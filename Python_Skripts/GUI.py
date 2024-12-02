@@ -11,6 +11,7 @@ from Object3D import Sensor, Probe, Hexapod
 from CreatePath import generate_grid, generate_snake_path
 from probe_tip_detection import detect_needle_tip
 from probe_tip_detection import crop_image
+from probe_tip_detection import crop_coordinate_transform
 
 import os
 import h5py
@@ -54,6 +55,9 @@ class UserInterface:
         self.checkerboard_dimensions = (7,4)
         self.checkerboard_size = 5 #mm size of one square edge TODO change dafault value
 
+        self.detected_probe_position = None
+
+        # Create the GUI
         self.create_menu()
         self.create_left_panel() # includes home, new_measurement, load_measurement
         self.create_paned_window() # also creates tab_group and event_log_panel and camera_panel 
@@ -72,7 +76,7 @@ class UserInterface:
         menubar.add_command(label="Help", command=self.show_help_panel)
 
     def create_left_panel(self):
-        self.left_panel = tk.Frame(self.root, width=320) # TODO change this depending on needed menu size
+        self.left_panel = tk.Frame(self.root, width=340) # TODO change this depending on needed menu size
         self.left_panel.pack(side="left", fill="both")
 
         self.create_home_panel(self.left_panel)
@@ -106,60 +110,126 @@ class UserInterface:
         for i in range(2):
             self.new_measurement_panel.grid_columnconfigure(i, weight=1)
 
-        measurement_space_label = tk.Label(self.new_measurement_panel, text="Measurement Space: (x, y, z) [mm]")
-        measurement_space_label.grid(row=0, column=0, pady=5)
-        self.measurement_space_entry = tk.Entry(self.new_measurement_panel, name = "measurement_space_entry")
-        self.measurement_space_entry.grid(row=0, column=1, pady=5)
-        self.measurement_space_entry.insert(0, f"({self.grid_size[0]}, {self.grid_size[1]}, {self.grid_size[2]})")
+        input_frame = tk.LabelFrame(self.new_measurement_panel,text ="New Measurement",name="input_frame")
+        input_frame.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=10) 
+
+        for i in range(3):
+            input_frame.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            input_frame.grid_columnconfigure(i, weight=1)
+
+        probe_name_label = tk.Label(input_frame, text="Probe Name:")
+        probe_name_label.grid(row=0, column=0, pady=5, sticky="e")
+        self.probe_name_entry = tk.Entry(input_frame, name="probe_name_entry")
+        self.probe_name_entry.grid(row=0, column=1, pady=5, sticky = "w")
+        self.probe_name_entry.insert(0, "Default")
+
+        # TODO maybe add aditional input fields for new measurement
+
+        measurement_space_label = tk.Label(input_frame, text="3D Size:")
+        measurement_space_label.grid(row=1, column=0, pady=5, sticky="e")
+        self.measurement_space_entry = tk.Entry(input_frame, name = "measurement_space_entry")
+        self.measurement_space_entry.grid(row=1, column=1, pady=5, sticky="w")
+        self.measurement_space_entry.insert(0, f"{self.grid_size[0]}, {self.grid_size[1]}, {self.grid_size[2]}")
         #TODO extract values from entry field with , seperator
 
-
         #Set up inputs for Step Size
-        step_size_label = tk.Label(self.new_measurement_panel, text="Step Size:")
-        step_size_label.grid(row=1, column=0, pady=5)
-        self.step_size_entry = tk.Entry(self.new_measurement_panel)
-        self.step_size_entry.grid(row=1, column=1, pady=5)
+        step_size_label = tk.Label(input_frame, text="Step Size:")
+        step_size_label.grid(row=2, column=0, pady=5, sticky="e")
+        self.step_size_entry = tk.Entry(input_frame, name = "step_size_entry")
+        self.step_size_entry.grid(row=2, column=1, pady=5, sticky="w")
         self.step_size_entry.insert(0, self.step_size)
 
         #Set up checkboxes
-        checkbox_panel = tk.Frame(self.new_measurement_panel)
-        checkbox_panel.grid(row=2, column=0, columnspan=2, pady=5, sticky="nsew")
+        checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
+        checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
 
-        for i in range(4):
+        for i in range(7):
             checkbox_panel.grid_rowconfigure(i, weight=1)
-        for i in range(1):
+        for i in range(2):
             checkbox_panel.grid_columnconfigure(i, weight=1)
 
-        camera_on = tk.Checkbutton(checkbox_panel, text="Camera ON", name="camera_on", state="disabled")
-        camera_on.grid(row=0, column=0, pady=5, sticky="w")
+        camera_connected = tk.Checkbutton(checkbox_panel, text="Camera connected", name="camera_connected", state="disabled")
+        camera_connected.grid(row=0, column=0, pady=5, sticky="w")
+        camera_connected.select() # TODO iplement camera connection status somewhere else
 
-        camera_calibrated = tk.Checkbutton(checkbox_panel, text="Camera Calibrated", name="camera_calibrated", state="disabled") 
+        open_camera_button = tk.Button(checkbox_panel, text="Open Camera", command=self.show_camera_panel)
+        open_camera_button.grid(row=0, column=1, pady=5, sticky="w")
+
+        camera_calibrated = tk.Checkbutton(checkbox_panel, text="Camera calibrated", name="camera_calibrated", state="disabled") 
         camera_calibrated.grid(row=1, column=0, pady=5, sticky="w")
 
-        sensor_detected = tk.Checkbutton(checkbox_panel, text="Sensor Detected", name="markers_detected", state="disabled")
+        sensor_detected = tk.Checkbutton(checkbox_panel, text="Sensor detected", name="markers_detected", state="disabled")
         sensor_detected.grid(row=2, column=0, pady=5, sticky="w")
 
-        probe_detected = tk.Checkbutton(checkbox_panel, text="Probe Detected", name="probe_detected", state="disabled")
+        probe_detected = tk.Checkbutton(checkbox_panel, text="Probe detected", name="probe_detected", state="disabled")
         probe_detected.grid(row=3, column=0, pady=5, sticky="w")
 
-        time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time:") # TODO implement time estimation
-        time_estimated_label.grid(row=4, column=0, pady=5, sticky="w")
+        hexapod_connected = tk.Checkbutton(checkbox_panel, text="Hexapod connected", name="hexapod_connected", state="disabled")
+        hexapod_connected.grid(row=4, column=0, pady=5, sticky="w")
 
-        #Set up Buttons
-        start_button = tk.Button(self.new_measurement_panel, text="START", command=self.start_button_pushed)
-        start_button.grid(row=4, column=0, pady=5)
+        connection_frame = tk.LabelFrame(checkbox_panel, name="connection_frame")
+        connection_frame.grid(row=1, column=1, rowspan=4 , sticky="nsew")
 
-        save_button = tk.Button(self.new_measurement_panel, text="SAVE", command=self.save_button_pushed)
-        save_button.grid(row=4, column=1, pady=5)
+        for i in range(3):
+            connection_frame.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            connection_frame.grid_columnconfigure(i, weight=1)
+        
+        port_1_label = tk.Label(connection_frame, text="Port 1:")
+        port_1_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.port_1_entry = tk.Entry(connection_frame, name="port_1_entry")
+        self.port_1_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.port_1_entry.insert(0, "5464")
 
-        process_data_button = tk.Button(self.new_measurement_panel, text="Process Data", command=self.process_data)
-        process_data_button.grid(row=5, column=0, columnspan=2, pady=5)
+        port_2_label = tk.Label(connection_frame, text="Port 2:")
+        port_2_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.port_2_entry = tk.Entry(connection_frame,name = "port_2_entry")
+        self.port_2_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.port_2_entry.insert(0, "5465")
 
-        #Set up Spinner for Measurement shown
+        ip_label = tk.Label(connection_frame, text="IP:")
+        ip_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+        self.ip_entry = tk.Entry(connection_frame, name="ip_entry")
+        self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.ip_entry.insert(0, '134.28.45.71') # TODO change to default value
+
+        connect_hexapod_button = tk.Button(connection_frame, text="Connect Hexapod", command=self.connect_hexapod)
+        connect_hexapod_button.grid(row=3, column=0, columnspan=2, padx=15, pady=5, sticky="nsew")
+
+        rough_alignment = tk.Checkbutton(checkbox_panel, text="Rough Alignment", name="rough_alignment", state="disabled")
+        rough_alignment.grid(row=5, column=0, pady=5, sticky="w")
+
+        rough_alignment_button = tk.Button(checkbox_panel, text="Align", command=self.rough_alignment)
+        rough_alignment_button.grid(row=5, column=1, pady=5, sticky="w")
+
+        fine_alignment = tk.Checkbutton(checkbox_panel, text="Fine Alignment", name="fine_alignment", state="disabled") # gets enabled after rough alignment
+        fine_alignment.grid(row=6, column=0, pady=5, sticky="w") 
+
+        time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time: N/A ", name="time_estimated_label") # TODO implement time estimation
+        time_estimated_label.grid(row=7, column=0, pady=5, sticky="w")
+
+        time_estimation_button = tk.Button(checkbox_panel, text="Estimate Time", command=self.estimate_time)
+        time_estimation_button.grid(row=7, column=1, pady=5, sticky="w")
+
+
+        progress_bar = ttk.Progressbar(self.new_measurement_panel, orient="horizontal", length=320, mode="determinate", name="progress_bar")
+        progress_bar.grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+
+        #Set up Big Buttons
+        start_button = tk.Button(self.new_measurement_panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
+        start_button.grid(row=4, column=0, padx=10, pady=5, sticky = "w")
+
+        save_button = tk.Button(self.new_measurement_panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
+        save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
+
+        # Set up Spinner for Measurement shown
         self.measurement_spinner_label = tk.Label(self.new_measurement_panel, text="Measurement:")
-        self.measurement_spinner_label.grid(row=6, column=0, pady=5)
-        self.measurement_spinner = tk.Spinbox(self.new_measurement_panel, from_=1, to=self.measurement_points)
-        self.measurement_spinner.grid(row=6, column=1, pady=5)
+        self.measurement_spinner_label.grid(row=6, column=0, padx=10, pady=5, sticky="w")
+        
+        # Increase the font size and add padding to the Spinbox
+        self.measurement_spinner = tk.Spinbox(self.new_measurement_panel, from_=1, to=100, font=("Helvetica", 16), width=5)
+        self.measurement_spinner.grid(row=6, column=1, pady=5, padx=10, sticky="w")
         self.measurement_spinner.insert(0, self.current_measurement_id+1)
 
         # Bind the Enter key and mouse button release to the update_tab method
@@ -241,9 +311,6 @@ class UserInterface:
         self.camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         toggle_camera_button = tk.Checkbutton(self.camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera)
         toggle_camera_button.pack(side = "top", pady=5)
-
-        drawMarkers_button = tk.Checkbutton(self.camera_settings_frame, text="Draw Markers")
-        drawMarkers_button.pack(side = "top",pady=5)
     def create_camera_detection_frame(self, parent):
         camera_detection_frame = tk.LabelFrame(parent, text="Detection", name="camera_detection_frame")
 
@@ -386,7 +453,7 @@ class UserInterface:
 
     def take_probe_image(self):
         # updates the canvas with the detected image
-
+        # TODO access the entries in a different way, not by .self
         top_left = tuple(map(int, self.crop_top_left_entry.get().split(',')))
         bottom_right = tuple(map(int, self.crop_bottom_right_entry.get().split(',')))
 
@@ -400,6 +467,11 @@ class UserInterface:
         threshold = self.threshold_slider.get()
         result_image, self.detected_probe_position, pixel_size = detect_needle_tip(image, threshold) # TODO add probe rotation detection
 
+        # translate the cropped coordinates to the original image
+        self.detected_probe_position = crop_coordinate_transform(image, self.detected_probe_position, top_left)
+
+
+
         # Show the result
         canvas = self.probe_plot_frame.canvas
         axes = self.probe_plot_frame.canvas.figure.axes[0]
@@ -412,9 +484,13 @@ class UserInterface:
 
         self.log_event("Took Probe Image")
     def save_probe_position(self):
-        # TODO implement detection function
+       
+        
+
+
         self.probe_detected = True
         self.probe_detetection_checkbox.select()
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("probe_detected").select()
         self.probe.position = self.detected_probe_position # save the detected position
         # TODO implement probe rotation detection
         self.log_event("Saved Probe Position")
@@ -430,6 +506,12 @@ class UserInterface:
         self.camera.Open()
         image = capture_image(self.camera)
         self.camera.Close()
+
+        # Crop the image
+        top_left = tuple(map(int, self.calibration_crop_top_left_entry.get().split(',')))
+        bottom_right = tuple(map(int, self.calibration_crop_bottom_right_entry.get().split(',')))
+        image = crop_image(image, top_left, bottom_right)
+
         self.checkerboard_images.append(image)
         self.log_event("Took calibration image")
 
@@ -516,6 +598,9 @@ class UserInterface:
         if len(objpoints) > 0 and len(imgpoints) > 0:
             # Calibrate the camera
             self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+            # Update the camera calibration checkbox
+            self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("camera_calibrated").select()
             self.log_event("Calibrated Camera")
         else:
             self.log_event("Calibration failed: No valid checkerboard corners found in any image")
@@ -725,9 +810,6 @@ class UserInterface:
         time_estimated_label = ttk.Label(label_frame, text="Time Estimated = N/A", name="time_estimated_label")
         time_elapsed_label.pack(side="top", pady=5)
 
-        progress_bar = ttk.Progressbar(measurement_info_frame, orient="horizontal", length=200, mode="determinate", name="progress_bar")
-        progress_bar.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=5)
-
         self.create_path_plot_frame(measurement_info_frame)
         path_plot_frame = measurement_info_frame.nametowidget("path_plot_frame")
         path_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
@@ -739,7 +821,7 @@ class UserInterface:
         canvas.get_tk_widget().pack(fill= "both", expand=True)
         path_plot_frame.canvas = canvas
         
-        grid_size = [2, 2, 4]  # [mm] # TODO change to refer to UI parameters
+        grid_size = [2, 2, 2]  # [mm] # TODO change to refer to UI parameters
         step_size = 1  # [mm]
 
         X, Y, Z = generate_grid(grid_size, step_size) # Create default grid
@@ -756,6 +838,7 @@ class UserInterface:
         ax.legend()
         ax.grid(True)
 
+    # Update Functions
     def update_tab(self, event=None):    
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
@@ -767,6 +850,13 @@ class UserInterface:
 
         sensor_info_frame = tab.nametowidget("sensor_info_frame")
         sensor_info_frame.config(text="Measurement " + str(self.current_measurement_id) + "/" + str(self.measurement_points)) # Update the title
+
+        # update progress bar here
+        progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
+        progress_bar['maximum'] = self.measurement_points
+        self.update_progress_bar(progress_bar, self.current_measurement_id) # TODO add this to new_measurement_panel
+
+
 
         self.log_event("Updated Tab: " + str(tab_name))
     def update_measurement_info_frame(self, tab, data):
@@ -784,11 +874,6 @@ class UserInterface:
         step_size_label.config(text=f"Step Size: {data['3D']['step_size']}")
         time_elapsed_label.config(text=f"Time Elapsed: {data['info']['elapsed_time']}")
         time_estimated_label.config(text=f"Time Estimated: {data['info']['time_estimated']}")
-
-        # update progress bar here
-        progress_bar = measurement_info_frame.nametowidget("progress_bar")
-        progress_bar['maximum'] = self.measurement_points
-        self.update_progress_bar(progress_bar, self.current_measurement_id)
 
         # update path plot here
         path_plot_frame = measurement_info_frame.nametowidget("path_plot_frame")
@@ -875,6 +960,7 @@ class UserInterface:
 
         self.log_event(f"Updated sensor info for Tab {tab}")
 
+    # Button Functions
     def start_button_pushed(self):
         self.create_tab()
         tab_name = self.tab_group.select()
@@ -882,8 +968,9 @@ class UserInterface:
         self.log_event("Start button pushed")
 
         # Get the grid size and step size
-        self.grid_size = self.new_measurement_panel.nametowidget("measurement_space_entry").get()
-        self.step_size = self.new_measurement_panel.nametowidget("step_size_entry").get()
+        self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
+        self.grid_size = tuple(map(int, self.grid_size.split(',')))
+        self.step_size = float(self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get())
 
         # Get the Measurment points and path points
         X, Y, Z = generate_grid(self.grid_size, self.step_size)
@@ -891,26 +978,19 @@ class UserInterface:
         self.path_points = generate_snake_path(X, Y, Z)
         self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
          
-
-        self.time_one_measurement = 1 # TODO get this from time between measurements
         self.measurement_points = self.data["3D"]["measurement_points"]
-        self.time_estimated = self.measurement_points * self.step_size / self.time_one_measurement
+        
         self.start_time = time.time()
         self.elapsed_time = 0
 
         self.add_meta_data(self.data)
 
-        #move hexapod to default position
         
-
-        # Get Sensor close to camera
-
-
-
         # Start the measurement
         for i in range(self.measurement_points):
             self.log_event(f"Measurement {i+1} of {self.measurement_points}")
-            #self.hexapod.move() # TODO move Hexapod to next position
+            next_relative_position = (self.path_points[i][0], self.path_points[i][1], self.path_points[i][2], 0, 0, 0) # account for rotation
+            #self.hexapod.move(next_relative_position, flag = "relative") # TODO move Hexapod to next position
             #wait for hexapod to move
 
             self.doMeasurement(self.data, self.sensor, self.probe, i)
@@ -922,7 +1002,7 @@ class UserInterface:
             self.elapsed_time = time.time() - self.start_time
             self.data["info"]["elapsed_time"] = self.elapsed_time
 
-        
+        self.new_measurement_panel.nametowidget("save_button").config(state="normal")
         self.log_event("Done with measurements")       
     def save_button_pushed(self):
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
@@ -939,6 +1019,7 @@ class UserInterface:
             self.update_tab()
             self.log_event(f"Data loaded from {file_path}")
    
+    # Data Handling
     def save_data(self, data_folder, data):
         """
         Save the data to an HDF5 file.
@@ -1021,6 +1102,53 @@ class UserInterface:
             "path": path, 
             "measurement_points": len(path)
         } 
+    
+    # Measurement Handling
+    def estimate_time(self):
+        # TODO implement time estimation
+        self.time_estimated = self.measurement_points * self.step_size # TODO replace with actual time estimation
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("time_estimated_label").config(text="Time Estimated: " + str(self.time_estimated) + " [min]")
+
+        self.log_event(f"Estimated time: " + str(self.time_estimated) + " [min]")
+
+    def connect_hexapod(self):
+        #TODO implement hexapod connection
+
+        checkbox_panel = self.new_measurement_panel.nametowidget("checkbox_panel")
+        connection_frame = checkbox_panel.nametowidget("connection_frame")
+
+        server_ip = connection_frame.nametowidget("ip_entry").get()
+        port_1 = int(connection_frame.nametowidget("port_1_entry").get())
+        port_2 = int(connection_frame.nametowidget("port_2_entry").get())
+
+        hexapod_connection_status = self.hexapod.connect_sockets(server_ip, port_1, port_2) # TODO change to true default ports
+        if hexapod_connection_status == True:
+            self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("hexapod_connected").select()
+            self.log_event("Hexapod connected to Server")
+        else:
+            self.log_event("Connection to Server failed")
+
+    def rough_alignment(self):
+        #TODO implement rough alignment
+        #self.hexapod.move_to_default_position()
+        
+        # Determine the rough alignment
+        # Get Sensor Postion
+
+        
+        #relative_movement = self.sensor.position - self.probe.position # TODO implement sensor position
+        # TODO implement some leeway for the rough alignment to avoid overshooting/collisions
+        #server_response = self.hexapod.move(relative_movement, flag = "relative") # Move the Hexapod to the rough alignment position
+        
+
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").config(state="normal")
+        
+        self.log_event("Rough Alignment done")
+        
+
+
+    
 
     def doMeasurement(self, data, sensor, probe, i):
 

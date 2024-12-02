@@ -75,6 +75,7 @@ def detect_needle_tip(image, threshold=60):
     if detected_position is None:
         print("No needle tip detected")
         return binary_image, detected_position, 0
+    
     rectangles = [] 
     for contour in contours:
         if cv2.contourArea(contour) > 5:
@@ -91,7 +92,7 @@ def calculate_detection_error(expected_position, detected_position):
     pixel_error = np.sqrt((expected_position[0] - detected_position[0])**2 + (expected_position[1] - detected_position[1])**2)
     return pixel_error
 
-def coordinate_transform(image, coordinates, top_left):
+def crop_coordinate_transform(image, coordinates, top_left):
     x, y = coordinates # coordinates in the cropped image
     crop_x, crop_y = top_left # top left corner of the cropped image in the original image
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
     show_image(cropped_image)
 
     # Transform the detected position to the original image
-    detected_position_transformed = coordinate_transform(loaded_image, detected_position, top_left)
+    detected_position_transformed = crop_coordinate_transform(loaded_image, detected_position, top_left)
     cv2.circle(loaded_image, detected_position_transformed, 3, (255, 0, 0), -1)
     show_image(loaded_image)
 

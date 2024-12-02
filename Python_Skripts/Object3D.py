@@ -62,11 +62,13 @@ class Sensor(Object3D):
         self.sum = np.random.rand()
         signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
         
+        """
         # change size of random numbers
         keys = list(signal.__dict__.keys())
         for key in keys:
             signal.__dict__[key] = (signal.__dict__[key] - 0.5) * 0.5
 
+        """
         return signal
 
 
@@ -108,28 +110,33 @@ class Hexapod():
         self.tcpipObj_Hexapod_1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Commands
         self.tcpipObj_Hexapod_2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Emergency Stop
 
-        # Define Default Addresses # TODO: Change to actual default addresses
-        self.IP_Hexapod = '134.28.45.71'
-        self.port_Hexapod_1 = 5464
-        self.port_Hexapod_2 = 5465
-
         self.connection_status = False #self.connect_sockets() # TODO show in UI event_log uncomment later
         self.server_response = None # to show server respons in UI event_log later
 
     def move_to_default_position(self):
+        if not self.connection_status:
+            self.server_response = 'Hexpod not connected to server'
+            return False
+
         self.move_hex(self.default_position, flag = "absolute")
     
-    def connect_sockets(self): 
+    def connect_sockets(self, IP= '134.28.45.71', port_1 = 5464, port_2 = 5465): # TODO implement in GUI and change to actual default adresses
         # Connect to Hexapod Server
         # TODO : implement Ip and port input in gui
-        self.tcpipObj_Hexapod_1.connect((self.IP_Hexapod, self.port_Hexapod_1))
-        self.tcpipObj_Hexapod_2.connect((self.IP_Hexapod, self.port_Hexapod_2))
+
 
         try:
+            self.tcpipObj_Hexapod_1.connect((IP, port_1))
+            self.tcpipObj_Hexapod_2.connect((IP, port_2))
+
             self.tcpipObj_Hexapod_1.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.tcpipObj_Hexapod_2.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.connection_status = True
             return True
+        
+        except socket.gaierror:
+            self.connection_status = False
+            return False
         except socket.error:
             self.connection_status = False
             return False
@@ -139,8 +146,8 @@ class Hexapod():
         # Use tcpipObj_Hexapod_1 for regular commands, tcpipObj_Hexapod_2 as emergency stop
 
         if not self.connection_status:
-            self.server_response = 'Connection to Hexapod Server failed'
-            return None
+            self.server_response = 'Hexpod not connected to server'
+            return self.server_response
         
         elif command == 'stop':
             self.tcpipObj_Hexapod_2.write(command.encode())
@@ -149,6 +156,7 @@ class Hexapod():
                 rcv = self.tcpipObj_Hexapod_2.read() # Reads the response from the TCP/IP server
             
             self.server_response = rcv.decode()
+            return self.server_response
 
         else:
             self.tcpipObj_Hexapod_1.write(command.encode()) # Encodes the command string to bytestring UTF-8
@@ -157,8 +165,14 @@ class Hexapod():
                 rcv = self.tcpipObj_Hexapod_1.read() # Reads the response from the TCP/IP server
             
             self.server_response = rcv.decode()
+            return self.server_response
 
     def move_hex(self, pos, flag = "relative"):
+        
+        if not self.connection_status:
+            self.server_response = 'Hexpod not connected to server'
+            return self.server_response
+        
         # Send command to get current position
         self.tcpipObj_Hexapod_1.write(b'get_pos\n')
         rcv = b''
@@ -172,7 +186,7 @@ class Hexapod():
             pos_new = pos
         else:
             self.server_response = 'Incorrect input for flag'
-            return None
+            return self.server_response
 
         # Send command to set new position
         self.tcpipObj_Hexapod_1.write(f'set_pos {" ".join(map(str, pos_new))}\n'.encode()) # TODO check if this works, translated from matlab
@@ -182,10 +196,16 @@ class Hexapod():
 
         self.server_response = rcv.decode()
         self.position = pos_new # update position attribute
+        return self.server_response
 
     def set_velocity(self, velocity):
+        if not self.connection_status:
+            self.server_response = 'Hexpod not connected to server'
+            return self.server_response
+        
         self.velocity = velocity
-        self.send_command(f'set_vel {velocity}\n')
+        self.server_response = self.send_command(f'set_vel {velocity}\n')
+        return self.server_response
 
     def __repr__(self):
         return f"Hexapod(position={self.position})"

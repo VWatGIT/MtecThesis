@@ -35,13 +35,13 @@ def save_checkerboard_images(camera, num_images = 1, save_dir = r'C:\Users\mtec\
 
     return 0
 
-def calibrate_camera(checkerboard_images, checkerboard_size):
+def calibrate_camera(checkerboard_images, checkerboard_dimensions):
     # termination criteria
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     
     # Prepare object points (0,0,0), (1,0,0), (2,0,0), ..., (6,5,0)
-    objp = np.zeros((checkerboard_size[0] * checkerboard_size[1], 3), np.float32)
-    objp[:, :2] = np.mgrid[0:checkerboard_size[0], 0:checkerboard_size[1]].T.reshape(-1, 2)
+    objp = np.zeros((checkerboard_dimensions[0] * checkerboard_dimensions[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:checkerboard_dimensions[0], 0:checkerboard_dimensions[1]].T.reshape(-1, 2)
     
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
@@ -53,7 +53,7 @@ def calibrate_camera(checkerboard_images, checkerboard_size):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
         # Find the chess board corners
-        ret, corners = cv2.findChessboardCorners(gray, checkerboard_size, None)
+        ret, corners = cv2.findChessboardCorners(gray, checkerboard_dimensions, None)
     
         # If found, add object points, image points (after refining them)
         if ret == True:
@@ -63,7 +63,7 @@ def calibrate_camera(checkerboard_images, checkerboard_size):
             imgpoints.append(corners2)
     
             # Draw and display the corners
-            cv2.drawChessboardCorners(img, (7,4), corners2, ret)
+            cv2.drawChessboardCorners(img, checkerboard_dimensions, corners2, ret)
             cv2.imshow('img', img)
             cv2.waitKey(200)
         else:
