@@ -36,53 +36,52 @@ def generate_grid(grid_size, step_size):
 
     return X, Y, Z
 
-"""
-# Set up Measurement Grid
-grid_size = [2, 2, 4]  # [mm]
-step_size = 1  # [mm]
-X, Y, Z = generate_grid(grid_size, step_size)
+if __name__ == "__main__":
+    # Set up Measurement Grid
+    grid_size = [2, 2, 4]  # [mm]
+    step_size = 1  # [mm]
+    X, Y, Z = generate_grid(grid_size, step_size)
 
-# Generate the snake path
-path_points_snake = generate_snake_path(X, Y, Z)
+    # Generate the snake path
+    path_points_snake = generate_snake_path(X, Y, Z)
 
-# Extract the path coordinates
-path_x_snake = path_points_snake[:, 0]
-path_y_snake = path_points_snake[:, 1]
-path_z_snake = path_points_snake[:, 2]
+    # Extract the path coordinates
+    path_x_snake = path_points_snake[:, 0]
+    path_y_snake = path_points_snake[:, 1]
+    path_z_snake = path_points_snake[:, 2]
 
-# Visualize the grid and the snake path
-# Create a 3D plot for the snake path
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+    # Visualize the grid and the snake path
+    # Create a 3D plot for the snake path
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-# Plot the meshgrid points
-X_flat = X.flatten()
-Y_flat = Y.flatten()
-Z_flat = Z.flatten()
+    # Plot the meshgrid points
+    X_flat = X.flatten()
+    Y_flat = Y.flatten()
+    Z_flat = Z.flatten()
 
-ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points')
+    ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points')
 
-# Initialize the path plot
-path_plot, = ax.plot([], [], [], color='red', marker='o', label='Hexapod Path')
+    # Initialize the path plot
+    path_plot, = ax.plot([], [], [], color='red', marker='o', label='Hexapod Path')
 
-# Set plot labels
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.set_title('3D Meshgrid with Hexapod Path')
-ax.legend()
+    # Set plot labels
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('3D Meshgrid with Hexapod Path')
+    ax.legend()
 
-# Function to update the path plot
-def update_path_plot(current_index):
-    path_plot.set_data(path_x_snake[:current_index], path_y_snake[:current_index])
-    path_plot.set_3d_properties(path_z_snake[:current_index])
-    plt.draw()
-    plt.pause(0.1)  # Pause to update the plot
+    # Function to update the path plot
+    def update_path_plot(current_index):
+        path_plot.set_data(path_x_snake[:current_index], path_y_snake[:current_index])
+        path_plot.set_3d_properties(path_z_snake[:current_index])
+        plt.draw()
+        plt.pause(0.1)  # Pause to update the plot
 
-# Simulate the movement of the hexapod
-for i in range(1, len(path_points_snake) + 1):
-    update_path_plot(i)
-    #time.sleep(0.2)  # Simulate time delay for movement
+    # Simulate the movement of the hexapod
+    for i in range(1, len(path_points_snake) + 1):
+        update_path_plot(i)
+        #time.sleep(0.2)  # Simulate time delay for movement
 
-plt.show()
-"""
+    plt.show()

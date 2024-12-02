@@ -60,7 +60,13 @@ class Sensor(Object3D):
         self.xdiff = np.random.rand()
         self.ydiff = np.random.rand()
         self.sum = np.random.rand()
-        signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)
+        signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
+        
+        # change size of random numbers
+        keys = list(signal.__dict__.keys())
+        for key in keys:
+            signal.__dict__[key] = (signal.__dict__[key] - 0.5) * 0.5
+
         return signal
 
 
@@ -92,6 +98,9 @@ class Hexapod():
             'stop': 'stop'
         }
         
+        self.default_position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
+
+
         self.position = [None, None, None, None, None, None] # [x, y, z, roll, pitch, yaw]
         self.velocity = None # TODO: set default velocity
 
@@ -106,7 +115,10 @@ class Hexapod():
 
         self.connection_status = False #self.connect_sockets() # TODO show in UI event_log uncomment later
         self.server_response = None # to show server respons in UI event_log later
-            
+
+    def move_to_default_position(self):
+        self.move_hex(self.default_position, flag = "absolute")
+    
     def connect_sockets(self): 
         # Connect to Hexapod Server
         # TODO : implement Ip and port input in gui
@@ -177,3 +189,10 @@ class Hexapod():
 
     def __repr__(self):
         return f"Hexapod(position={self.position})"
+    
+
+if __name__ == "__main__":
+    sensor = Sensor()
+
+    signal = sensor.get_test_signal()
+    print(signal.xpos, signal.ypos)

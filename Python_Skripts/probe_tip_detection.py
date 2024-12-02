@@ -39,15 +39,15 @@ def show_image(image):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-def detect_needle_tip(image):
+def detect_needle_tip(image, threshold=60):
     # Convert to grayscale
-    #gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Apply Gaussian blur
-    blurred_image = cv2.GaussianBlur(image, (5, 5), 0)
+    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
 
     # Apply thresholding
-    _, binary_image = cv2.threshold(blurred_image, 60, 255, cv2.THRESH_BINARY) # TODO adjust threshold value, maybe with slider in GUI
+    _, binary_image = cv2.threshold(blurred_image, threshold, 255, cv2.THRESH_BINARY) # TODO adjust threshold value, maybe with slider in GUI
 
     # Find contours
     contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -57,6 +57,7 @@ def detect_needle_tip(image):
     for contour in contours:
         if cv2.contourArea(contour) > 5:  # Filter small contours
             cv2.drawContours(image, [contour], -1, (0, 255, 0), 1)
+            cv2.drawContours(binary_image, [contour], -1, (0, 255, 0), 1)
             x, y, w, h = cv2.boundingRect(contour)
             
             # Add width to find the tip # TODO this is only temporary
@@ -66,8 +67,14 @@ def detect_needle_tip(image):
             cv2.circle(image, (tip_x, tip_y), 1, (255, 0, 0), -1)
     
     # TODO: implement better selection of the relevant positon
-    detected_position = detected_candidates[1] if detected_candidates else (-1, -1)
+    #detected_position = detected_candidates[1] if detected_candidates else (-1, -1)
+    detected_position = None
 
+    # TODO implement calulation of probe rotation by using pattern MAYBE?
+
+    if detected_position is None:
+        print("No needle tip detected")
+        return binary_image, detected_position, 0
     rectangles = [] 
     for contour in contours:
         if cv2.contourArea(contour) > 5:

@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import numpy as np
+import cv2
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pypylon.pylon as pylon
@@ -8,15 +9,18 @@ from CaptureIMG import capture_image
 from calibrate_camera import calibrate_camera
 from Object3D import Sensor, Probe, Hexapod
 from CreatePath import generate_grid, generate_snake_path
+from probe_tip_detection import detect_needle_tip
+from probe_tip_detection import crop_image
 
 import os
 import h5py
 import time
+from datetime import datetime
 
 class UserInterface:
     def __init__(self, root):
         self.root = root
-        self.root.title("Python App")
+        self.root.title("Probe Beam Measurement")
         self.root.geometry("1600x1000")
 
         self.tab_count = 0
@@ -39,7 +43,6 @@ class UserInterface:
 
         self.current_measurement_id = 0
         
-
         # TODO make callback function for values changed in entry fields
 
         os.environ["PYLON_CAMEMU"] = "1" # Enable the pylon camera emulator
@@ -120,24 +123,27 @@ class UserInterface:
 
         #Set up checkboxes
         checkbox_panel = tk.Frame(self.new_measurement_panel)
-        checkbox_panel.grid(row=2, column=1, pady=5)
+        checkbox_panel.grid(row=2, column=0, columnspan=2, pady=5, sticky="nsew")
 
-        for i in range(3):
+        for i in range(4):
             checkbox_panel.grid_rowconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(1):
             checkbox_panel.grid_columnconfigure(i, weight=1)
 
         camera_on = tk.Checkbutton(checkbox_panel, text="Camera ON", name="camera_on", state="disabled")
-        camera_on.grid(row=0, column=0, pady=5)
+        camera_on.grid(row=0, column=0, pady=5, sticky="w")
 
         camera_calibrated = tk.Checkbutton(checkbox_panel, text="Camera Calibrated", name="camera_calibrated", state="disabled") 
-        camera_calibrated.grid(row=0, column=1, pady=5)
+        camera_calibrated.grid(row=1, column=0, pady=5, sticky="w")
 
         sensor_detected = tk.Checkbutton(checkbox_panel, text="Sensor Detected", name="markers_detected", state="disabled")
-        sensor_detected.grid(row=1, column=0, pady=5)
+        sensor_detected.grid(row=2, column=0, pady=5, sticky="w")
 
         probe_detected = tk.Checkbutton(checkbox_panel, text="Probe Detected", name="probe_detected", state="disabled")
-        probe_detected.grid(row=1, column=1, pady=5)
+        probe_detected.grid(row=3, column=0, pady=5, sticky="w")
+
+        time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time:") # TODO implement time estimation
+        time_estimated_label.grid(row=4, column=0, pady=5, sticky="w")
 
         #Set up Buttons
         start_button = tk.Button(self.new_measurement_panel, text="START", command=self.start_button_pushed)
@@ -154,7 +160,7 @@ class UserInterface:
         self.measurement_spinner_label.grid(row=6, column=0, pady=5)
         self.measurement_spinner = tk.Spinbox(self.new_measurement_panel, from_=1, to=self.measurement_points)
         self.measurement_spinner.grid(row=6, column=1, pady=5)
-        self.current_measurement_id = str(self.measurement_spinner.get())
+        self.measurement_spinner.insert(0, self.current_measurement_id+1)
 
         # Bind the Enter key and mouse button release to the update_tab method
         self.measurement_spinner.bind("<Return>", self.update_tab)
@@ -230,6 +236,7 @@ class UserInterface:
         canvas = FigureCanvasTkAgg(fig, master=self.camera_plot_frame)
         canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
         self.camera_plot_frame.canvas = canvas
+        ax.axis('off')
     def create_camera_settings_frame(self, parent):
         self.camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         toggle_camera_button = tk.Checkbutton(self.camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera)
@@ -269,7 +276,7 @@ class UserInterface:
         canvas = FigureCanvasTkAgg(fig, master=self.probe_plot_frame)
         canvas.get_tk_widget().pack(side="left", fill="both")
         self.probe_plot_frame.canvas = canvas
-
+        ax.axis('off')
     def create_probe_detection_input_frame(self, parent):
         probe_detection_input_frame = tk.Frame(parent, name="probe_detection_input_frame")
 
@@ -292,28 +299,22 @@ class UserInterface:
         self.crop_bottom_right_entry.grid(row=1, column=1, pady=5)
         self.crop_bottom_right_entry.insert(0, "1920,1080")
 
-        self.crop_button = tk.Button(probe_detection_input_frame, text="Crop Image") # TODO implement crop_image
-        self.crop_button.grid(row=2, column=0, columnspan=2,rowspan = 2,pady=5)
-
-        # Get the input from the entry field
-        #input_text = entry.get()
-        # Split the input text by comma and convert to integers
-        #x, y = map(int, input_text.split(','))
-
         self.threshold_slider_label = tk.Label(probe_detection_input_frame, text="Threshold Value", name="threshold_slider_label") 
-        self.threshold_slider_label.grid(row=4, column=0, rowspan=2, pady=5)
+        self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5)
         self.threshold_slider = tk.Scale(probe_detection_input_frame, from_=0, to=255, orient="horizontal", name="threshold_slider")
-        self.threshold_slider.grid(row=4, column=1, rowspan=2, pady=5)
+        self.threshold_slider.grid(row=2, column=1, rowspan=2, pady=5)
+
+
+        self.take_probe_image_button = tk.Button(probe_detection_input_frame, text="Take Image", command=self.take_probe_image) # TODO implement crop_image
+        self.take_probe_image_button.grid(row=4, column=0, columnspan=2,rowspan = 2,pady=5)
 
         probe_detection_input_frame.grid_rowconfigure(3, weight=3) #weight row for gap
         
-        self.detect_probe_button = tk.Button(probe_detection_input_frame, text="Detect Probe") # TODO implement detect_probe
-        self.detect_probe_button.grid(row=6, column=1, pady=5)
+        self.save_probe_position_button = tk.Button(probe_detection_input_frame, text="Save Position", command=self.save_probe_position) # TODO implement detect_probe
+        self.save_probe_position_button.grid(row=6, column=1, pady=5)
 
         self.probe_detetection_checkbox = tk.Checkbutton(probe_detection_input_frame, text="Probe Detected", name="probe_detected", state="disabled")
         self.probe_detetection_checkbox.grid(row=6, column=0, pady=5)
-
-
     def create_marker_detection_frame(self, parent):
         marker_detection_frame = tk.LabelFrame(parent, text="Marker Detection", name="marker_detection_frame")
         # TODO implement marker detection
@@ -323,7 +324,7 @@ class UserInterface:
 
         self.camera_calibration_frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
 
-        for i in range(3):
+        for i in range(5):
             self.camera_calibration_frame.grid_rowconfigure(i, weight=1)
         for i in range(3):
             self.camera_calibration_frame.grid_columnconfigure(i, weight=1)
@@ -331,30 +332,45 @@ class UserInterface:
         self.create_calibration_image_frame(self.camera_calibration_frame)
 
         self.calibration_image_frame = self.camera_calibration_frame.nametowidget("calibration_image_frame")
-        self.calibration_image_frame.grid(row=0, column=2, rowspan=3, pady=5, sticky="nsew")
+        self.calibration_image_frame.grid(row=0, column=2, rowspan=6, pady=5, sticky="nsew")
         self.calibration_image_frame.propagate(False)
         self.camera_calibration_frame.columnconfigure(2, weight=20)
 
         #TODO decide on better grid layout
 
+        calibration_crop_top_left_label = tk.Label(self.camera_calibration_frame, text="Top Left Corner: [x,y]", name="calibration_crop_top_left_label")
+        calibration_crop_top_left_label.grid(row=0, column=0, pady=5, sticky="w")
+        self.calibration_crop_top_left_entry = tk.Entry(self.camera_calibration_frame, name="calibration_crop_top_left_entry")
+        self.calibration_crop_top_left_entry.grid(row=0, column=1, pady=5)
+        self.calibration_crop_top_left_entry.insert(0, "0,0")
+
+        calibration_crop_bottom_right_label = tk.Label(self.camera_calibration_frame, text="Bottom Right Corner: [x,y]", name="calibration_crop_bottom_right_label")
+        calibration_crop_bottom_right_label.grid(row=1, column=0, pady=0, sticky="w")
+        self.calibration_crop_bottom_right_entry = tk.Entry(self.camera_calibration_frame, name="calibration_crop_bottom_right_entry")
+        self.calibration_crop_bottom_right_entry.grid(row=1, column=1, pady=0)
+        self.calibration_crop_bottom_right_entry.insert(0, "1920,1080")
+
         checkerboard_size_label = tk.Label(self.camera_calibration_frame, text="Checkerboard Size [mm]: ", name="checkerboard_size_label")
-        checkerboard_size_label.grid(row=0, column=0, pady=5, sticky="w")
+        checkerboard_size_label.grid(row=2, column=0, pady=5, sticky="w")
         self.checkerboard_size_entry = tk.Entry(self.camera_calibration_frame, name="checkerboard_size_entry")
-        self.checkerboard_size_entry.grid(row=0, column=1, pady=5)
+        self.checkerboard_size_entry.grid(row=2, column=1, pady=5)
         self.checkerboard_size_entry.insert(0, self.checkerboard_size)
 
         checkerboard_corners_label = tk.Label(self.camera_calibration_frame, text="Checkerboard Corners [x,y]: ", name="checkerboard_corners_label")
-        checkerboard_corners_label.grid(row=1, column=0, pady=5, sticky="w")
+        checkerboard_corners_label.grid(row=3, column=0, pady=0, sticky="w")
         self.checkerboard_corners_entry = tk.Entry(self.camera_calibration_frame, name="checkerboard_corners_entry")
-        self.checkerboard_corners_entry.grid(row=1, column=1, pady=5)
+        self.checkerboard_corners_entry.grid(row=3, column=1, pady=0)
         self.checkerboard_corners_entry.insert(0, f"{self.checkerboard_dimensions[0]},{self.checkerboard_dimensions[1]}")
 
 
         self.take_image_button = tk.Button(self.camera_calibration_frame, command=self.take_calibration_image, text="Take Image " + str(len(self.checkerboard_images)+1)) #+ "/" + str(self.checkerboard_image_amount))
-        self.take_image_button.grid(row=2, column=0, pady=5)
+        self.take_image_button.grid(row=4, column=0, pady=5)
 
         self.calibrate_button = tk.Button(self.camera_calibration_frame, text="Calibrate", command=self.calibrate_camera, state="active") # TODO decide on state
-        self.calibrate_button.grid(row=2, column=1, pady=5)
+        self.calibrate_button.grid(row=4, column=1, pady=5)
+
+        self.reset_button = tk.Button(self.camera_calibration_frame, text="Reset", command=self.reset_calibration)
+        self.reset_button.grid(row=5, column=0, columnspan=2, pady=5)
     def create_calibration_image_frame(self, parent):
         self.calibration_image_frame = tk.LabelFrame(parent, text="Calibration Images", name="calibration_image_frame")
         
@@ -362,11 +378,53 @@ class UserInterface:
         canvas = FigureCanvasTkAgg(fig, master=self.calibration_image_frame)
         canvas.get_tk_widget().pack(side = "left", fill="both")
         self.calibration_image_frame.canvas = canvas
+        ax.axis('off')
 
         # Create initial Default Canvas
         #self.create_calibration_image_canvas(self.calibration_image_frame)
         #self.default_image_frame = self.calibration_image_frame.nametowidget("new_image_frame_"+ str(len(self.checkerboard_images)))
 
+    def take_probe_image(self):
+        # updates the canvas with the detected image
+
+        top_left = tuple(map(int, self.crop_top_left_entry.get().split(',')))
+        bottom_right = tuple(map(int, self.crop_bottom_right_entry.get().split(',')))
+
+        self.camera.Open()
+        image = capture_image(self.camera)
+        self.camera.Close()
+
+        image = crop_image(image, top_left, bottom_right)
+
+        # Detect the needle tip
+        threshold = self.threshold_slider.get()
+        result_image, self.detected_probe_position, pixel_size = detect_needle_tip(image, threshold) # TODO add probe rotation detection
+
+        # Show the result
+        canvas = self.probe_plot_frame.canvas
+        axes = self.probe_plot_frame.canvas.figure.axes[0]
+        axes.clear()
+        axes.imshow(result_image)
+        canvas.draw()
+        axes.axis('off')
+
+
+
+        self.log_event("Took Probe Image")
+    def save_probe_position(self):
+        # TODO implement detection function
+        self.probe_detected = True
+        self.probe_detetection_checkbox.select()
+        self.probe.position = self.detected_probe_position # save the detected position
+        # TODO implement probe rotation detection
+        self.log_event("Saved Probe Position")
+
+
+    def reset_calibration(self):
+        self.checkerboard_images = []
+        self.update_calibration_images()
+        self.take_image_button.config(text="Take Image " + str(len(self.checkerboard_images) + 1))
+        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
     def take_calibration_image(self):
         #if len(self.checkerboard_images) < self.checkerboard_image_amount:         
         self.camera.Open()
@@ -392,33 +450,75 @@ class UserInterface:
         """
     def update_calibration_images(self): #TODO change layout of subplots
         num_images = len(self.checkerboard_images)
-        rows = num_images  # subplots layout
-        cols = 1
+        rows = 1  # subplots layout
+        cols = num_images
 
         fig, axs = plt.subplots(rows, cols, figsize=(8, 4 * rows))
         fig.subplots_adjust(hspace=0.2)
 
         if num_images == 0:
             axs = [axs]
+            axs[0].axis('off')
 
         for i in range(num_images):
             row = i // cols 
             col = i % cols
-            if rows > 1: # Handle multiple rows
-                ax = axs[row]
+            if cols > 1: # Handle multiple columns
+                ax = axs[col]
             else:
-                ax = axs if num_images == 1 else axs[row]
+                ax = axs if num_images == 1 else axs[col]
             ax.imshow(self.checkerboard_images[i], cmap='gray')
             ax.set_title(f"Image {i + 1}")
+            ax.axis('off')
 
         canvas = self.calibration_image_frame.canvas
         canvas.figure = fig
         canvas.draw()
 
-        self.log_event("Updated Calibration Image: " + "new_image_frame_" + str(num_images - 1))
+        self.log_event("Updated Calibration Images")
     def calibrate_camera(self):
+        # termination criteria
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        
+        # Prepare object points (0,0,0), (1,0,0), (2,0,0), ..., (6,5,0)
+        objp = np.zeros((self.checkerboard_dimensions[0] * self.checkerboard_dimensions[1], 3), np.float32)
+        objp[:, :2] = np.mgrid[0:self.checkerboard_dimensions[0], 0:self.checkerboard_dimensions[1]].T.reshape(-1, 2)
+        
+        # Arrays to store object points and image points from all the images.
+        objpoints = [] # 3d point in real world space
+        imgpoints = [] # 2d points in image plane.
+        
+        
+        for index, image in enumerate(self.checkerboard_images):
 
-        self.log_event("Calibrated Camera")
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+            # Find the chess board corners
+            ret, corners = cv2.findChessboardCorners(gray, self.checkerboard_dimensions, None)
+        
+            # If found, add object points, image points (after refining them)
+            if ret == True:
+                objpoints.append(objp)
+        
+                corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+                imgpoints.append(corners2)
+        
+                # Draw and display the corners
+                cv2.drawChessboardCorners(image, self.checkerboard_dimensions, corners2, ret)
+                self.update_calibration_images()
+             
+            else:
+                self.log_event(f"Checkerboard corners not found in image {index+1}")
+
+        cv2.destroyAllWindows()
+
+        # Check if objpoints and imgpoints are not empty
+        if len(objpoints) > 0 and len(imgpoints) > 0:
+            # Calibrate the camera
+            self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+            self.log_event("Calibrated Camera")
+        else:
+            self.log_event("Calibration failed: No valid checkerboard corners found in any image")
     def update_camera(self):    
         if self.camera.IsOpen():
             image = capture_image(self.camera)
@@ -439,7 +539,6 @@ class UserInterface:
             self.root.after(10, self.update_camera)
         self.log_event("Toggled Camera")
 
-    
     def create_paned_window(self):
         self.paned_window = ttk.PanedWindow(self.root, orient="vertical")
         self.paned_window.pack(side="right", fill="both", expand=True)
@@ -504,8 +603,10 @@ class UserInterface:
         self.event_log = tk.Text(self.event_log_panel, height = 5, width = 20, state='disabled')
         self.event_log.pack(expand =True, fill="both", padx=10, pady=10)
     def log_event(self, message):
+        current_time = datetime.now().strftime("%H:%M:%S")
+        formatted_message = f"[{current_time}] {message}"
         self.event_log.config(state='normal')
-        self.event_log.insert(tk.END, message + '\n')
+        self.event_log.insert(tk.END, formatted_message + '\n')
         self.event_log.config(state='disabled')
         self.event_log.see(tk.END)
     def update_log(self):
@@ -612,7 +713,7 @@ class UserInterface:
         for i in range(2):
             measurement_info_frame.grid_rowconfigure(i, weight=1)
 
-        label_frame = tk.LabelFrame(measurement_info_frame, text="Measurement Info", name="label_frame")
+        label_frame = tk.Frame(measurement_info_frame, name="label_frame")
         label_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         measurement_points_label = ttk.Label(label_frame, text="Measurement Points: N/A" ,name="measurement_points_label")
@@ -780,6 +881,10 @@ class UserInterface:
         tab = self.tab_group.nametowidget(tab_name)
         self.log_event("Start button pushed")
 
+        # Get the grid size and step size
+        self.grid_size = self.new_measurement_panel.nametowidget("measurement_space_entry").get()
+        self.step_size = self.new_measurement_panel.nametowidget("step_size_entry").get()
+
         # Get the Measurment points and path points
         X, Y, Z = generate_grid(self.grid_size, self.step_size)
         self.grid = (X, Y, Z)
@@ -795,6 +900,14 @@ class UserInterface:
 
         self.add_meta_data(self.data)
 
+        #move hexapod to default position
+        
+
+        # Get Sensor close to camera
+
+
+
+        # Start the measurement
         for i in range(self.measurement_points):
             self.log_event(f"Measurement {i+1} of {self.measurement_points}")
             #self.hexapod.move() # TODO move Hexapod to next position
