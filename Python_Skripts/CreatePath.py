@@ -28,17 +28,18 @@ def generate_snake_path(X, Y, Z):
     return np.array(path_points)
 
 def generate_grid(grid_size, step_size):
-    x = np.linspace(0, grid_size[0], int(grid_size[0] / step_size)+1) # +1 for off by 1 error due to 0 - size grid
-    y = np.linspace(0, grid_size[1], int(grid_size[1] / step_size)+1)
-    z = np.linspace(0, grid_size[2], int(grid_size[2] / step_size)+1)
-    X, Y, Z = np.meshgrid(x, y, z)
+    
+    x = np.linspace(-grid_size[0]/2, grid_size[0]/2, int(grid_size[0] / step_size)+1) # +1 for off by 1 error due to 0 - size grid
+    y = np.linspace(-grid_size[1]/2, grid_size[1]/2, int(grid_size[1] / step_size)+1)
+    z = np.linspace(0, grid_size[2], int(grid_size[2] / step_size)+1) 
 
-
+    X, Y, Z = np.meshgrid(x, y, z) # TODO Switch y and z to account for sensor coordinate system
+    # Now Start position is 0 0 0 at center of grid, only z is positive TODO
     return X, Y, Z
 
 if __name__ == "__main__":
     # Set up Measurement Grid
-    grid_size = [2, 2, 4]  # [mm]
+    grid_size = [2, 2, 2]  # [mm]
     step_size = 1  # [mm]
     X, Y, Z = generate_grid(grid_size, step_size)
 
@@ -67,8 +68,8 @@ if __name__ == "__main__":
 
     # Set plot labels
     ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_ylabel('Z')
+    ax.set_zlabel('Y')
     ax.set_title('3D Meshgrid with Hexapod Path')
     ax.legend()
 
