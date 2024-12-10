@@ -37,6 +37,3 @@ def detect_markers(image, mtx, dist):
         tvecs = []
     
     return image, rvecs, tvecs
-
-
-print('Hi')

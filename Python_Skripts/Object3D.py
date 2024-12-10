@@ -2,6 +2,7 @@
 #from pylablib.devices import Thorlabs
 import numpy as np
 import socket
+import cv2
 
 #TODO delet signal class
 class Signal:
@@ -19,20 +20,19 @@ class Object3D:
         self.position = (None, None, None)
         self.rotation = (None, None, None)
 
-        self.xposition = None
-        self.yposition = None
-        self.zposition = None
-
-
     def __repr__(self):
         return f"Object3D(position={self.position}, rotation={self.rotation})"
 
 class Sensor(Object3D):
     def __init__(self, marker_id = 0, marker_size = 16):
         super().__init__(marker_id, marker_size)
-        self.Unique_rvecs = []  # edit this
-        self.Unique_tvecs = []  # edit this --> Translation Matrix from Marker to Sensor array
+        self.Unique_rvecs = [0, 0, 0]  # 0 if sicker is applied correctly
+        self.Unique_tvecs = []  # TODO from marker corner to photo diode array
 
+        self.marker_tvecs = [] 
+        self.marker_rvecs = []
+
+        # Sensor Readings
         self.xpos = None
         self.ypos = None
         self.xdiff = None
@@ -40,8 +40,14 @@ class Sensor(Object3D):
         self.sum = None
 
         # initialize stage
-        #self.stage = Thorlabs.KinesisQuadDetector("69251980") # 69251980 is the serial number of the Cube KPA101
         self.stage = None
+        initialize_stage()
+        
+
+    def initialize_stage(self): 
+        #self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+        pass
+
 
     def get_signal(self):
         self.stage.open()
@@ -76,10 +82,34 @@ class Sensor(Object3D):
         return f"Sensor(position={self.position}, rotation={self.rotation})"
 
 class Probe(Object3D):
-    def __init__(self, marker_id = 1, marker_size = 0):
+    def __init__(self, marker_id=1, marker_size=0):
         super().__init__(marker_id, marker_size)
-        self.Unique_rvecs = []  # edit this (maybe also GUI input?)
-        self.Unique_tvecs = []  # edit this --> Translation Matrix from Marker to the Tip of the Probe
+        self.Unique_tvecs = [0, 0, 2]  # TODO Translation Matrix from Marker to the Tip of the Probe only z is relevant change z
+
+        self.marker_tvecs = [None, None, None] 
+        self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
+
+        self.probe_tip_position = None
+
+    def translate_probe_tip(self, probe_tip_position, mtx, dist):
+        self.probe_tip_position = probe_tip_position
+
+        z = self.marker_tvecs[2]  # TODO: implement Marker translation matrix
+        z = 2  # TODO: remove this line
+
+        # Step 1: Undistort the pixel coordinates
+        undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)
+
+        # Step 2: Convert to normalized image coordinates
+        undistorted_pixel_with_1 = np.append(undistorted_pixel[0][0], 1)  # Append 1 to the undistorted pixel coordinates
+        inv_mtx = np.linalg.inv(mtx)  # Calculate the inverse of the camera matrix
+        normalized_image_coords = inv_mtx.dot(undistorted_pixel_with_1)  # Multiply the inverse camera matrix with the undistorted pixel coordinates
+
+        # Step 3: Scale by the z-value
+        camera_coords = normalized_image_coords * z # postition in camera coordinate system
+
+        self.position = camera_coords # refers to the probe tip position in camera coordinates
+
 
     def __repr__(self):
         return f"Probe(position={self.position}, rotation={self.rotation})"
@@ -215,4 +245,17 @@ if __name__ == "__main__":
     sensor = Sensor()
 
     signal = sensor.get_test_signal()
-    print(signal.xpos, signal.ypos)
+    #print(signal.xpos, signal.ypos)
+
+    # Example pixel coordinates
+    probe_tip_position = (320, 240)
+
+    # Example camera calibration matrices (replace with your actual calibration data)
+    mtx = np.array([[1000, 0, 320],
+                    [0, 1000, 240],
+                    [0, 0, 1]], dtype=np.float32)
+    dist = np.array([0.1, -0.25, 0, 0, 0], dtype=np.float32)
+
+    probe = Probe()
+    probe.translate_probe_tip(probe_tip_position, mtx, dist)
+    print(f"Camera coordinates: {probe.position}")
