@@ -21,7 +21,7 @@ if __name__ == "__main__":
     path_y_snake = path_points_snake[:, 1]
     path_z_snake = path_points_snake[:, 2]
 
-
+    
     # Visualize the grid and the snake path
     # Create a 3D plot for the snake path
     fig = plt.figure()
@@ -64,7 +64,8 @@ if __name__ == "__main__":
 
         # add the signal postion to the measurement point position
         relative_signal_position = (signal.xpos, signal.ypos)
-        absolute_signal_position = [path_x_snake[i] + relative_signal_position[0], path_y_snake[i] + relative_signal_position[1], path_z_snake[i]] # TODO merge coordinate systems correctly
+        absolute_signal_position = [path_x_snake[i] + relative_signal_position[0], path_y_snake[i], path_z_snake[i]+ relative_signal_position[1]] 
+        # TODO merge coordinate systems correctly (Sensor x --> path x, Sensor y --> path z, Sensor z --> path y) 
         absolute_signal_positions.append(absolute_signal_position)
 
         # TODO: write function to use signal.sum to determine beam dimensions

@@ -24,6 +24,7 @@ def generate_snake_path(X, Y, Z):
                 else:  # Odd rows
                     for x in range(x_dim):
                         path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
+    
 
     return np.array(path_points)
 
@@ -33,9 +34,9 @@ def generate_grid(grid_size, step_size):
     y = np.linspace(-grid_size[1]/2, grid_size[1]/2, int(grid_size[1] / step_size)+1)
     z = np.linspace(0, grid_size[2], int(grid_size[2] / step_size)+1) 
 
-    X, Y, Z = np.meshgrid(x, y, z) # TODO Switch y and z to account for sensor coordinate system
-    # Now Start position is 0 0 0 at center of grid, only z is positive TODO
-    return X, Y, Z
+    X, Y, Z = np.meshgrid(x, y, z)
+    # Now Start position is 0 0 0 at center of grid, only z is positive
+    return X, Y, Z # Switch y and z to account for sensor coordinate system
 
 if __name__ == "__main__":
     # Set up Measurement Grid
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     Y_flat = Y.flatten()
     Z_flat = Z.flatten()
 
-    ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points')
+    ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 5)
 
     # Initialize the path plot
     path_plot, = ax.plot([], [], [], color='red', marker='o', label='Hexapod Path')

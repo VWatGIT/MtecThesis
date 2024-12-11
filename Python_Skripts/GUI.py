@@ -14,6 +14,9 @@ from CreatePath import generate_grid, generate_snake_path
 from probe_tip_detection import detect_needle_tip
 from probe_tip_detection import crop_image
 from probe_tip_detection import crop_coordinate_transform
+from alignment import fine_alignment
+from alignment import rough_alignment
+from detect_markers import detect_markers
 
 import os
 import h5py
@@ -203,11 +206,14 @@ class UserInterface:
         rough_alignment = tk.Checkbutton(checkbox_panel, text="Rough Alignment", name="rough_alignment", state="disabled")
         rough_alignment.grid(row=5, column=0, pady=5, sticky="w")
 
-        rough_alignment_button = tk.Button(checkbox_panel, text="Align", command=self.rough_alignment)
+        rough_alignment_button = tk.Button(checkbox_panel, text="Rough Align", command=self.rough_alignment)
         rough_alignment_button.grid(row=5, column=1, pady=5, sticky="w")
 
         fine_alignment = tk.Checkbutton(checkbox_panel, text="Fine Alignment", name="fine_alignment", state="disabled") # gets enabled after rough alignment
         fine_alignment.grid(row=6, column=0, pady=5, sticky="w") 
+
+        fine_alignment_button = tk.Button(checkbox_panel, text="Fine Align", command=self.fine_alignment)
+        fine_alignment_button.grid(row=6, column=1, pady=5, sticky="w")
 
         time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time: N/A ", name="time_estimated_label") # TODO implement time estimation
         time_estimated_label.grid(row=7, column=0, pady=5, sticky="w")
@@ -217,7 +223,7 @@ class UserInterface:
 
 
         progress_bar = ttk.Progressbar(self.new_measurement_panel, orient="horizontal", length=320, mode="determinate", name="progress_bar")
-        progress_bar.grid(row=3, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+        progress_bar.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
         #Set up Big Buttons
         start_button = tk.Button(self.new_measurement_panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
@@ -226,18 +232,6 @@ class UserInterface:
         save_button = tk.Button(self.new_measurement_panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
         save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
 
-        # Set up Spinner for Measurement shown
-        self.measurement_spinner_label = tk.Label(self.new_measurement_panel, text="Measurement:")
-        self.measurement_spinner_label.grid(row=6, column=0, padx=10, pady=5, sticky="w")
-        
-        # Increase the font size and add padding to the Spinbox
-        self.measurement_spinner = tk.Spinbox(self.new_measurement_panel, from_=1, to=100, font=("Helvetica", 16), width=5)
-        self.measurement_spinner.grid(row=6, column=1, pady=5, padx=10, sticky="w")
-        self.measurement_spinner.insert(0, self.current_measurement_id+1)
-
-        # Bind the Enter key and mouse button release to the update_tab method
-        self.measurement_spinner.bind("<Return>", self.update_tab)
-        self.measurement_spinner.bind("<ButtonRelease-1>", self.update_tab)
     def create_load_measurement_panel(self, parent):
         self.load_measurement_panel = tk.Frame(parent)
 
@@ -389,12 +383,28 @@ class UserInterface:
         marker_detection_frame = tk.LabelFrame(parent, text="Marker Detection", name="marker_detection_frame")
         # TODO implement marker detection
 
+    def scan_markers(self, image):
+        image = rvecs, tvecs = detect_markers(image, self.mtx, self.dist)
+
+        self.sensor.marker_rvecs = rvecs[self.sensor.marker_id]
+        self.sensor.marker_tvecs = tvecs[self.sensor.marker_id]
+
+        self.probe.marker_rvecs = rvecs[self.probe.marker_id]
+        self.probe.marker_tvecs = tvecs[self.probe.marker_id]
+
+        self.update_marker_plot(image)
+
+    def update_marker_plot(self, image):
+        # TODO implement marker detection plot
+        pass
+
+
 
     def create_camera_calibration_frame(self, parent):
 
         self.camera_calibration_frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
 
-        for i in range(5):
+        for i in range(6):
             self.camera_calibration_frame.grid_rowconfigure(i, weight=1)
         for i in range(4):
             self.camera_calibration_frame.grid_columnconfigure(i, weight=1)
@@ -404,7 +414,7 @@ class UserInterface:
         self.calibration_image_frame = self.camera_calibration_frame.nametowidget("calibration_image_frame")
         self.calibration_image_frame.grid(row=0, column=2, rowspan=6, columnspan=2, pady=5, sticky="nsew") # why rowspan 6?
         self.calibration_image_frame.propagate(False)
-        self.camera_calibration_frame.columnconfigure(2, weight=20)
+        self.camera_calibration_frame.columnconfigure(2, weight=100)
 
         #TODO decide on better grid layout
 
@@ -434,13 +444,13 @@ class UserInterface:
 
 
         self.take_image_button = tk.Button(self.camera_calibration_frame, command=self.take_calibration_image, text="Take Image " + str(len(self.checkerboard_images)+1)) #+ "/" + str(self.checkerboard_image_amount))
-        self.take_image_button.grid(row=4, column=0, pady=5)
+        self.take_image_button.grid(row=4, column=0,padx=10, pady=5, sticky="e")
 
         self.calibrate_button = tk.Button(self.camera_calibration_frame, text="Calibrate", command=self.calibrate_camera, state="active") # TODO decide on state
-        self.calibrate_button.grid(row=4, column=1, pady=5)
+        self.calibrate_button.grid(row=4, column=1, pady=5, sticky="w")
 
         self.reset_button = tk.Button(self.camera_calibration_frame, text="Reset", command=self.reset_calibration)
-        self.reset_button.grid(row=5, column=0, columnspan=2, pady=5)
+        self.reset_button.grid(row=5, column=1, columnspan=1, pady=5, sticky="w")
     def create_calibration_image_frame(self, parent):
         self.calibration_image_frame = tk.LabelFrame(parent, text="Calibration Images", name="calibration_image_frame")
         
@@ -495,12 +505,13 @@ class UserInterface:
 
         self.log_event("Took Probe Image")
     def save_probe_position(self):
-       
+        # TODO maybe merge this with take probe image
+
         self.probe_detected = True
         self.probe_detetection_checkbox.select()
+
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("probe_detected").select()
-        self.probe.position = self.detected_probe_position # save the detected position
-        # TODO implement probe rotation detection
+        self.probe.translate_probe_tip(self.detected_probe_position, self.mtx, self.dist)
         self.log_event("Saved Probe Position")
 
 
@@ -671,6 +682,9 @@ class UserInterface:
         for i in range(1):
             new_tab.grid_rowconfigure(i, weight=1)
 
+        new_tab.grid_columnconfigure(1, weight=10)
+
+
         self.create_sensor_info_frame(new_tab)
         self.create_results_frame(new_tab)
 
@@ -717,26 +731,43 @@ class UserInterface:
         # Configure the grid layout within the sensor_info_frame LabelFrame
         for i in range(2):
             sensor_info_frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(3):
             sensor_info_frame.grid_rowconfigure(i, weight=1)
 
         self.create_sensor_readings_frame(sensor_info_frame)
-        self.create_sensor_position_frame(sensor_info_frame)
+        #self.create_sensor_position_frame(sensor_info_frame)
+        self.create_measurement_info_frame(sensor_info_frame)
         self.create_sensor_plot_frame(sensor_info_frame)
 
-        sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
-        sensor_readings_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
+        measurment_slider = tk.Scale(sensor_info_frame, from_=1, to=100, orient="horizontal", name="measurement_slider")
+        measurment_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
+        sensor_info_frame.grid_rowconfigure(1, weight=10)
 
-        sensor_position_frame = sensor_info_frame.nametowidget("sensor_position_frame")
-        sensor_position_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)    
+        measurment_slider.set(1)
+        measurment_slider.config(resolution=1, state="normal")
+        measurment_slider.bind("<ButtonRelease-1>", self.update_tab)
+
+        
+
+        sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
+        sensor_readings_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
+
+        measurement_info_frame = sensor_info_frame.nametowidget("measurement_info_frame")
+        measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
+
+        #sensor_position_frame = sensor_info_frame.nametowidget("sensor_position_frame")
+        #sensor_position_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)    
     
         sensor_plot_frame = sensor_info_frame.nametowidget("sensor_plot_frame")
-        sensor_plot_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)      
+        sensor_plot_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)      
     def create_sensor_readings_frame(self, parent):    
 
         # Create a LabelFrame for X and Y positions
         sensor_readings_frame = tk.LabelFrame(parent, text="Sensor Readings", name="sensor_readings_frame")
         sensor_readings_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
+
+        for i in range(5):
+            sensor_readings_frame.grid_rowconfigure(i, weight=1)
 
         # Add labels to display X and Y positions within the sensor_readings_frame
         xpos_label = ttk.Label(sensor_readings_frame, text="X Position: N/A", name="xpos_label")
@@ -745,14 +776,16 @@ class UserInterface:
         ypos_label = ttk.Label(sensor_readings_frame, text="Y Position: N/A", name="ypos_label")
         ypos_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
 
-        xdiff_label = ttk.Label(sensor_readings_frame, text="X Diff: N/A", name="xdiff_label")
-        xdiff_label.grid(row=0, column=1, sticky="w", padx=10, pady=5)
-
-        ydiff_label = ttk.Label(sensor_readings_frame, text="Y Diff: N/A", name="ydiff_label")
-        ydiff_label.grid(row=1, column=1, sticky="w", padx=10, pady=5)
-
         sum_label = ttk.Label(sensor_readings_frame, text="Sum: N/A", name="sum_label")
         sum_label.grid(row=2, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+
+        xdiff_label = ttk.Label(sensor_readings_frame, text="X Diff: N/A", name="xdiff_label")
+        xdiff_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
+
+        ydiff_label = ttk.Label(sensor_readings_frame, text="Y Diff: N/A", name="ydiff_label")
+        ydiff_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+
+
     def create_sensor_position_frame(self, parent):    
         # Sensor Position Panel
         sensor_position_frame = tk.LabelFrame(parent, text="Sensor Position", name="sensor_position_frame")
@@ -797,17 +830,17 @@ class UserInterface:
         
 
         self.create_slice_plot_frame(results_frame)
-        self.create_measurement_info_frame(results_frame)
+        self.create_measurement_info_frame(results_frame) # TODO put this into Sensor Info Frame
 
         slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
         slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
 
-
-        measurement_info_frame = results_frame.nametowidget("measurement_info_frame")
-        measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
+        self.create_path_plot_frame(results_frame) 
+        path_plot_frame = results_frame.nametowidget("path_plot_frame")
+        path_plot_frame.grid(row=1, column=1, rowspan=1, sticky="nsew", padx=10, pady=10)
     def create_slice_plot_frame(self, parent):
         slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
-        for i in range(2):
+        for i in range(4):
             slice_plot_frame.grid_rowconfigure(i, weight=1)
         for i in range(2): 
             slice_plot_frame.grid_columnconfigure(i, weight=1)
@@ -823,101 +856,68 @@ class UserInterface:
         canvas.get_tk_widget().pack(fill= "both", expand=True)  # Span the canvas across all columns
         plot_frame.canvas = canvas
         
+        # Create Labels for the Sliders
+        slice_slider_label = ttk.Label(slice_plot_frame, text="Slice Index:", name="slice_slider_label")
+        slice_slider_label.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
+
+        contour_levels_slider_label = ttk.Label(slice_plot_frame, text="Contour Levels:", name="contour_levels_slider_label")
+        contour_levels_slider_label.grid(row=1, column=1, rowspan = 1, columnspan=1, sticky="w", padx=5)
+
         # Create a slider for the slice plot
         slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="slice_slider")
-        slice_slider.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5, pady=5)
+        slice_slider.grid(row=2, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
         slice_slider.set(1) # set default value
         slice_slider.config(resolution=1) # set slider resolution
+
+        contour_levels_slider = tk.Scale(slice_plot_frame, from_=1, to=30, orient="horizontal", name="contour_levels_slider")
+        contour_levels_slider.grid(row=2, column=1, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
+        contour_levels_slider.set(10) # set default value
+        contour_levels_slider.config(resolution=1)
 
         # Create a checkbox for the slice plot
         interpolation_var = tk.IntVar()
         interpolation_checkbox = tk.Checkbutton(slice_plot_frame, text="Interpolation", name="interpolation_checkbox", variable=interpolation_var)
-        interpolation_checkbox.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+        interpolation_checkbox.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
         interpolation_checkbox.value = interpolation_var
 
-        slice_slider.config(command=self.update_tab) # TODO set limits
-        interpolation_checkbox.config(command=self.update_tab)
+        # trying to fix the slider bug
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
 
+        self.data["Slices"] = {} 
 
-    def update_slice_plot(self, tab, data, event=None):
-
-        results_frame = tab.nametowidget("results_frame")
-        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
-        plot_frame = slice_plot_frame.nametowidget("plot_frame")
-
-        canvas = plot_frame.canvas
-        ax = canvas.figure.axes[0]
-
-        slice_slider = slice_plot_frame.nametowidget("slice_slider")
-        interpolation_checkbox = slice_plot_frame.nametowidget("interpolation_checkbox")
-        
-        interpolation_var = interpolation_checkbox.value.get()
-        interpolation = interpolation_var
-
-        slice_index = str(slice_slider.get()) # fix slider bug
-        self.log_event(f"Slice Index: {slice_index}")
-
-        # Get the slice from the data
-        slice = data["Slices"][slice_index] # TODO implement multiple different data storages handling
-        
-        points = []
-        sum_values = []
-
-        for measurement_id in slice:
-            point = slice[measurement_id]["Measurement_point"]
-            sum = slice[measurement_id]["Signal_sum"]
-            sum = int(sum*100) # scale the sum value
-            points.append(point)
-            sum_values.append(sum)
-            print(f"Point: {point}, Sum: {sum}")
-
-       
-        x_coords = [point[0] for point in points]
-        y_coords = [point[1] for point in points]
-
-        # Create grid data
-        x = np.linspace(min(x_coords), max(x_coords), 100)
-        y = np.linspace(min(y_coords), max(y_coords), 100)
-        X, Y = np.meshgrid(x, y)
-        Z = np.zeros_like(X)
-
-        # Interpolate sum values onto the grid
-        interpolation_method = 'nearest' if interpolation_var == 0 else 'cubic'
-
-        Z = griddata((x_coords, y_coords), sum_values, (X, Y), method=interpolation_method)
-
-        # Update the slice plot
-        ax.clear()
-        contour = ax.contourf(X, Y, Z, levels=20, cmap='hot')
-        canvas.draw()
-
-        self.log_event("Updated Slice Plot")
-
+        slice_slider.config(command=self.update_slice_plot)
+        contour_levels_slider.config(command=self.update_slice_plot)
+        interpolation_checkbox.config(command=self.update_slice_plot) 
 
     def create_measurement_info_frame(self, parent):
-        measurement_info_frame = tk.LabelFrame(parent, text="Measurement Info", name="measurement_info_frame")
+        measurement_info_frame = tk.LabelFrame(parent, text="Info", name="measurement_info_frame") 
 
         # Configure the grid layout within the sensor_info_frame LabelFrame
-        for i in range(2):
+        for i in range(1):
             measurement_info_frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(7):
             measurement_info_frame.grid_rowconfigure(i, weight=1)
 
-        label_frame = tk.Frame(measurement_info_frame, name="label_frame")
-        label_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        
 
-        measurement_points_label = ttk.Label(label_frame, text="Measurement Points: N/A" ,name="measurement_points_label")
-        measurement_points_label.pack(side="top", pady=5)
-        step_size_label = ttk.Label(label_frame, text="Step Size = N/A", name="step_size_label")
-        step_size_label.pack(side="top", pady=5)
-        time_elapsed_label = ttk.Label(label_frame, text="Time Elapsed = N/A", name="time_elapsed_label")
-        time_elapsed_label.pack(side="top", pady=5)
-        time_estimated_label = ttk.Label(label_frame, text="Time Estimated = N/A", name="time_estimated_label")
-        time_elapsed_label.pack(side="top", pady=5)
+        measurement_points_label = ttk.Label(measurement_info_frame, text="Measurement Points: N/A" ,name="measurement_points_label")
+        measurement_points_label.grid(row=0, column=0, sticky="w", padx=10, pady=5)
 
-        self.create_path_plot_frame(measurement_info_frame)
-        path_plot_frame = measurement_info_frame.nametowidget("path_plot_frame")
-        path_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
+        slices_label = ttk.Label(measurement_info_frame, text="Slices: N/A", name="slices_label")
+        slices_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
+
+        grid_size_label = ttk.Label(measurement_info_frame, text="Grid Size = N/A", name="grid_size_label")
+        grid_size_label.grid(row=2, column=0, sticky="w", padx=10, pady=5)
+
+        step_size_label = ttk.Label(measurement_info_frame, text="Step Size = N/A", name="step_size_label")
+        step_size_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
+
+        time_elapsed_label = ttk.Label(measurement_info_frame, text="Time Elapsed = N/A", name="time_elapsed_label")
+        time_elapsed_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+    
+        time_estimated_label = ttk.Label(measurement_info_frame, text="Time Estimated = N/A", name="time_estimated_label")
+        time_estimated_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)    
     def create_path_plot_frame(self, parent):
         path_plot_frame = tk.LabelFrame(parent, text="Path", name="path_plot_frame")
         fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
@@ -947,22 +947,21 @@ class UserInterface:
     def update_tab(self, event=None):    # TODO implement data input parameter
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
-        self.current_measurement_id = str(int(self.measurement_spinner.get()))
+
+        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+        self.current_measurement_id = str(measurement_slider.get())# Get the current measurement id from the slider
+        self.log_event(f"Current Measurement ID: {self.current_measurement_id}")
+        #self.current_measurement_id = str(int(self.measurement_spinner.get()))
 
         if tab:
             self.update_measurement_info_frame(tab, self.data)
             self.update_sensor_info_frame(tab, self.data)
 
             if self.data["Slices"] != {}:
-                self.update_slice_plot(tab, self.data)
+                self.update_slice_plot()
 
         sensor_info_frame = tab.nametowidget("sensor_info_frame")
         sensor_info_frame.config(text="Measurement " + str(self.current_measurement_id) + "/" + str(self.measurement_points)) # Update the title
-
-        # update progress bar here
-        progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
-        progress_bar['maximum'] = self.measurement_points
-        self.update_progress_bar(progress_bar, self.current_measurement_id) # TODO add this to new_measurement_panel
 
 
 
@@ -970,13 +969,14 @@ class UserInterface:
     def update_measurement_info_frame(self, tab, data):
         
         # update labels here
-        results_frame = tab.nametowidget("results_frame")
-        measurement_info_frame = results_frame.nametowidget("measurement_info_frame")
-        label_frame = measurement_info_frame.nametowidget("label_frame")
-        measurement_points_label = label_frame.nametowidget("measurement_points_label")
-        step_size_label = label_frame.nametowidget("step_size_label")
-        time_elapsed_label = label_frame.nametowidget("time_elapsed_label")
-        time_estimated_label = label_frame.nametowidget("time_estimated_label")
+        
+
+        sensor_info_frame = tab.nametowidget("sensor_info_frame")
+        measurement_info_frame = sensor_info_frame.nametowidget("measurement_info_frame")
+        measurement_points_label = measurement_info_frame.nametowidget("measurement_points_label")
+        step_size_label = measurement_info_frame.nametowidget("step_size_label")
+        time_elapsed_label = measurement_info_frame.nametowidget("time_elapsed_label")
+        time_estimated_label = measurement_info_frame.nametowidget("time_estimated_label")
 
         measurement_points_label.config(text=f"Measurement Points: {data['3D']['measurement_points']}")
         step_size_label.config(text=f"Step Size: {data['3D']['step_size']}")
@@ -984,7 +984,8 @@ class UserInterface:
         time_estimated_label.config(text=f"Time Estimated: {data['info']['time_estimated']}")
 
         # update path plot here
-        path_plot_frame = measurement_info_frame.nametowidget("path_plot_frame")
+        results_frame = tab.nametowidget("results_frame")
+        path_plot_frame = results_frame.nametowidget("path_plot_frame")
         canvas = path_plot_frame.canvas
         ax = canvas.figure.axes[0]
         ax.clear() # TODO implement path plot
@@ -999,12 +1000,35 @@ class UserInterface:
         Y_flat = data['3D']['Y'].flatten()
         Z_flat = data['3D']['Z'].flatten()
 
-        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points')
+        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 5)
         ax.plot(path_x, path_y, path_z, color='red', label='Path')
-        #ax.legend()
+        ax.legend()
 
-        self.log_event(f"Updated measurement info for Tab {self.tab_count}")
+        # Plot the seethrough plane
+        if data["Slices"] != {}:
+
+            # Extract Meshgrid from Data
+            slice_index = str(tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider").get())
+            first_measurement_id = list(data["Slices"][slice_index].keys())[0]
+            z = int(data["Slices"][slice_index][first_measurement_id]["Measurement_point"][2]) # Get the z value of the first measurement point in the slice
+            
+            X_plane = data["3D"]["X"][:,:,z]
+            Y_plane = data["3D"]["Y"][:,:,z]
+
+            Z_plane = np.full_like(X_plane, z)
+
+            self.log_event(f"X Plane: {X_plane}")
+            self.log_event(f"Y Plane: {Y_plane}")
+            self.log_event(f"Z Plane: {Z_plane}")
+            
+            # Plot the plane
+            ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
+        
+        canvas.draw()
+
+        #self.log_event(f"Updated measurement info for Tab {self.tab_count}")
     def update_progress_bar(self, progress_bar, measurements_done):
+        
         progress_bar["value"] = measurements_done
         progress_bar.update_idletasks()
     def update_sensor_info_frame(self, tab, data):
@@ -1067,7 +1091,75 @@ class UserInterface:
 
         sensor_plot_frame.canvas.draw()
 
-        self.log_event(f"Updated sensor info for Tab {tab}")
+        #self.log_event(f"Updated sensor info for Tab {tab}")
+    def update_slice_plot(self, event=None):
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+
+        data = self.data # TODO implement multiple different data storages handling
+
+        results_frame = tab.nametowidget("results_frame")
+        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
+        plot_frame = slice_plot_frame.nametowidget("plot_frame")
+
+        canvas = plot_frame.canvas
+        ax = canvas.figure.axes[0]
+
+        slice_slider = slice_plot_frame.nametowidget("slice_slider")
+        interpolation_checkbox = slice_plot_frame.nametowidget("interpolation_checkbox")
+
+        contour_levels_slider = slice_plot_frame.nametowidget("contour_levels_slider")
+        contour_levels = contour_levels_slider.get()
+        
+        interpolation_var = interpolation_checkbox.value.get()
+        interpolation = interpolation_var
+
+        slice_index = str(slice_slider.get()) # fix slider bug
+        self.log_event(f"Slice Index: {slice_index}")
+
+        #only update if data is available
+        if data["Slices"] != {}:
+            # Get the slice from the data
+            slice = data["Slices"][slice_index] # TODO implement multiple different data storages handling
+            
+            points = []
+            sum_values = []
+
+            for measurement_id in slice:
+                point = slice[measurement_id]["Measurement_point"]
+                sum = slice[measurement_id]["Signal_sum"]
+                sum = int(sum*100) # scale the sum value
+                points.append(point)
+                sum_values.append(sum)
+                #print(f"Point: {point}, Sum: {sum}")
+
+        
+            x_coords = [point[0] for point in points]
+            y_coords = [point[1] for point in points]
+
+            # Create grid data
+            x = np.linspace(min(x_coords), max(x_coords), 100) # TODO maybe be related to len(sum_values)
+            y = np.linspace(min(y_coords), max(y_coords), 100)
+            X, Y = np.meshgrid(x, y)
+            Z = np.zeros_like(X)
+
+            # Interpolate sum values onto the grid
+            interpolation_method = 'nearest' if interpolation_var == 0 else 'cubic'
+            Z = griddata((x_coords, y_coords), sum_values, (X, Y), method=interpolation_method)
+            
+
+            # Update the slice plot
+            ax.clear()
+            contour = ax.contourf(X, Y, Z, levels=contour_levels, cmap='hot') # TODO 
+            canvas.draw()
+
+
+            self.update_measurement_info_frame(tab, data)
+        
+
+            self.log_event("Updated Slice Plot")
+        else:
+            self.log_event("No Slice Data available")
 
     # Button Functions
     def start_button_pushed(self):
@@ -1095,6 +1187,12 @@ class UserInterface:
         self.elapsed_time = 0
 
         self.add_meta_data(self.data)
+
+        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+        measurement_slider.config(to=self.measurement_points)
+
+        progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
+        progress_bar['maximum'] = self.measurement_points
         
         # Start the measurement
         for i in range(self.measurement_points):
@@ -1106,8 +1204,10 @@ class UserInterface:
             #wait for hexapod to move
 
             self.doMeasurement(self.data, self.sensor, i)
-            self.measurement_spinner.delete(0, "end")
-            self.measurement_spinner.insert(0, i+1) # Update the spinner to the current measurement
+            
+            # update 
+            measurement_slider.set(str(i+1))
+            self.update_progress_bar(progress_bar, i+1) # TODO add this to new_measurement_panel
             self.update_tab()
 
             self.elapsed_time = time.time() - self.start_time
@@ -1115,10 +1215,11 @@ class UserInterface:
 
         self.create_slices(self.data)
 
-        pprint.pprint(self.data)   
+        #pprint.pprint(self.data)   # Show Data structure in Console
 
         self.update_tab()
 
+        measurement_slider.config(state = "normal")
         self.new_measurement_panel.nametowidget("save_button").config(state="normal")
         self.log_event("Done with measurements")       
     def save_button_pushed(self):
@@ -1259,10 +1360,14 @@ class UserInterface:
         
 
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
-        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").config(state="normal")
-        
         self.log_event("Rough Alignment done")
     
+    def fine_alignment(self):
+        fine_alignment(self.sensor, self.hexapod) # imported from another file
+
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").select()
+        self.log_event("Fine Alignment done")
+
 
     def create_slices(self, data): # TODO test this function
         last_z = None
@@ -1275,7 +1380,7 @@ class UserInterface:
         for measurement_id in data["Measurements"]:
             measurement = data["Measurements"][str(measurement_id)]
             point = measurement["Measurement_point"]
-            current_z = point[2]
+            current_z = point[2] # TODO check if this is the correct axis
 
             if last_z is None:
                 last_z = current_z # for first iteration
