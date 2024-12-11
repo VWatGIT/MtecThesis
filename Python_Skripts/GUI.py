@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import threading
 import numpy as np
 import pprint
 import cv2
@@ -36,6 +37,7 @@ class UserInterface:
 
         #implement support for multiple data tabs
         
+        # Create the objects
         self.sensor = Sensor()
         self.probe = Probe()
         self.hexapod = Hexapod()
@@ -49,6 +51,7 @@ class UserInterface:
         self.elapsed_time = 0
 
         self.current_measurement_id = 0
+        self.measurement_running = False
         
         # TODO make callback function for values changed in entry fields
 
@@ -69,7 +72,18 @@ class UserInterface:
         self.create_paned_window() # also creates tab_group and event_log_panel and camera_panel 
         self.show_home_panel()
         self.show_camera_panel()
+
+        # Setup
+        root.after(100, self.setup) # after to give the event log time to be created
+        
+    
+
    
+    def setup(self):
+        self.connect_stage() # TODO decide if necessary
+        self.connect_hexapod()
+
+        # TODO decide if necessary
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -150,7 +164,7 @@ class UserInterface:
         checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
         checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
 
-        for i in range(7):
+        for i in range(9):
             checkbox_panel.grid_rowconfigure(i, weight=1)
         for i in range(2):
             checkbox_panel.grid_columnconfigure(i, weight=1)
@@ -198,28 +212,34 @@ class UserInterface:
         ip_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
         self.ip_entry = tk.Entry(connection_frame, name="ip_entry")
         self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
-        self.ip_entry.insert(0, '134.28.45.71') # TODO change to default value
+        self.ip_entry.insert(0, '134.28.45.17') # TODO change to default value
 
         connect_hexapod_button = tk.Button(connection_frame, text="Connect Hexapod", command=self.connect_hexapod)
         connect_hexapod_button.grid(row=3, column=0, columnspan=2, padx=15, pady=5, sticky="nsew")
 
+        stage_connected = tk.Checkbutton(checkbox_panel, text="Stage connected", name="stage_connected", state="disabled")
+        stage_connected.grid(row=5, column=0, pady=5, sticky="w")
+
+        connect_stage_button = tk.Button(checkbox_panel, text="Connect Stage", command=self.connect_stage)
+        connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
+
         rough_alignment = tk.Checkbutton(checkbox_panel, text="Rough Alignment", name="rough_alignment", state="disabled")
-        rough_alignment.grid(row=5, column=0, pady=5, sticky="w")
+        rough_alignment.grid(row=6, column=0, pady=5, sticky="w")
 
         rough_alignment_button = tk.Button(checkbox_panel, text="Rough Align", command=self.rough_alignment)
-        rough_alignment_button.grid(row=5, column=1, pady=5, sticky="w")
+        rough_alignment_button.grid(row=6, column=1, pady=5, sticky="w")
 
         fine_alignment = tk.Checkbutton(checkbox_panel, text="Fine Alignment", name="fine_alignment", state="disabled") # gets enabled after rough alignment
-        fine_alignment.grid(row=6, column=0, pady=5, sticky="w") 
+        fine_alignment.grid(row=7, column=0, pady=5, sticky="w") 
 
         fine_alignment_button = tk.Button(checkbox_panel, text="Fine Align", command=self.fine_alignment)
-        fine_alignment_button.grid(row=6, column=1, pady=5, sticky="w")
+        fine_alignment_button.grid(row=7, column=1, pady=5, sticky="w")
 
         time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time: N/A ", name="time_estimated_label") # TODO implement time estimation
-        time_estimated_label.grid(row=7, column=0, pady=5, sticky="w")
+        time_estimated_label.grid(row=8, column=0, pady=5, sticky="w")
 
         time_estimation_button = tk.Button(checkbox_panel, text="Estimate Time", command=self.estimate_time)
-        time_estimation_button.grid(row=7, column=1, pady=5, sticky="w")
+        time_estimation_button.grid(row=8, column=1, pady=5, sticky="w")
 
 
         progress_bar = ttk.Progressbar(self.new_measurement_panel, orient="horizontal", length=320, mode="determinate", name="progress_bar")
@@ -231,6 +251,9 @@ class UserInterface:
 
         save_button = tk.Button(self.new_measurement_panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
         save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
+
+        stop_button = tk.Button(self.new_measurement_panel, text="STOP", name="stop_button", command=self.stop_button_pushed, width = 40, height = 6)
+        stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
 
     def create_load_measurement_panel(self, parent):
         self.load_measurement_panel = tk.Frame(parent)
@@ -650,7 +673,7 @@ class UserInterface:
         self.paned_window.pack(side="right", fill="both", expand=True)
 
         self.helper_frame = tk.Frame(self.paned_window)
-        self.paned_window.add(self.helper_frame, weight=1)
+        self.paned_window.add(self.helper_frame)
 
         self.create_event_log_panel(self.paned_window)
 
@@ -659,8 +682,9 @@ class UserInterface:
         self.create_camera_panel(self.helper_frame)
         
         
-        self.paned_window.add(self.event_log_panel, weight=1)
+        self.paned_window.add(self.event_log_panel)
 
+        #self.paned_window.config(sashrelief="raised")
         self.root.after(200, lambda: self.paned_window.sashpos(0, 840)) # set initial position of sash, after for short delay (bugfix)
         
         self.update_log()
@@ -719,9 +743,7 @@ class UserInterface:
         self.event_log.config(state='disabled')
         self.event_log.see(tk.END)
     def update_log(self):
-        #self.log_event(f"Current sash position: {self.paned_window.sashpos(0)}")
-        #self.log_event(f"Number of Checkerboard Images: {len(self.checkerboard_images)}")
-
+    
         self.root.after(3000, self.update_log)  # Schedule the update function to run every 5 seconds
 
     def create_sensor_info_frame(self, parent):
@@ -950,8 +972,7 @@ class UserInterface:
 
         measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         self.current_measurement_id = str(measurement_slider.get())# Get the current measurement id from the slider
-        self.log_event(f"Current Measurement ID: {self.current_measurement_id}")
-        #self.current_measurement_id = str(int(self.measurement_spinner.get()))
+        
 
         if tab:
             self.update_measurement_info_frame(tab, self.data)
@@ -965,7 +986,7 @@ class UserInterface:
 
 
 
-        self.log_event("Updated Tab: " + str(tab_name))
+        #self.log_event("Updated Tab: " + str(tab_name))
     def update_measurement_info_frame(self, tab, data):
         
         # update labels here
@@ -1014,13 +1035,8 @@ class UserInterface:
             
             X_plane = data["3D"]["X"][:,:,z]
             Y_plane = data["3D"]["Y"][:,:,z]
-
             Z_plane = np.full_like(X_plane, z)
 
-            self.log_event(f"X Plane: {X_plane}")
-            self.log_event(f"Y Plane: {Y_plane}")
-            self.log_event(f"Z Plane: {Z_plane}")
-            
             # Plot the plane
             ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
         
@@ -1114,13 +1130,13 @@ class UserInterface:
         interpolation_var = interpolation_checkbox.value.get()
         interpolation = interpolation_var
 
-        slice_index = str(slice_slider.get()) # fix slider bug
-        self.log_event(f"Slice Index: {slice_index}")
+        slice_index = str(slice_slider.get()) 
+        #self.log_event(f"Slice Index: {slice_index}")
 
         #only update if data is available
         if data["Slices"] != {}:
             # Get the slice from the data
-            slice = data["Slices"][slice_index] # TODO implement multiple different data storages handling
+            slice = data["Slices"][slice_index]
             
             points = []
             sum_values = []
@@ -1135,7 +1151,7 @@ class UserInterface:
 
         
             x_coords = [point[0] for point in points]
-            y_coords = [point[1] for point in points]
+            y_coords = [point[1] for point in points] 
 
             # Create grid data
             x = np.linspace(min(x_coords), max(x_coords), 100) # TODO maybe be related to len(sum_values)
@@ -1157,71 +1173,22 @@ class UserInterface:
             self.update_measurement_info_frame(tab, data)
         
 
-            self.log_event("Updated Slice Plot")
+            #self.log_event("Updated Slice Plot")
         else:
             self.log_event("No Slice Data available")
 
     # Button Functions
     def start_button_pushed(self):
         self.create_tab()
-        tab_name = self.tab_group.select()
-        tab = self.tab_group.nametowidget(tab_name)
-        self.log_event("Start button pushed")
 
-        # Get the grid size and step size
-        self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
-        self.grid_size = tuple(map(int, self.grid_size.split(',')))
-        self.step_size = float(self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get())
-
-        # Get the Measurment points and path points
-        X, Y, Z = generate_grid(self.grid_size, self.step_size)
-        self.grid = (X, Y, Z)
-        self.path_points = generate_snake_path(X, Y, Z)
-        self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
-         
-        self.measurement_points = self.data["3D"]["measurement_points"]
-        self.data["Measurements"] = {} # Create a dictionary to store the measurements
-        self.data["Slices"] = {} # Create a dictionary to store the slices
-
-        self.start_time = time.time()
-        self.elapsed_time = 0
-
-        self.add_meta_data(self.data)
-
-        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
-        measurement_slider.config(to=self.measurement_points)
-
-        progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
-        progress_bar['maximum'] = self.measurement_points
-        
-        # Start the measurement
-        for i in range(self.measurement_points):
-            self.log_event(f"Measurement {i+1} of {self.measurement_points}")
-
-
-            next_relative_position = (self.path_points[i][0], self.path_points[i][1], self.path_points[i][2], 0, 0, 0) # account for rotation
-            #self.hexapod.move(next_relative_position, flag = "relative") # TODO move Hexapod to next position
-            #wait for hexapod to move
-
-            self.doMeasurement(self.data, self.sensor, i)
-            
-            # update 
-            measurement_slider.set(str(i+1))
-            self.update_progress_bar(progress_bar, i+1) # TODO add this to new_measurement_panel
-            self.update_tab()
-
-            self.elapsed_time = time.time() - self.start_time
-            self.data["info"]["elapsed_time"] = self.elapsed_time
-
-        self.create_slices(self.data)
-
-        #pprint.pprint(self.data)   # Show Data structure in Console
-
-        self.update_tab()
-
-        measurement_slider.config(state = "normal")
-        self.new_measurement_panel.nametowidget("save_button").config(state="normal")
-        self.log_event("Done with measurements")       
+        # Threading to make interaction with UI possible while measurements are running
+        if not self.measurement_running:
+            self.measurement_running = True
+            self.measurement_thread = threading.Thread(target=self.run_measurements)
+            self.measurement_thread.start()
+            self.log_event("Started Measurements")
+        else:
+            self.log_event("Measurements already running")
     def save_button_pushed(self):
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
         file_name = filedialog.asksaveasfilename(initialdir=folder_path, filetypes=[("h5 files", "*.h5")])
@@ -1236,7 +1203,11 @@ class UserInterface:
             self.create_tab()
             self.update_tab()
             self.log_event(f"Data loaded from {file_path}")
-   
+    def stop_button_pushed(self):
+        self.measurement_running = False
+        self.hexapod.send_command("stop") # Stop the Hexapod
+        self.log_event("Stopped Measurements")
+
     # Data Handling
     def save_data(self, data_folder, data):
         """
@@ -1329,6 +1300,15 @@ class UserInterface:
 
         self.log_event(f"Estimated time: " + str(self.time_estimated) + " [min]")
 
+    def connect_stage(self):
+        self.sensor.initialize_stage() 
+
+        if self.sensor.stage is not None:
+            self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("stage_connected").select()
+            self.log_event("Stage connected")
+        
+
+
     def connect_hexapod(self):
         #TODO implement hexapod connection
 
@@ -1339,12 +1319,14 @@ class UserInterface:
         port_1 = int(connection_frame.nametowidget("port_1_entry").get())
         port_2 = int(connection_frame.nametowidget("port_2_entry").get())
 
-        hexapod_connection_status = self.hexapod.connect_sockets(server_ip, port_1, port_2) # TODO change to true default ports
-        if hexapod_connection_status == True:
+        rcv = self.hexapod.connect_sockets(server_ip, port_1, port_2) # TODO change to true default ports
+        self.log_event(rcv)
+
+        rcv = self.hexapod.move_to_default_position() # TODO put this somewhere else
+        self.log_event(rcv)
+
+        if self.hexapod.connection_status == True:
             self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("hexapod_connected").select()
-            self.log_event("Hexapod connected to Server")
-        else:
-            self.log_event("Connection to Server failed")
 
     def rough_alignment(self):
         #TODO implement rough alignment
@@ -1368,9 +1350,79 @@ class UserInterface:
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").select()
         self.log_event("Fine Alignment done")
 
+    def run_measurements(self):
+        tab_name = self.tab_group.select()
+        tab = self.tab_group.nametowidget(tab_name)
 
-    def create_slices(self, data): # TODO test this function
-        last_z = None
+        # Get the grid size and step size
+        self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
+        self.grid_size = tuple(map(int, self.grid_size.split(',')))
+        self.step_size = float(self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get())
+
+        # Get the Measurment points and path points
+        X, Y, Z = generate_grid(self.grid_size, self.step_size)
+        self.grid = (X, Y, Z)
+        self.path_points = generate_snake_path(X, Y, Z)
+        self.log_event(f'Path Points: \n {self.path_points}')
+
+        self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
+         
+        self.measurement_points = self.data["3D"]["measurement_points"]
+        self.data["Measurements"] = {} # Create a dictionary to store the measurements
+        self.data["Slices"] = {} # Create a dictionary to store the slices
+
+        self.start_time = time.time()
+        self.elapsed_time = 0
+
+        self.add_meta_data(self.data)
+
+        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+        measurement_slider.config(to=self.measurement_points)
+
+        progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
+        progress_bar['maximum'] = self.measurement_points
+        
+        # Start the measurement
+        last_point = (0, 0, 0, 0, 0, 0) # Start at the origin
+        
+
+        for i in range(self.measurement_points):
+            self.log_event(f"Measurement {i+1} of {self.measurement_points}")
+
+            # As Path points are absolute, transform them to relative positions
+            next_point = (self.path_points[i][0], self.path_points[i][1], self.path_points[i][2], 0, 0, 0) 
+            next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
+            
+            self.log_event(f"Next Relative Position: {next_relative_position}")
+            self.hexapod.move(next_relative_position, flag = "relative") 
+
+            last_point = next_point # Update the last point
+
+            self.doMeasurement(self.data, self.sensor, self.hexapod, i)
+            
+            # update 
+            measurement_slider.set(str(i+1))
+            self.update_progress_bar(progress_bar, i+1)
+            self.update_tab()
+
+            self.elapsed_time = time.time() - self.start_time
+            self.data["info"]["elapsed_time"] = self.elapsed_time
+
+        #pprint.pprint(self.data)   # Show Data structure in Console
+
+        measurement_slider.config(state = "normal")
+        self.new_measurement_panel.nametowidget("save_button").config(state="normal")
+        self.log_event("Done with measurements")     
+
+        self.hexapod.move_to_default_position() 
+
+        self.create_slices(self.data)
+        self.update_tab()
+
+        self.measurement_running = False # end threading
+
+    def create_slices(self, data):
+        last_y = None
         last_measurement_id = 0
         slice_index = 1 # Start with slice 1
         
@@ -1380,19 +1432,20 @@ class UserInterface:
         for measurement_id in data["Measurements"]:
             measurement = data["Measurements"][str(measurement_id)]
             point = measurement["Measurement_point"]
-            current_z = point[2] # TODO check if this is the correct axis
+            current_y = point[1] # TODO fix and take corect value
+            # HAS something to do with this function!!! TODO
 
-            if last_z is None:
-                last_z = current_z # for first iteration
+            if last_y is None:
+                last_y = current_y # for first iteration
 
-            if current_z != last_z:
+            if current_y != last_y:
                 # Store the current slice
                 data["Slices"][str(slice_index)] = current_slice
                 slice_index += 1
                 current_slice = {}
 
             current_slice[measurement_id] = measurement
-            last_z = current_z
+            last_z = current_y
             last_measurement_id = measurement_id
 
         # Store the last slice
@@ -1406,12 +1459,19 @@ class UserInterface:
 
         slice_slider = tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
         slice_slider.config(from_=1, to=len(data["Slices"]))
+        pprint.pprint(data["Slices"])
 
         self.log_event("Created Slices")
-    def doMeasurement(self, data, sensor, i):
+    def doMeasurement(self, data, sensor, hexapod, i):
 
-        # Simulate a measurement TODO delete or comment this
-        signal = sensor.get_test_signal() # TODO replace with sensor.get_readings()
+        # Get data from the sensor
+        signal = sensor.get_signal()
+        
+        # Get the current (theoretical) measurement point
+        measurement_point = self.path_points[i]
+
+        # Get the absolute Hexapod position for the measurement point 
+        hexapod_position = hexapod.position
 
         measurement_id_str = str(i+1)  # Convert measurement_id to string
         data["Measurements"][measurement_id_str] = {
@@ -1422,7 +1482,8 @@ class UserInterface:
             'Signal_ydiff': signal.ydiff,
             'Signal_sum': signal.sum,
 
-            'Measurement_point': self.path_points[i],
+            'Measurement_point': measurement_point,
+            'Hexapod_position': hexapod_position
         }
         self.log_event(f"Performed measurement {measurement_id_str}")
     def process_data(self, data):

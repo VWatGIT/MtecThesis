@@ -34,7 +34,7 @@ def generate_grid(grid_size, step_size):
     y = np.linspace(-grid_size[1]/2, grid_size[1]/2, int(grid_size[1] / step_size)+1)
     z = np.linspace(0, grid_size[2], int(grid_size[2] / step_size)+1) 
 
-    X, Y, Z = np.meshgrid(x, y, z)
+    X, Z, Y = np.meshgrid(x, y, z)
     # Now Start position is 0 0 0 at center of grid, only z is positive
     return X, Y, Z # Switch y and z to account for sensor coordinate system
 
@@ -46,10 +46,11 @@ if __name__ == "__main__":
 
     # Generate the snake path
     path_points_snake = generate_snake_path(X, Y, Z)
+    #print(path_points_snake)
 
     # Extract the path coordinates
     path_x_snake = path_points_snake[:, 0]
-    path_y_snake = path_points_snake[:, 1]
+    path_y_snake = path_points_snake[:, 1] # TODO switch ?
     path_z_snake = path_points_snake[:, 2]
 
     # Visualize the grid and the snake path

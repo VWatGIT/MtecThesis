@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def align_center(sensor, hexapod, depth = 0):
     # allign beam to center of sensor recursivly
-    resolutions = [0.1, 0.01, 0.001, 0.0001]
+    resolutions = [0.1, 0.01] # also use [0.1, 0.01, 0.001, 0.0001]
 
     if depth == len(resolutions):
         return True
@@ -20,27 +20,26 @@ def align_center(sensor, hexapod, depth = 0):
     while iterations < 20:
         iterations += 1
 
-        #signal = sensor.get_test_signal() TODO uncomment comments 
-        #xpos = signal.xpos
-        #ypos = signal.ypos 
-
+        signal = sensor.get_signal() #  
+        print(f'Signal x: {sensor.xpos}, y: {sensor.ypos}')
         plt.plot(sensor.xpos, sensor.ypos, 'o')
+        print(f'Hex Position: {hexapod.position}')
 
         if sensor.xpos > center+step_size:
-            #hexapod.move([-step_size, 0, 0, 0, 0, 0], flag = "relative") # TODO xpos and ypos changes only for testing purposes
-            sensor.xpos -= step_size
+            hexapod.move([-step_size, 0, 0, 0, 0, 0], flag = "relative") # TODO xpos and ypos changes only for testing purposes
+            #sensor.xpos -= step_size
             
         elif sensor.xpos < center-step_size:
-            #hexapod.move([step_size, 0, 0, 0, 0, 0], flag = "relative")
-            sensor.xpos += step_size
+            hexapod.move([step_size, 0, 0, 0, 0, 0], flag = "relative")
+            #sensor.xpos += step_size
         
         elif sensor.ypos > center+step_size:
-            #hexapod.move([0, 0, -step_size, 0, 0, 0], flag = "relative")
-            sensor.ypos -= step_size
+            hexapod.move([0, 0, -step_size, 0, 0, 0], flag = "relative")
+            #sensor.ypos -= step_size
             
         elif sensor.ypos < center-step_size:
-            #hexapod.move([0, 0, step_size, 0, 0, 0], flag = "relative")
-            sensor.ypos += step_size
+            hexapod.move([0, 0, step_size, 0, 0, 0], flag = "relative")
+            #sensor.ypos += step_size
 
         else:
             align_center(sensor, hexapod, depth+1)
@@ -52,9 +51,7 @@ def align_center(sensor, hexapod, depth = 0):
 def fine_alignment(sensor, hexapod):
     
     aligned = False
-
-    Signal = sensor.get_test_signal() # TODO rename to get_signal
-   
+       
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -79,12 +76,7 @@ def fine_alignment(sensor, hexapod):
 def rough_alignment(sensor, hexapod, probe):
     aligned = False
     
-    
     hexapod.move_to_default_position()
-
-    
-   
-
 
     return aligned
 
@@ -93,6 +85,9 @@ if __name__ == "__main__":
     
     sensor = Sensor()
     hexapod = Hexapod()
+    
+    print(hexapod.connect_sockets())
+    print(hexapod.move_to_default_position())
 
     aligned = fine_alignment(sensor, hexapod)
     
