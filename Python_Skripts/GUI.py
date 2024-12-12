@@ -74,7 +74,7 @@ class UserInterface:
         self.show_camera_panel()
 
         # Setup
-        root.after(100, self.setup) # after to give the event log time to be created
+        #root.after(100, self.setup) # after to give the event log time to be created
         
     
 
@@ -421,8 +421,6 @@ class UserInterface:
         # TODO implement marker detection plot
         pass
 
-
-
     def create_camera_calibration_frame(self, parent):
 
         self.camera_calibration_frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
@@ -536,7 +534,6 @@ class UserInterface:
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("probe_detected").select()
         self.probe.translate_probe_tip(self.detected_probe_position, self.mtx, self.dist)
         self.log_event("Saved Probe Position")
-
 
     def reset_calibration(self):
         self.checkerboard_images = []
@@ -1021,9 +1018,15 @@ class UserInterface:
         Y_flat = data['3D']['Y'].flatten()
         Z_flat = data['3D']['Z'].flatten()
 
-        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 5)
-        ax.plot(path_x, path_y, path_z, color='red', label='Path')
+        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 1)
+        ax.plot(path_x, path_y, path_z, color='red', label='Path', linewidth= 1)
         ax.legend()
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+
 
         # Plot the seethrough plane
         if data["Slices"] != {}:
@@ -1031,15 +1034,17 @@ class UserInterface:
             # Extract Meshgrid from Data
             slice_index = str(tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider").get())
             first_measurement_id = list(data["Slices"][slice_index].keys())[0]
-            z = int(data["Slices"][slice_index][first_measurement_id]["Measurement_point"][2]) # Get the z value of the first measurement point in the slice
+            x = int(data["Slices"][slice_index][first_measurement_id]["Measurement_point"][0]) # Get the x value of the first measurement point in the slice
             
-            X_plane = data["3D"]["X"][:,:,z]
-            Y_plane = data["3D"]["Y"][:,:,z]
-            Z_plane = np.full_like(X_plane, z)
+            Z_plane = data["3D"]["Z"][x,:,:]
+            Y_plane = data["3D"]["Y"][x,:,:]
+            X_plane = np.full_like(Z_plane, x)
 
             # Plot the plane
             ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
-        
+            #self.log_event(f'Z Plane: {Z_plane}, Y Plane: {Y_plane}, X Plane: {X_plane}')
+
+
         canvas.draw()
 
         #self.log_event(f"Updated measurement info for Tab {self.tab_count}")
@@ -1150,18 +1155,20 @@ class UserInterface:
                 #print(f"Point: {point}, Sum: {sum}")
 
         
-            x_coords = [point[0] for point in points]
-            y_coords = [point[1] for point in points] 
+            y_coords = [point[1] for point in points]
+            z_coords = [point[2] for point in points] 
+
+            # slice X coordinates
 
             # Create grid data
-            x = np.linspace(min(x_coords), max(x_coords), 100) # TODO maybe be related to len(sum_values)
-            y = np.linspace(min(y_coords), max(y_coords), 100)
-            X, Y = np.meshgrid(x, y)
+            y = np.linspace(min(y_coords), max(y_coords), 100) # TODO maybe be related to len(sum_values)
+            z = np.linspace(min(z_coords), max(z_coords), 100)
+            X, Y = np.meshgrid(y, z)
             Z = np.zeros_like(X)
 
             # Interpolate sum values onto the grid
             interpolation_method = 'nearest' if interpolation_var == 0 else 'cubic'
-            Z = griddata((x_coords, y_coords), sum_values, (X, Y), method=interpolation_method)
+            Z = griddata((y_coords, z_coords), sum_values, (X, Y), method=interpolation_method)
             
 
             # Update the slice plot
@@ -1394,7 +1401,9 @@ class UserInterface:
             next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
             
             self.log_event(f"Next Relative Position: {next_relative_position}")
-            self.hexapod.move(next_relative_position, flag = "relative") 
+            
+            if self.hexapod.connection_status is True:
+                self.hexapod.move(next_relative_position, flag = "relative") 
 
             last_point = next_point # Update the last point
 
@@ -1422,7 +1431,7 @@ class UserInterface:
         self.measurement_running = False # end threading
 
     def create_slices(self, data):
-        last_y = None
+        last_x = None
         last_measurement_id = 0
         slice_index = 1 # Start with slice 1
         
@@ -1432,20 +1441,20 @@ class UserInterface:
         for measurement_id in data["Measurements"]:
             measurement = data["Measurements"][str(measurement_id)]
             point = measurement["Measurement_point"]
-            current_y = point[1] # TODO fix and take corect value
+            current_x = point[0] # slice at different x coordinates
             # HAS something to do with this function!!! TODO
 
-            if last_y is None:
-                last_y = current_y # for first iteration
+            if last_x is None:
+                last_x = current_x # for first iteration
 
-            if current_y != last_y:
+            if current_x != last_x:
                 # Store the current slice
                 data["Slices"][str(slice_index)] = current_slice
                 slice_index += 1
                 current_slice = {}
 
             current_slice[measurement_id] = measurement
-            last_z = current_y
+            last_x = current_x
             last_measurement_id = measurement_id
 
         # Store the last slice
@@ -1465,8 +1474,14 @@ class UserInterface:
     def doMeasurement(self, data, sensor, hexapod, i):
 
         # Get data from the sensor
-        signal = sensor.get_signal()
+        if self.sensor.stage is not None:
+            signal = sensor.get_signal()
         
+        else:
+            signal = sensor.get_test_signal()
+            # TODO delete this later
+
+
         # Get the current (theoretical) measurement point
         measurement_point = self.path_points[i]
 
