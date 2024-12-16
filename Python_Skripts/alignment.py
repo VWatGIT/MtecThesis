@@ -17,7 +17,7 @@ def align_center(sensor, hexapod, depth = 0):
 
     aligned = False
 
-    while iterations < 20:
+    while iterations < 50:
         iterations += 1
 
         signal = sensor.get_signal() #  
