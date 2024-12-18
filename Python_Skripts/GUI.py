@@ -1384,6 +1384,7 @@ class UserInterface:
         step_size = self.step_size_entry.get()
         step_size = tuple(map(float, step_size.split(',')))
 
+        # TODO fix this this is wrong!
         measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
         
         self.time_estimated = measurement_points * one_measurement_time
@@ -1516,8 +1517,13 @@ class UserInterface:
 
         self.hexapod.move_to_default_position() 
 
+        self.log_event("Moved Hexapod to default position")
+        self.log_event("Starting data processing")
         self.create_slices(self.data)
+
         self.update_tab()
+
+        # TODO implement auto save checkbox
 
         self.measurement_running = False # end threading
 
