@@ -33,7 +33,11 @@ class UserInterface:
 
         self.tab_count = 0
     
-        self.data = self.create_empty_data
+        self.data = {}
+        self.data["Slices"] = {}
+        self.data["3D"] = {}
+        self.data["Measurements"] = {}
+        self.data['Info'] = {}
 
         #implement support for multiple data tabs
         
@@ -79,17 +83,6 @@ class UserInterface:
     def setup(self):
         self.connect_stage() # TODO decide if necessary
         self.connect_hexapod()
-
-
-        # TODO decide if necessary
-    def create_empty_data():
-        data = {}
-        data["Slices"] = {}
-        data["3D"] = {}
-        data["Measurements"] = {}
-        data['Info'] = {}
-
-        return data 
     
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -1113,10 +1106,12 @@ class UserInterface:
         ax.clear() #TODO after all dots have been shown, dont clear any more
         ax.set_aspect('equal', 'box')
 
+        '''
         # Plot all previous points in black
         for measurement_id in range(1, int(self.current_measurement_id)):
             previous_measurement_data = data["Measurements"][str(measurement_id)]
             ax.plot(previous_measurement_data['Signal_xpos'], previous_measurement_data['Signal_ypos'], 'o', color='black')
+        '''
 
         # Plot the current point in red
         ax.plot(current_measurement_data['Signal_xdiff'], current_measurement_data['Signal_ydiff'], 'o', color='red') # TODO xpos or xdiff?
@@ -1229,16 +1224,6 @@ class UserInterface:
             #self.print_data_with_types(self.data)
             self.create_tab()
             self.update_tab()
-
-            if "Slices" in self.data:
-                print(f"Key 'Slices' exists in self.data")
-                print(f"Type of self.data['Slices']: {type(self.data['Slices'])}")
-                print(f"Content of self.data['Slices']: {self.data['Slices']}")
-                if self.data["Slices"] != {}:
-                    self.update_slice_plot()
-            else:
-                print("Key 'Slices' does not exist in self.data")
-
 
             self.measurement_points = self.data["3D"]["measurement_points"]
             self.current_measurement_id = 0
@@ -1365,8 +1350,11 @@ class UserInterface:
             "tvecs": self.tvecs
         }
 
-        data["info"] = {
+        tab_name = self.tab_group.select()
+        tab = self.tab_group.nametowidget(tab_name)
 
+        data["info"] = {
+            "name" : tab_name,
             "time_estimated": self.time_estimated,
             "elapsed_time": self.elapsed_time,
             "start_time": self.start_time
