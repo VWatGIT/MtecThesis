@@ -29,7 +29,7 @@ class UserInterface:
         self.root = root
         self.root.title("Probe Beam Measurement")
         self.root.geometry("1920x1080")
-        self.root.wm_state("zoomed")
+        #self.root.wm_state("zoomed")
 
         self.tab_count = 0
     
@@ -304,13 +304,13 @@ class UserInterface:
         hexapod_y_label.grid(row=1, column=0, pady=5, sticky="e")
         self.hexapod_y_entry = tk.Entry(self.help_panel)
         self.hexapod_y_entry.grid(row=1, column=1, pady=5, sticky="w")
-        self.hexapod_y_entry.insert(0, "0")
+        self.hexapod_y_entry.insert(0, "0.2")
 
         hexapod_z_label = tk.Label(self.help_panel, text="Hexapod Z: ")
         hexapod_z_label.grid(row=2, column=0, pady=5, sticky="e")
         self.hexapod_z_entry = tk.Entry(self.help_panel)
         self.hexapod_z_entry.grid(row=2, column=1, pady=5, sticky="w")
-        self.hexapod_z_entry.insert(0, "-8")
+        self.hexapod_z_entry.insert(0, "-7.8")
 
         manual_align_button = tk.Button(self.help_panel, text="Manual Align", command=self.manual_alignment)
         manual_align_button.grid(row=3, column=0, columnspan=2, pady=5, sticky="n")
@@ -1078,7 +1078,7 @@ class UserInterface:
             ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
             ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
 
-            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points', s=1)
+            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
             #print("Initialized grid points")
 
         if not hasattr(tab, 'path'):
@@ -1087,6 +1087,8 @@ class UserInterface:
         else:
             tab.path.set_data(path_x, path_y)
             tab.path.set_3d_properties(path_z)
+
+            # TODO: depreciation warning
 
         # Plot the seethrough plane
         ''' TODO fix this
@@ -1152,6 +1154,7 @@ class UserInterface:
             current_x = current_measurement_data['Signal_xpos']
             current_y = current_measurement_data['Signal_ypos']
             tab.current_point.set_data(current_x, current_y)
+            # TODO: depreciation warning
 
         '''
         # Plot all previous points in black
@@ -1420,7 +1423,6 @@ class UserInterface:
         pass
     # Measurement Handling
     def estimate_time(self):
-        # TODO implement time estimation
         one_measurement_time = 1 # [second] 
         
         grid_size = self.measurement_space_entry.get()
@@ -1430,6 +1432,8 @@ class UserInterface:
         step_size = tuple(map(float, step_size.split(',')))
 
         # TODO fix this this is wrong!
+        measurement_points = int((grid_size[0]+1)/(step_size[0])) * int((grid_size[1]+1)/(step_size[1])) * int((grid_size[2]+1)/(step_size[2]))
+
         measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
         
         self.time_estimated = measurement_points * one_measurement_time
