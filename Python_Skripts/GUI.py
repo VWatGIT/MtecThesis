@@ -28,12 +28,16 @@ class UserInterface:
     def __init__(self, root):
         self.root = root
         self.root.title("Probe Beam Measurement")
-        self.root.geometry("1600x1000")
+        self.root.geometry("1920x1080")
+        self.root.wm_state("zoomed")
 
         self.tab_count = 0
-        #self.tabs = {}
-
-        self.data = {} # Data dictionary
+    
+        self.data = {}
+        self.data["Slices"] = {}
+        self.data["3D"] = {}
+        self.data["Measurements"] = {}
+        self.data['Info'] = {}
 
         #implement support for multiple data tabs
         
@@ -45,7 +49,7 @@ class UserInterface:
         # Default values
         self.grid_size = (1, 1, 1) #mm
 
-        self.step_size = 1 #mm
+        self.step_size = (1,1,1) #mm
         self.measurement_points = 1
         self.time_estimated = 0
         self.elapsed_time = 0
@@ -76,16 +80,11 @@ class UserInterface:
 
         # Setup
         #root.after(100, self.setup) # after to give the event log time to be created
-        
-    
-
-
+   
     def setup(self):
         self.connect_stage() # TODO decide if necessary
         self.connect_hexapod()
-
-        # TODO decide if necessary
-
+    
     def create_menu(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
@@ -152,14 +151,13 @@ class UserInterface:
         self.measurement_space_entry = tk.Entry(input_frame, name = "measurement_space_entry")
         self.measurement_space_entry.grid(row=1, column=1, pady=5, sticky="w")
         self.measurement_space_entry.insert(0, f"{self.grid_size[0]}, {self.grid_size[1]}, {self.grid_size[2]}")
-        #TODO extract values from entry field with , seperator
 
         #Set up inputs for Step Size
         step_size_label = tk.Label(input_frame, text="Step Size:")
         step_size_label.grid(row=2, column=0, pady=5, sticky="e")
         self.step_size_entry = tk.Entry(input_frame, name = "step_size_entry")
         self.step_size_entry.grid(row=2, column=1, pady=5, sticky="w")
-        self.step_size_entry.insert(0, self.step_size)
+        self.step_size_entry.insert(0, f"{self.step_size[0]}, {self.step_size[1]}, {self.step_size[2]}") 
 
         #Set up checkboxes
         checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
@@ -290,26 +288,56 @@ class UserInterface:
         return_button.place(relx=1, rely= 0, anchor="ne")
     def create_help_panel(self, parent):
         self.help_panel = tk.Frame(parent, name="help_panel")
-        help_text = "This is a help text."
-        help_label = tk.Label(self.help_panel, text=help_text)
+        
+        for i in range(4):
+            self.help_panel.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            self.help_panel.grid_columnconfigure(i, weight=1)
+
+        hexapod_x_label = tk.Label(self.help_panel, text="Hexapod X: ")
+        hexapod_x_label.grid(row=0, column=0, pady=5, sticky="e")
+        self.hexapod_x_entry = tk.Entry(self.help_panel)
+        self.hexapod_x_entry.grid(row=0, column=1, pady=5, sticky="w")
+        self.hexapod_x_entry.insert(0, "10")
+
+        hexapod_y_label = tk.Label(self.help_panel, text="Hexapod Y: ")
+        hexapod_y_label.grid(row=1, column=0, pady=5, sticky="e")
+        self.hexapod_y_entry = tk.Entry(self.help_panel)
+        self.hexapod_y_entry.grid(row=1, column=1, pady=5, sticky="w")
+        self.hexapod_y_entry.insert(0, "0")
+
+        hexapod_z_label = tk.Label(self.help_panel, text="Hexapod Z: ")
+        hexapod_z_label.grid(row=2, column=0, pady=5, sticky="e")
+        self.hexapod_z_entry = tk.Entry(self.help_panel)
+        self.hexapod_z_entry.grid(row=2, column=1, pady=5, sticky="w")
+        self.hexapod_z_entry.insert(0, "-8")
+
+        manual_align_button = tk.Button(self.help_panel, text="Manual Align", command=self.manual_alignment)
+        manual_align_button.grid(row=3, column=0, columnspan=2, pady=5, sticky="n")
+        self.help_panel.rowconfigure(4, weight=100)
 
     def show_home_panel(self):
         self.hide_all_panels()
         self.home_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
     def show_new_measurement_panel(self):
         self.hide_all_panels()
+        self.show_tabgroup()
         self.new_measurement_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
     def show_load_measurement_panel(self):
         self.hide_all_panels()
+        self.show_tabgroup()
         self.load_measurement_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
     def show_camera_panel(self):
-        if not self.camera_panel:
-            self.create_camera_panel()
+        self.help_panel.place_forget()
         self.camera_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
     def show_help_panel(self):
-            if not self.camera_panel:
-                self.create_help_panel()
+            self.camera_panel.place_forget()
             self.help_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
+    def show_tabgroup(self):
+        self.help_panel.place_forget()
+        self.camera_panel.place_forget()
+        self.tab_group.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
+    
     def hide_all_panels(self):
         self.home_panel.place_forget()
         self.new_measurement_panel.place_forget()
@@ -719,28 +747,41 @@ class UserInterface:
         self.create_tab() # Create the Default Tab
     def create_tab(self):
         self.tab_count += 1
-        new_tab = ttk.Frame(self.tab_group, name=f"tab{self.tab_count}") # TODO change naming sceheme with probe names
-        self.tab_group.add(new_tab, text=f'Tab {self.tab_count}')
+        name = str(self.probe_name_entry.get())
+
+        new_tab = ttk.Frame(self.tab_group, name=f"tab{self.tab_count}") # TODO change naming sheme with probe names
+        self.tab_group.add(new_tab, text=name)
         #self.tabs[self.tab_count] = new_tab
 
         # Configure the grid layout within the new_tab
-        for i in range(2):
+        for i in range(4):
             new_tab.grid_columnconfigure(i, weight=1)
-        for i in range(1):
+        for i in range(2):
             new_tab.grid_rowconfigure(i, weight=1)
 
-        new_tab.grid_columnconfigure(1, weight=10)
+        new_tab.grid_columnconfigure(3, weight=100)
 
 
         self.create_sensor_info_frame(new_tab)
+        self.create_path_plot_frame(new_tab)
+        self.create_measurement_info_frame(new_tab)
         self.create_results_frame(new_tab)
+        
 
         sensor_info_frame = new_tab.nametowidget("sensor_info_frame")
-        sensor_info_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        sensor_info_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
+
+        path_plot_frame = new_tab.nametowidget("path_plot_frame")
+        path_plot_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+
+        measurement_info_frame = new_tab.nametowidget("measurement_info_frame")
+        measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
+        new_tab.grid_columnconfigure(1, weight=1, minsize=100)
 
         results_frame = new_tab.nametowidget("results_frame")
-        results_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
-        
+        results_frame.grid(row=0, column=2, rowspan = 2, columnspan = 2, sticky="nsew", padx=10, pady=10)
+        new_tab.columnconfigure(2, weight=100)
+
         close_button = tk.Button(new_tab, text="Close Tab", command=lambda: self.close_tab(new_tab), name="close_button") # create this last in create_tab
         close_button.place(relx=1, rely=0, anchor="ne")  # Place the close button in the top-right corner
 
@@ -772,42 +813,32 @@ class UserInterface:
 
     def create_sensor_info_frame(self, parent):
         # Create the main sensor_info_frame LabelFrame
-        sensor_info_frame = tk.LabelFrame(parent, text="Measurement N/A" , name="sensor_info_frame")
+        sensor_info_frame = tk.LabelFrame(parent, text="Measurement N/A" , name="sensor_info_frame")#, width=500, height=500)
     
         # Configure the grid layout within the sensor_info_frame LabelFrame
         for i in range(2):
             sensor_info_frame.grid_columnconfigure(i, weight=1)
-        for i in range(3):
+        for i in range(2):
             sensor_info_frame.grid_rowconfigure(i, weight=1)
 
         self.create_sensor_readings_frame(sensor_info_frame)
-        #self.create_sensor_position_frame(sensor_info_frame)
-        self.create_measurement_info_frame(sensor_info_frame)
         self.create_sensor_plot_frame(sensor_info_frame)
 
-        measurement_slider = tk.Scale(sensor_info_frame, from_=1, to=100, orient="horizontal", name="measurement_slider")
-        measurement_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
-        sensor_info_frame.grid_rowconfigure(1, weight=10)
+        measurment_slider = tk.Scale(sensor_info_frame, from_=1, to=100, orient="horizontal", name="measurement_slider")
+        measurment_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
+        sensor_info_frame.grid_rowconfigure(1, weight=100)
+        sensor_info_frame.grid_columnconfigure(1, weight=100)
 
-        measurement_slider.set(1)
-        measurement_slider.config(resolution=1, state="normal")
-        measurement_slider.bind("<ButtonRelease-1>", self.update_tab)
-        
-        # Set fixed size for the slider # TODO fix flickeing bug
-        measurement_slider.config(width=20, length=	10)
-        
+        measurment_slider.set(1)
+        measurment_slider.config(resolution=1, state="normal", command=self.update_tab)
+        #measurment_slider.bind("<ButtonRelease-1>", self.update_tab)
+        #measurment_slider.bind("<Motion>", self.update_tab) TODO find correct event to update when incrementing slider
 
         sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
-        sensor_readings_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
+        sensor_readings_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
 
-        measurement_info_frame = sensor_info_frame.nametowidget("measurement_info_frame")
-        measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
-
-        #sensor_position_frame = sensor_info_frame.nametowidget("sensor_position_frame")
-        #sensor_position_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)    
-    
         sensor_plot_frame = sensor_info_frame.nametowidget("sensor_plot_frame")
-        sensor_plot_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)      
+        sensor_plot_frame.grid(row=1, column=0, columnspan=1, sticky="ns", padx=10, pady=10)      
     def create_sensor_readings_frame(self, parent):    
 
         # Create a LabelFrame for X and Y positions
@@ -869,8 +900,10 @@ class UserInterface:
         ax.set_title('Sensor Output')
         ax.grid(True)
         ax.legend(['Signal Position'])
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
+
+        ax.set_aspect('equal')
+        ax.set_xlim(-10, 10)
+        ax.set_ylim(-10, 10)
 
         canvas = FigureCanvasTkAgg(fig, master=sensor_plot_frame) 
         canvas.draw()
@@ -886,15 +919,10 @@ class UserInterface:
         
 
         self.create_slice_plot_frame(results_frame)
-        self.create_measurement_info_frame(results_frame) # TODO put this into Sensor Info Frame
+        self.create_measurement_info_frame(results_frame)
 
         slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
         slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
-
-        self.create_path_plot_frame(results_frame) 
-        path_plot_frame = results_frame.nametowidget("path_plot_frame")
-        path_plot_frame.grid(row=1, column=1, rowspan=1, sticky="nsew", padx=10, pady=10)
-
 
     def create_slice_plot_frame(self, parent):
         slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
@@ -941,7 +969,9 @@ class UserInterface:
         interpolation_checkbox.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
         interpolation_checkbox.value = interpolation_var
 
-        self.data["Slices"] = {} 
+        # trying to fix the slider bug
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
 
         slice_slider.config(command=self.update_slice_plot)
         contour_levels_slider.config(command=self.update_slice_plot)
@@ -992,14 +1022,15 @@ class UserInterface:
         ax.set_title('Path')
         ax.grid(True)
 
+
     # Update Functions
     def update_tab(self, event=None):    # TODO implement data input parameter
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
 
         measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
-        self.current_measurement_id = str(measurement_slider.get())# Get the current measurement id from the slider
-        
+        self.current_measurement_id = str(measurement_slider.get())
+
 
         if tab:
             self.update_measurement_info_frame(tab, self.data)
@@ -1008,19 +1039,13 @@ class UserInterface:
             if self.data["Slices"] != {}:
                 self.update_slice_plot()
 
-        sensor_info_frame = tab.nametowidget("sensor_info_frame")
-        sensor_info_frame.config(text="Measurement " + str(self.current_measurement_id) + "/" + str(self.measurement_points)) # Update the title
-
 
 
         #self.log_event("Updated Tab: " + str(tab_name))
     def update_measurement_info_frame(self, tab, data):
         
         # update labels here
-        
-
-        sensor_info_frame = tab.nametowidget("sensor_info_frame")
-        measurement_info_frame = sensor_info_frame.nametowidget("measurement_info_frame")
+        measurement_info_frame = tab.nametowidget("measurement_info_frame")
         measurement_points_label = measurement_info_frame.nametowidget("measurement_points_label")
         step_size_label = measurement_info_frame.nametowidget("step_size_label")
         time_elapsed_label = measurement_info_frame.nametowidget("time_elapsed_label")
@@ -1032,8 +1057,8 @@ class UserInterface:
         time_estimated_label.config(text=f"Time Estimated: {data['info']['time_estimated']}")
 
         # update path plot here
-        results_frame = tab.nametowidget("results_frame")
-        path_plot_frame = results_frame.nametowidget("path_plot_frame")
+        #results_frame = tab.nametowidget("results_frame")
+        path_plot_frame = tab.nametowidget("path_plot_frame")
         canvas = path_plot_frame.canvas
         ax = canvas.figure.axes[0]
 
@@ -1094,6 +1119,10 @@ class UserInterface:
 
         current_measurement_data = data["Measurements"][self.current_measurement_id]
 
+        sensor_info_frame.config(text="Measurement " + str(self.current_measurement_id) + "/" + str(self.measurement_points)) # Update the title
+
+
+
         # Update the sensor readings
         xpos_label = sensor_readings_frame.nametowidget("xpos_label")
         ypos_label = sensor_readings_frame.nametowidget("ypos_label")
@@ -1101,11 +1130,11 @@ class UserInterface:
         ydiff_label = sensor_readings_frame.nametowidget("ydiff_label")
         sum_label = sensor_readings_frame.nametowidget("sum_label")
 
-        xpos_label.config(text=f"X Position: {current_measurement_data['Signal_xpos']}")
-        ypos_label.config(text=f"Y Position: {current_measurement_data['Signal_ypos']}")
-        xdiff_label.config(text=f"X Diff: {current_measurement_data['Signal_xdiff']}")
-        ydiff_label.config(text=f"Y Diff: {current_measurement_data['Signal_ydiff']}")
-        sum_label.config(text=f"Sum: {current_measurement_data['Signal_sum']}")
+        xpos_label.config(text=f"X Position: {current_measurement_data['Signal_xpos']:.2f}")
+        ypos_label.config(text=f"Y Position: {current_measurement_data['Signal_ypos']:.2f}")
+        xdiff_label.config(text=f"X Diff: {current_measurement_data['Signal_xdiff']:.2f}")
+        ydiff_label.config(text=f"Y Diff: {current_measurement_data['Signal_ydiff']:.2f}")
+        sum_label.config(text=f"Sum: {current_measurement_data['Signal_sum']:.2f}")
 
         # Plot the x pos and y pos in sensor_plot_frame
         sensor_plot_frame = sensor_info_frame.nametowidget("sensor_plot_frame")
@@ -1228,17 +1257,33 @@ class UserInterface:
             self.log_event("Measurements already running")
     def save_button_pushed(self):
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
-        file_name = filedialog.asksaveasfilename(initialdir=folder_path, filetypes=[("h5 files", "*.h5")])
-        self.save_data(file_name, self.data)
-        #messagebox.showinfo("Save Data", f"Data saved to {file_name}")
-        self.log_event(f"Data saved to {file_name}")
+        directory = filedialog.askdirectory(initialdir=folder_path, title="Select Directory")
+        if directory:  
+            file_name = self.save_data(directory, self.data)
+            self.log_event(f"Data saved to {file_name}")
     def load_button_pushed(self):
-        file_path = filedialog.askopenfilename(filetypes=[("htm5 files", "*.h5")])
+        file_path = filedialog.askopenfilename(filetypes=[("hdf5 files", "*.h5")])
         if file_path:
             self.data = self.load_data(file_path)
-            print(self.data)
+            #pprint.pprint(self.data)
+            #self.print_data_with_types(self.data)
             self.create_tab()
             self.update_tab()
+
+            self.measurement_points = self.data["3D"]["measurement_points"]
+            self.current_measurement_id = 0
+
+            tab_name = self.tab_group.select()
+            tab = self.root.nametowidget(tab_name)
+
+            measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+            measurement_slider.config(to=self.measurement_points)
+            measurement_slider.set(self.current_measurement_id+1)
+
+            slice_slider = tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
+            slice_slider.config(from_=1, to=len(self.data["Slices"]))
+            
+
             self.log_event(f"Data loaded from {file_path}")
     def stop_button_pushed(self):
         self.measurement_running = False
@@ -1246,54 +1291,99 @@ class UserInterface:
         self.log_event("Stopped Measurements")
 
     # Data Handling
-    def save_data(self, data_folder, data):
-        """
-        Save the data to an HDF5 file.
+    def print_data_with_types(self, data, indent=0):
+        # Print the data with types
+        # Fix saving issues with h5py format
+        # TODO delete this function
 
-        Parameters:
-        data_folder (str): The folder to store the data.
-        data (dict): The data to store, with keys for each measurement.
-        """
+        indent_str = ' ' * indent
+        if isinstance(data, dict):
+            for key, value in data.items():
+                print(f"{indent_str}{key}:")
+                self.print_data_with_types(value, indent + 2)
+        elif isinstance(data, (list, tuple)):
+            for i, value in enumerate(data):
+                print(f"{indent_str}[{i}]: {value} (type: {type(value)})")
+                self.print_data_with_types(value, indent + 2)
+        elif isinstance(data, np.ndarray):
+            print(f"{indent_str}{data} (type: {data.dtype})")
+        else:
+            print(f"{indent_str}{data} (type: {type(data)})")
+
+    def convert_data(self, data):
+        try:
+            if isinstance(data, dict):
+                return {key: self.convert_data(value) for key, value in data.items()}
+            elif isinstance(data, (list, tuple)):
+                return np.array(data, dtype=np.float64)  # Convert lists or tuples to numpy arrays of floats
+            elif isinstance(data, np.ndarray):
+                if data.dtype == object or data.dtype.kind in {'i', 'u'}:
+                    print(f"object array: {data}") # Convert object arrays to float arrays
+                    return data.astype(np.float64)
+                else:
+                    return data
+            else:
+                return data
+
+        except TypeError as e:
+            print(f"Error converting data: {e}")
+            print(f"Type of data: {type(data)}, dtype: {data.dtype if isinstance(data, np.ndarray) else 'N/A'}")
+            raise
+    def save_data(self, data_folder, data):
+
         # Ensure the folder exists
         if not os.path.exists(data_folder):
             os.makedirs(data_folder)
 
         # Define the HDF5 file path
-        hdf5_file_path = os.path.join(data_folder, 'experiment_data.h5')
+        date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        hdf5_file_path = os.path.join(data_folder, 'data_'+str(date)+'.h5')
 
-        # Write data to HDF5
-        with h5py.File(hdf5_file_path, 'w') as hdf5_file:
+        #convert data --> ensure that all data is in the correct format
+        data = self.convert_data(data)
+        #pprint.pprint(data)
+        #self.print_data_with_types(data)
+
+        # Recursive function to save nested dictionaries
+        def save_group(group, data):
             for key, value in data.items():
                 key_str = str(key)  # Convert key to string
-                if isinstance(value, (list, tuple)):
-                    value = np.array(value)  # Convert lists or tuples to numpy arrays
                 if isinstance(value, dict):
-                    group = hdf5_file.create_group(key_str)
-                    for sub_key, sub_value in value.items():
-                        sub_key_str = str(sub_key)
-                        if isinstance(sub_value, (list, tuple)):
-                            sub_value = np.array(sub_value)
-                        if sub_value is not None:
-                            group.create_dataset(sub_key_str, data=sub_value)
-                        else:
-                            print(f"Skipping None value for {sub_key_str}")
+                    if value:  # Check if the dictionary is not empty
+                        subgroup = group.create_group(key_str)
+                        save_group(subgroup, value)
+                    else:
+                        print(f"Skipping empty dictionary for {key_str}")
                 else:
                     if value is not None:
-                        hdf5_file.create_dataset(key_str, data=value)
+                        group.create_dataset(key_str, data=value)
                     else:
                         print(f"Skipping None value for {key_str}")
 
-        print(f"Data saved to {hdf5_file_path}") 
+
+        # Write data to HDF5
+        with h5py.File(hdf5_file_path, 'w') as hdf5_file:
+            save_group(hdf5_file, data)
+                
+        return hdf5_file_path
     def load_data(self, hdf5_file_path):
+        # Recursive function to load nested dictionaries
+        def load_group(group): 
+            data = {}
+            for key in group.keys():
+                #print(f'{key} +{group[key]}')
+                item = group[key]
+                if isinstance(item, h5py.Group):
+                    data[key] = load_group(item)
+                else:
+                    data[key] = item[()]
+
+            return data
+
 
         with h5py.File(hdf5_file_path, 'r') as hdf5_file:
-            data = {}
-            for key in hdf5_file.keys():
-                group = hdf5_file[key]
-                if isinstance(group, h5py.Group):
-                    data[key] = {sub_key: group[sub_key][()] for sub_key in group.keys()}
-                else:
-                    data[key] = group[()]
+            data = load_group(hdf5_file)
+
         return data
     def add_meta_data(self, data):
         data["camera"] = {
@@ -1305,17 +1395,14 @@ class UserInterface:
             "tvecs": self.tvecs
         }
 
-        data["info"] = {
+        tab_name = self.tab_group.select()
+        tab = self.tab_group.nametowidget(tab_name)
 
+        data["info"] = {
+            "name" : tab_name,
             "time_estimated": self.time_estimated,
             "elapsed_time": self.elapsed_time,
             "start_time": self.start_time
-        }
-
-        data["beam_visualization"] = {
-
-            #TODO add beam visualization data here
-
         }
     def add_3D_data(self, data, grid, grid_size, step_size, path):
         data["3D"] = {
@@ -1328,14 +1415,33 @@ class UserInterface:
             "path": path, 
             "measurement_points": len(path)
         } 
-    
+    def add_visualization_data(self, data):
+        #TODO: add in dictionary 
+        pass
     # Measurement Handling
     def estimate_time(self):
         # TODO implement time estimation
-        self.time_estimated = self.measurement_points * self.step_size # TODO replace with actual time estimation
-        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("time_estimated_label").config(text="Time Estimated: " + str(self.time_estimated) + " [min]")
+        one_measurement_time = 1 # [second] 
+        
+        grid_size = self.measurement_space_entry.get()
+        grid_size = tuple(map(float, grid_size.split(',')))
 
-        self.log_event(f"Estimated time: " + str(self.time_estimated) + " [min]")
+        step_size = self.step_size_entry.get()
+        step_size = tuple(map(float, step_size.split(',')))
+
+        # TODO fix this this is wrong!
+        measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
+        
+        self.time_estimated = measurement_points * one_measurement_time
+        if int(self.time_estimated) > 60:
+            self.time_estimated = str(int(self.time_estimated / 60)) + " [min]"
+            
+        else :
+            self.time_estimated = str(int(self.time_estimated)) + " [s]"
+
+        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("time_estimated_label").config(text=self.time_estimated)
+
+        self.log_event(f"Estimated time:  {self.time_estimated}")
 
     def connect_stage(self):
         self.sensor.initialize_stage() 
@@ -1343,7 +1449,7 @@ class UserInterface:
         if self.sensor.stage is not None:
             self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("stage_connected").select()
             self.log_event("Stage connected")
-
+        
     def connect_hexapod(self):
         #TODO implement hexapod connection
 
@@ -1363,18 +1469,18 @@ class UserInterface:
         if self.hexapod.connection_status == True:
             self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("hexapod_connected").select()
 
+    def manual_alignment(self):
+        #self.hexapod.move_to_default_position()
+        # manual alignment for testing
+        x = self.hexapod_x_entry.get()
+        y = self.hexapod_y_entry.get()
+        z = self.hexapod_z_entry.get()
+        
+        self.hexapod.move((x, y, z, 0, 0, 0), flag = "absolute") 
+        self.log_event("Manual Alignment done")
+
     def rough_alignment(self):
         #TODO implement rough alignment
-        #self.hexapod.move_to_default_position()
-        
-        # Determine the rough alignment
-        # Get Sensor Postion
-
-        
-        #relative_movement = self.sensor.position - self.probe.position # TODO implement sensor position
-        # TODO implement some leeway for the rough alignment to avoid overshooting/collisions
-        #server_response = self.hexapod.move(relative_movement, flag = "relative") # Move the Hexapod to the rough alignment position
-        
 
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
         self.log_event("Rough Alignment done")
@@ -1391,8 +1497,10 @@ class UserInterface:
 
         # Get the grid size and step size
         self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
-        self.grid_size = tuple(map(int, self.grid_size.split(',')))
-        self.step_size = float(self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get())
+        self.grid_size = tuple(map(float, self.grid_size.split(',')))
+
+        self.step_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get()
+        self.step_size = tuple(map(float, self.step_size.split(',')))
 
         # Get the Measurment points and path points
         X, Y, Z = generate_grid(self.grid_size, self.step_size)
@@ -1402,14 +1510,14 @@ class UserInterface:
 
         self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
          
-        self.measurement_points = self.data["3D"]["measurement_points"]
-        self.data["Measurements"] = {} # Create a dictionary to store the measurements
-        self.data["Slices"] = {} # Create a dictionary to store the slices
-
+        
+        
         self.start_time = time.time()
         self.elapsed_time = 0
 
         self.add_meta_data(self.data)
+
+        self.measurement_points = self.data["3D"]["measurement_points"]
 
         measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         measurement_slider.config(to=self.measurement_points)
@@ -1422,13 +1530,13 @@ class UserInterface:
         
 
         for i in range(self.measurement_points):
-            self.log_event(f"Measurement {i+1} of {self.measurement_points}")
+            #self.log_event(f"Measurement {i+1} of {self.measurement_points}")
 
             # As Path points are absolute, transform them to relative positions
             next_point = (self.path_points[i][0], self.path_points[i][1], self.path_points[i][2], 0, 0, 0) 
             next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
             
-            self.log_event(f"Next Relative Position: {next_relative_position}")
+            #self.log_event(f"Next Relative Position: {next_relative_position}")
             
             if self.hexapod.connection_status is True:
                 self.hexapod.move(next_relative_position, flag = "relative") 
@@ -1436,13 +1544,14 @@ class UserInterface:
             last_point = next_point # Update the last point
 
             self.doMeasurement(self.data, self.sensor, self.hexapod, i)
-            
+            self.log_event(f"Performed measurement {i+1} / {self.measurement_points}")
+
             # update 
-            measurement_slider.set(str(i+1))
+            measurement_slider.set(str(i+1)) # TODO fix current measurement id!!!
             self.update_progress_bar(progress_bar, i+1)
             self.update_tab()
 
-            self.elapsed_time = time.time() - self.start_time
+            self.elapsed_time = int((time.time() - self.start_time)/60)
             self.data["info"]["elapsed_time"] = self.elapsed_time
 
         #pprint.pprint(self.data)   # Show Data structure in Console
@@ -1453,8 +1562,13 @@ class UserInterface:
 
         self.hexapod.move_to_default_position() 
 
+        self.log_event("Moved Hexapod to default position")
+        self.log_event("Starting data processing")
         self.create_slices(self.data)
+
         self.update_tab()
+
+        # TODO implement auto save checkbox
 
         self.measurement_running = False # end threading
 
@@ -1528,7 +1642,7 @@ class UserInterface:
             'Measurement_point': measurement_point,
             'Hexapod_position': hexapod_position
         }
-        self.log_event(f"Performed measurement {measurement_id_str}")
+        
     def process_data(self, data):
         # Process the data
         self.log_event("Processing data")

@@ -47,7 +47,8 @@ class Sensor(Object3D):
 
     def initialize_stage(self): 
         try:
-            self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+            #self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+            pass        
         except Exception as e:
             print(f"Error: {e}")
             self.stage = None
@@ -66,11 +67,11 @@ class Sensor(Object3D):
         return signal # TODO decide weather to decide to return signal or always get values from sensor object
 
     def get_test_signal(self): # used for working at home
-        self.xpos = np.random.rand()
-        self.ypos = np.random.rand()
-        self.xdiff = np.random.rand()
-        self.ydiff = np.random.rand()
-        self.sum = np.random.rand()
+        self.xpos = (np.random.rand()-0.5)*10
+        self.ypos = (np.random.rand()-0.5)*10
+        self.xdiff = (np.random.rand()-0.5)*10
+        self.ydiff = (np.random.rand()-0.5)*10
+        self.sum = np.random.rand()*100
         signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
         
         """

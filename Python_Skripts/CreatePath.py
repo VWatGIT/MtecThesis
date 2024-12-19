@@ -34,10 +34,14 @@ def generate_snake_path(X, Y, Z): # switch
     return np.array(path_points)
 
 def generate_grid(grid_size, step_size):
+    # step_size = [x,y,z]
+    # grid_size = [x,y,z]
     # All coordinates with respect to the Hexapod Coordinate System
-    y = np.linspace(-grid_size[0]/2, grid_size[0]/2, int(grid_size[0] / step_size)+1) # +1 for off by 1 error due to 0 - size grid
-    z = np.linspace(-grid_size[1]/2, grid_size[1]/2, int(grid_size[1] / step_size)+1)
-    x = np.linspace(0, -grid_size[2], int(grid_size[2] / step_size)+1) 
+
+    x = np.linspace(0, -grid_size[0], int(grid_size[0] / step_size[0])+1) 
+    y = np.linspace(-grid_size[1]/2, grid_size[1]/2, int(grid_size[1] / step_size[1])+1) # +1 for off by 1 error due to 0 - size grid
+    z = np.linspace(-grid_size[2]/2, grid_size[2]/2, int(grid_size[2] / step_size[2])+1)
+    
 
     X, Y, Z = np.meshgrid(x, y, z)
     
@@ -45,8 +49,8 @@ def generate_grid(grid_size, step_size):
 
 if __name__ == "__main__":
     # Set up Measurement Grid
-    grid_size = [2, 2, 2]  # [mm]
-    step_size = 1 # [mm]
+    grid_size = [1, 1, 1]  # [mm]
+    step_size = [1,0.1,0.1] # [mm]
     X, Y, Z = generate_grid(grid_size, step_size)
 
     # Generate the snake path
