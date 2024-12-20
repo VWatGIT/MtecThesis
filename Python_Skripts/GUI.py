@@ -29,7 +29,7 @@ class UserInterface:
         self.root = root
         self.root.title("Probe Beam Measurement")
         self.root.geometry("1920x1080")
-        self.root.wm_state("zoomed")
+        #self.root.wm_state("zoomed")
 
         self.tab_count = 0
     
@@ -59,9 +59,10 @@ class UserInterface:
         
         # TODO make callback function for values changed in entry fields
 
-        os.environ["PYLON_CAMEMU"] = "1" # Enable the pylon camera emulator
+        os.environ["PYLON_CAMEMU"] = "1" # Enable the pylon camera emulator for testing at home
         self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None # Camera Calibration Values
+        self.camera_calibrated = False # TODO replace with variable from GUI?
 
         self.checkerboard_images = []
         self.checkerboard_image_amount = 3
@@ -269,23 +270,19 @@ class UserInterface:
             self.camera_panel.grid_rowconfigure(i, weight=1)
         for i in range(2):
             self.camera_panel.grid_columnconfigure(i, weight=1)
-
-        self.create_camera_plot_frame(self.camera_panel)
+ 
         self.create_camera_settings_frame(self.camera_panel)
         self.create_camera_calibration_frame(self.camera_panel)
         self.create_camera_detection_frame(self.camera_panel)
-
-        self.camera_plot_frame = self.camera_panel.nametowidget("camera_plot_frame")
-        self.camera_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
         
         self.camera_settings_frame = self.camera_panel.nametowidget("camera_settings_frame")
-        self.camera_settings_frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=10) 
+        self.camera_settings_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10) 
 
         self.camera_calibration_frame = self.camera_panel.nametowidget("camera_calibration_frame")
         self.camera_calibration_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
         self.camera_detection_frame = self.camera_panel.nametowidget("camera_detection_frame")
-        self.camera_detection_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        self.camera_detection_frame.grid(row=1, column=0,columnspan=2, sticky="nsew", padx=10, pady=10)
 
         return_button = tk.Button(self.camera_panel, text="Return", command= lambda: self.camera_panel.place_forget())
         return_button.place(relx=1, rely= 0, anchor="ne")
@@ -307,13 +304,13 @@ class UserInterface:
         hexapod_y_label.grid(row=1, column=0, pady=5, sticky="e")
         self.hexapod_y_entry = tk.Entry(self.help_panel)
         self.hexapod_y_entry.grid(row=1, column=1, pady=5, sticky="w")
-        self.hexapod_y_entry.insert(0, "0")
+        self.hexapod_y_entry.insert(0, "0.2")
 
         hexapod_z_label = tk.Label(self.help_panel, text="Hexapod Z: ")
         hexapod_z_label.grid(row=2, column=0, pady=5, sticky="e")
         self.hexapod_z_entry = tk.Entry(self.help_panel)
         self.hexapod_z_entry.grid(row=2, column=1, pady=5, sticky="w")
-        self.hexapod_z_entry.insert(0, "-8")
+        self.hexapod_z_entry.insert(0, "-7.8")
 
         manual_align_button = tk.Button(self.help_panel, text="Manual Align", command=self.manual_alignment)
         manual_align_button.grid(row=3, column=0, columnspan=2, pady=5, sticky="n")
@@ -349,12 +346,13 @@ class UserInterface:
         self.help_panel.place_forget()
 
     def create_camera_plot_frame(self, parent):
-        self.camera_plot_frame = tk.LabelFrame(parent, text="Camera Image", name="camera_plot_frame")
+        camera_plot_frame = tk.LabelFrame(parent, text="Camera Image", name="camera_plot_frame")
         fig, ax = plt.subplots()
-        canvas = FigureCanvasTkAgg(fig, master=self.camera_plot_frame)
+        canvas = FigureCanvasTkAgg(fig, master=camera_plot_frame)
         canvas.get_tk_widget().place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
-        self.camera_plot_frame.canvas = canvas
+        camera_plot_frame.canvas = canvas
         ax.axis('off')
+        return camera_plot_frame
     def create_camera_settings_frame(self, parent):
         self.camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         toggle_camera_button = tk.Checkbutton(self.camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera)
@@ -373,9 +371,9 @@ class UserInterface:
     def create_probe_detection_frame(self, parent):
         probe_detection_frame = tk.LabelFrame(parent, text="Probe Tip", name="probe_detection_frame")
         
-        for i in range(1):
-            probe_detection_frame.grid_rowconfigure(i, weight=1)
         for i in range(2):
+            probe_detection_frame.grid_rowconfigure(i, weight=1)
+        for i in range(1):
             probe_detection_frame.grid_columnconfigure(i, weight=1)
 
         self.create_probe_detection_input_frame(probe_detection_frame)
@@ -385,7 +383,7 @@ class UserInterface:
 
         # Create a frame for the probe plot
         self.probe_plot_frame = tk.Frame(probe_detection_frame, name="probe_plot_frame")
-        self.probe_plot_frame.grid(row=0, column=1, pady=5, sticky = "nsew")
+        self.probe_plot_frame.grid(row=1, column=0, pady=5, sticky = "nsew")
 
         fig, ax = plt.subplots() # Maybe use multiple subplots
         canvas = FigureCanvasTkAgg(fig, master=self.probe_plot_frame)
@@ -432,6 +430,21 @@ class UserInterface:
         self.probe_detetection_checkbox.grid(row=6, column=0, pady=5)
     def create_marker_detection_frame(self, parent):
         marker_detection_frame = tk.LabelFrame(parent, text="Marker Detection", name="marker_detection_frame")
+        self.camera_plot_frame = self.create_camera_plot_frame(marker_detection_frame)
+        marker_stats_frame = self.create_marker_stats_frame(marker_detection_frame)
+
+        for i in range(2):
+            marker_detection_frame.grid_rowconfigure(i, weight=1)
+        for i in range(1):
+            marker_detection_frame.grid_columnconfigure(i, weight=1)
+
+        self.camera_plot_frame.grid(row=0, column=0, pady=5, sticky="nsew")
+        marker_stats_frame.grid(row=1, column=0, pady=5, sticky="nsew")
+
+    def create_marker_stats_frame(self, parent):
+        marker_stats_frame = tk.Frame(parent, name="marker_stats_frame")
+
+        return marker_stats_frame
         # TODO implement marker detection
 
     def scan_markers(self, image):
@@ -670,12 +683,22 @@ class UserInterface:
 
             # Update the camera calibration checkbox
             self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("camera_calibrated").select()
+            self.camera_calibrated = True
             self.log_event("Calibrated Camera")
         else:
             self.log_event("Calibration failed: No valid checkerboard corners found in any image")
     def update_camera(self):    
         if self.camera.IsOpen():
             image = capture_image(self.camera)
+
+
+            if self.camera_calibrated:
+                image, marker_rvecs, marker_tvecs = detect_markers(image, self.mtx, self.dist)
+
+                self.sensor.marker_rvecs = marker_rvecs[self.sensor.marker_id]
+                self.sensor.marker_tvecs = marker_tvecs[self.sensor.marker_id]
+                self.probe.marker_rvecs = marker_rvecs[self.probe.marker_id]
+                self.probe.marker_tvecs = marker_tvecs[self.probe.marker_id]
 
             # Update Camera Image
             canvas = self.camera_plot_frame.canvas 
@@ -697,17 +720,20 @@ class UserInterface:
         self.paned_window = ttk.PanedWindow(self.root, orient="vertical")
         self.paned_window.pack(side="right", fill="both", expand=True)
 
+
+
         self.helper_frame = tk.Frame(self.paned_window)
         self.paned_window.add(self.helper_frame)
 
         self.create_event_log_panel(self.paned_window)
+        self.paned_window.add(self.event_log_panel)
 
         self.create_tab_group(self.helper_frame)
         self.create_help_panel(self.helper_frame)
         self.create_camera_panel(self.helper_frame)
         
         
-        self.paned_window.add(self.event_log_panel)
+        
 
         #self.paned_window.config(sashrelief="raised")
         self.root.after(200, lambda: self.paned_window.sashpos(0, 840)) # set initial position of sash, after for short delay (bugfix)
@@ -761,6 +787,7 @@ class UserInterface:
 
         self.tab_group.select(new_tab)
 
+        self.bind_resize_event(new_tab) # Bind the resize event to the new tab widgets for debugging flickering
         # Log the creation of a new tab
         self.log_event(f"Created Tab {self.tab_count}") 
     def close_tab(self, tab):
@@ -838,7 +865,7 @@ class UserInterface:
         ydiff_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
 
     def create_sensor_position_frame(self, parent):    
-        # Sensor Position Panel
+        # Sensor Position Panel TODO delete or implement
         sensor_position_frame = tk.LabelFrame(parent, text="Sensor Position", name="sensor_position_frame")
 
         # Configure the grid layout within the sensor_position_frame 
@@ -867,6 +894,13 @@ class UserInterface:
         
         # display the sensor data in a plot
         fig, ax = plt.subplots()
+
+        ax.set_xlabel('X Position')
+        ax.set_ylabel('Y Position')
+        ax.set_title('Sensor Output')
+        ax.grid(True)
+        ax.legend(['Signal Position'])
+
         ax.set_aspect('equal')
         ax.set_xlim(-10, 10)
         ax.set_ylim(-10, 10)
@@ -898,11 +932,14 @@ class UserInterface:
             slice_plot_frame.grid_columnconfigure(i, weight=1)
         
         plot_frame = tk.LabelFrame(slice_plot_frame, name="plot_frame")
-        plot_frame.grid(row=0, column=0, rowspan=1, columnspan=2, sticky="nsew", padx=5, pady=5,)
-        slice_plot_frame.grid_rowconfigure(0, weight=100)
-        #slice_plot_frame.grid_rowconfigure(1, weight=5)
+        plot_frame.grid(row=0, column=0, rowspan=1, columnspan=2, sticky="nsew", padx=5, pady=5)
+        slice_plot_frame.grid_rowconfigure(0, weight=100) #weight for correct sizing of the slider
+      
         # Create a canvas for the slice plot
         fig, ax = plt.subplots()
+        ax.set_xlabel('Y')
+        ax.set_ylabel('Z')
+
         canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill= "both", expand=True)  # Span the canvas across all columns
@@ -942,6 +979,7 @@ class UserInterface:
 
     def create_measurement_info_frame(self, parent):
         measurement_info_frame = tk.LabelFrame(parent, text="Info", name="measurement_info_frame") 
+        measurement_info_frame.bind("<Configure>", self.on_resize)
 
         # Configure the grid layout within the sensor_info_frame LabelFrame
         for i in range(1):
@@ -970,24 +1008,18 @@ class UserInterface:
         time_estimated_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)    
     def create_path_plot_frame(self, parent):
         path_plot_frame = tk.LabelFrame(parent, text="Path", name="path_plot_frame")
+        
+
         fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
         canvas = FigureCanvasTkAgg(fig, master=path_plot_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill= "both", expand=True)
         path_plot_frame.canvas = canvas
-
-        X, Y, Z = generate_grid(self.grid_size, self.step_size) # Create default grid
-
-        # Plot the meshgrid points
-        X_flat = X.flatten()
-        Y_flat = Y.flatten()
-        Z_flat = Z.flatten()
-
-        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points')
+        
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-        ax.legend()
+        ax.set_title('Path')
         ax.grid(True)
 
 
@@ -1029,7 +1061,6 @@ class UserInterface:
         path_plot_frame = tab.nametowidget("path_plot_frame")
         canvas = path_plot_frame.canvas
         ax = canvas.figure.axes[0]
-        ax.clear() # TODO implement path plot
 
         # Extract the path coordinates from the data
         path = data['3D']['path']
@@ -1037,21 +1068,30 @@ class UserInterface:
         path_y = path[:int(self.current_measurement_id), 1]
         path_z = path[:int(self.current_measurement_id), 2]
 
-        X_flat = data['3D']['X'].flatten()
-        Y_flat = data['3D']['Y'].flatten()
-        Z_flat = data['3D']['Z'].flatten()
+    
+        if not hasattr(tab, 'grid_points'):
+            X_flat = data['3D']['X'].flatten()
+            Y_flat = data['3D']['Y'].flatten()
+            Z_flat = data['3D']['Z'].flatten()
 
-        ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 1)
-        ax.plot(path_x, path_y, path_z, color='red', label='Path', linewidth= 1)
-        ax.legend()
+            ax.set_xlim(X_flat.min()-0.1, X_flat.max()+0.1)
+            ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
+            ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
+            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
+            #print("Initialized grid points")
 
+        if not hasattr(tab, 'path'):
+            tab.path, = ax.plot([], [], [], color='red', label='Path', linewidth = 1)
+            ax.legend()
+        else:
+            tab.path.set_data(path_x, path_y)
+            tab.path.set_3d_properties(path_z)
 
+            # TODO: depreciation warning
 
         # Plot the seethrough plane
+        ''' TODO fix this
         if data["Slices"] != {}:
 
             # Extract Meshgrid from Data
@@ -1066,8 +1106,7 @@ class UserInterface:
             # Plot the plane
             ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
             #self.log_event(f'Z Plane: {Z_plane}, Y Plane: {Y_plane}, X Plane: {X_plane}')
-
-
+        '''
         canvas.draw()
 
         #self.log_event(f"Updated measurement info for Tab {self.tab_count}")
@@ -1103,8 +1142,19 @@ class UserInterface:
         sensor_plot_frame = sensor_info_frame.nametowidget("sensor_plot_frame")
         canvas = sensor_plot_frame.canvas 
         ax = canvas.figure.axes[0]
-        ax.clear() #TODO after all dots have been shown, dont clear any more
-        ax.set_aspect('equal', 'box')
+        #ax.clear() #TODO better updating
+
+
+        # Initialize the plot if it hasn't been initialized yet
+        if not hasattr(tab, 'previous_points'):
+            tab.previous_points, = ax.plot([], [], 'o', color='black')
+            tab.current_point, = ax.plot([], [], 'o', color='red')
+        else:
+            # Plot the current point in red
+            current_x = current_measurement_data['Signal_xpos']
+            current_y = current_measurement_data['Signal_ypos']
+            tab.current_point.set_data(current_x, current_y)
+            # TODO: depreciation warning
 
         '''
         # Plot all previous points in black
@@ -1112,17 +1162,15 @@ class UserInterface:
             previous_measurement_data = data["Measurements"][str(measurement_id)]
             ax.plot(previous_measurement_data['Signal_xpos'], previous_measurement_data['Signal_ypos'], 'o', color='black')
         '''
+            
 
-        # Plot the current point in red
-        ax.plot(current_measurement_data['Signal_xdiff'], current_measurement_data['Signal_ydiff'], 'o', color='red') # TODO xpos or xdiff?
 
-        ax.set_xlabel('X Position')
-        ax.set_ylabel('Y Position')
-        ax.set_title('Sensor Output')
-        ax.grid(True)
-        ax.legend(['Signal Position'])
-        ax.set_xlim(-10, 10)
-        ax.set_ylim(-10, 10)
+        '''
+        # Update the previous points in black # TODO decide on whether to keep this
+        previous_x = current_measurement_data['Signal_xpos']
+        previous_y = current_measurement_data['Signal_ypos']
+        self.previous_points.set_data(previous_x, previous_y)
+        '''
 
         sensor_plot_frame.canvas.draw()
 
@@ -1384,6 +1432,8 @@ class UserInterface:
         step_size = tuple(map(float, step_size.split(',')))
 
         # TODO fix this this is wrong!
+        measurement_points = int((grid_size[0]+1)/(step_size[0])) * int((grid_size[1]+1)/(step_size[1])) * int((grid_size[2]+1)/(step_size[2]))
+
         measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
         
         self.time_estimated = measurement_points * one_measurement_time
@@ -1601,6 +1651,14 @@ class UserInterface:
         # Process the data
         self.log_event("Processing data")
 
+    def on_resize(self, event):
+        #self.log_event(f"Resized: {event.widget} to {event.width}x{event.height}")
+        pass
+        
+    def bind_resize_event(self, widget):
+        widget.bind("<Configure>", self.on_resize)
+        for child in widget.winfo_children():
+            self.bind_resize_event(child)
 
 if __name__ == "__main__":
     root = tk.Tk()

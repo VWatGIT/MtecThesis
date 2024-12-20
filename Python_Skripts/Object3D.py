@@ -1,11 +1,11 @@
 # Objects.py
-from pylablib.devices import Thorlabs
+#from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
 import cv2
 import time
 
-#TODO delet signal class
+#TODO delete signal class only used for testing purposes
 class Signal:
     def __init__(self, xpos, ypos, xdiff, ydiff, sum):
         self.xpos = xpos
@@ -42,12 +42,13 @@ class Sensor(Object3D):
 
         # initialize stage
         self.stage = None
-        #self.initialize_stage()
+        #self.initialize_stage() # TODO uncomment later
         
 
     def initialize_stage(self): 
         try:
-            self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+            #self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+            pass        
         except Exception as e:
             print(f"Error: {e}")
             self.stage = None

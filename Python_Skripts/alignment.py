@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 def align_center(sensor, hexapod, depth = 0):
     # allign beam to center of sensor recursivly
+    # assumes the sensor detects the beam
     resolutions = [0.1, 0.01] # also use [0.1, 0.01, 0.001, 0.0001]
 
     if depth == len(resolutions):
@@ -17,7 +18,7 @@ def align_center(sensor, hexapod, depth = 0):
 
     aligned = False
 
-    while iterations < 20:
+    while iterations < 50:
         iterations += 1
 
         signal = sensor.get_signal() #  
