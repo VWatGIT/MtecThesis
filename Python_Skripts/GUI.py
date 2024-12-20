@@ -1375,7 +1375,6 @@ class UserInterface:
         pass
     # Measurement Handling
     def estimate_time(self):
-        # TODO implement time estimation
         one_measurement_time = 1 # [second] 
         
         grid_size = self.measurement_space_entry.get()
