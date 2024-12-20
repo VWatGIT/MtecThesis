@@ -37,6 +37,12 @@ def capture_image(camera):
 
     return image_array
 
+
+if __name__ == "__main__":
+    array = [1,3,4,2,-7,9,8]
+    print(sorted(array))
+
+
 ''' Save the array to a .mat file
 try:
     scipy.io.savemat('image_data.mat', {'image': image_array})

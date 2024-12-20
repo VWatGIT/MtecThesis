@@ -3,15 +3,68 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time
 
-def generate_snake_path(X, Y, Z): # switch
+def generate_snake_path(X, Y, Z): 
+    # step size = [x,y,z] = [0.001, 1, 1]
     path_points = []
     x_dim, y_dim, z_dim = X.shape
     
-    # Path first goes to
-    # 1. Z direction
-    # 2. Y direction
-    # 3. X direction
+    dim_index = [0, 1, 2] # x, y, z
+    dim_values = [x_dim, y_dim, z_dim]
+    
 
+    # Sort dimensions based on number of path_points
+    sorted_dims = sorted(zip(dim_values, dim_index), reverse=True)
+    ordered_dim_values = [dim_value for dim_value, _ in sorted_dims]
+    ordered_dim_index = [dim for _, dim in sorted_dims]
+   
+
+    # Path goes to the axis with most points first to improve efficiency
+    first_dim = ordered_dim_values[0]
+    second_dim = ordered_dim_values[1]
+    last_dim = ordered_dim_values[2]
+
+    for second in range(second_dim):
+        if second % 2 == 0:  # Even layers
+            for last in range(last_dim):
+                if last % 2 == 0:  # Even rows
+                    for first in range(first_dim):
+                        coords = [0, 0, 0]
+                        coords[ordered_dim_index[0]] = first
+                        coords[ordered_dim_index[1]] = second
+                        coords[ordered_dim_index[2]] = last
+                        path_points.append([X[coords[0], coords[1], coords[2]], 
+                                            Y[coords[0], coords[1], coords[2]], 
+                                            Z[coords[0], coords[1], coords[2]]])
+                else:  # Odd rows
+                    for first in range(first_dim-1, -1, -1):
+                        coords = [0, 0, 0]
+                        coords[ordered_dim_index[0]] = first
+                        coords[ordered_dim_index[1]] = second
+                        coords[ordered_dim_index[2]] = last
+                        path_points.append([X[coords[0], coords[1], coords[2]], 
+                                            Y[coords[0], coords[1], coords[2]], 
+                                            Z[coords[0], coords[1], coords[2]]])
+        else:  # Odd layers
+            for last in range(last_dim-1, -1, -1):
+                if last % 2 == 0:  # Even rows
+                    for first in range(first_dim-1, -1, -1):
+                        coords = [0, 0, 0]
+                        coords[ordered_dim_index[0]] = first
+                        coords[ordered_dim_index[1]] = second
+                        coords[ordered_dim_index[2]] = last
+                        path_points.append([X[coords[0], coords[1], coords[2]], 
+                                            Y[coords[0], coords[1], coords[2]], 
+                                            Z[coords[0], coords[1], coords[2]]])
+                else:  # Odd rows
+                    for first in range(first_dim):
+                        coords = [0, 0, 0]
+                        coords[ordered_dim_index[0]] = first
+                        coords[ordered_dim_index[1]] = second
+                        coords[ordered_dim_index[2]] = last
+                        path_points.append([X[coords[0], coords[1], coords[2]], 
+                                            Y[coords[0], coords[1], coords[2]], 
+                                            Z[coords[0], coords[1], coords[2]]])
+    '''
 
     for y in range(y_dim):
         if y % 2 == 0:  # Even layers
@@ -30,7 +83,8 @@ def generate_snake_path(X, Y, Z): # switch
                 else:  # Odd rows
                     for z in range(z_dim):
                         path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
-
+    '''
+                        
     return np.array(path_points)
 
 def generate_grid(grid_size, step_size):
@@ -50,12 +104,13 @@ def generate_grid(grid_size, step_size):
 if __name__ == "__main__":
     # Set up Measurement Grid
     grid_size = [1, 1, 1]  # [mm]
-    step_size = [1,0.1,0.1] # [mm]
+    step_size = [0.5,1,1] # [mm]
     X, Y, Z = generate_grid(grid_size, step_size)
+    print(X.shape, Y.shape, Z.shape)
 
     # Generate the snake path
     path_points_snake = generate_snake_path(X, Y, Z)
-    #print(path_points_snake)
+    print(path_points_snake)
 
     # Extract the path coordinates
     path_x_snake = path_points_snake[:, 0]
@@ -100,18 +155,18 @@ if __name__ == "__main__":
 
     # Extract planes where x equals a specific value
     x_value = path_points_snake[0, 0]
-    print("x_value:", x_value)
+    #print("x_value:", x_value)
 
     x_index = np.where(X[:, 0, 0] == x_value)  # Find the index of the specific x value 
-    print("x_index:", x_index)
+    #print("x_index:", x_index)
 
     X_plane = X[x_index]
     Y_plane = Y[x_index]
     Z_plane = Z[x_index]
 
-    print("X_plane:", X_plane)
-    print("Y_plane:", Y_plane)
-    print("Z_plane:", Z_plane)
+    #print("X_plane:", X_plane)
+    #print("Y_plane:", Y_plane)
+    #print("Z_plane:", Z_plane)
         
 
     # Plot the plane

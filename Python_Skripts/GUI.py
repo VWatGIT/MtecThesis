@@ -29,7 +29,7 @@ class UserInterface:
         self.root = root
         self.root.title("Probe Beam Measurement")
         self.root.geometry("1920x1080")
-        #self.root.wm_state("zoomed")
+        self.root.wm_state("zoomed")
 
         self.tab_count = 0
     
@@ -47,7 +47,7 @@ class UserInterface:
         self.hexapod = Hexapod()
 
         # Default values
-        self.grid_size = (1, 1, 1) #mm
+        self.grid_size = (1, 6, 6) #mm
 
         self.step_size = (1,1,1) #mm
         self.measurement_points = 1
@@ -133,7 +133,7 @@ class UserInterface:
         input_frame = tk.LabelFrame(self.new_measurement_panel,text ="New Measurement",name="input_frame")
         input_frame.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=10) 
 
-        for i in range(3):
+        for i in range(4):
             input_frame.grid_rowconfigure(i, weight=1)
         for i in range(2):
             input_frame.grid_columnconfigure(i, weight=1)
@@ -158,6 +158,13 @@ class UserInterface:
         self.step_size_entry = tk.Entry(input_frame, name = "step_size_entry")
         self.step_size_entry.grid(row=2, column=1, pady=5, sticky="w")
         self.step_size_entry.insert(0, f"{self.step_size[0]}, {self.step_size[1]}, {self.step_size[2]}") 
+
+        # Time estimation
+        time_estimated_label = tk.Label(input_frame, text="Estimated Time: N/A ", name="time_estimated_label") 
+        time_estimated_label.grid(row=3, column=0, pady=5, sticky="w")
+
+        time_estimation_button = tk.Button(input_frame, text="Estimate Time", command=self.estimate_time)
+        time_estimation_button.grid(row=3, column=1, pady=5, sticky="w")
 
         #Set up checkboxes
         checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
@@ -234,25 +241,27 @@ class UserInterface:
         fine_alignment_button = tk.Button(checkbox_panel, text="Fine Align", command=self.fine_alignment)
         fine_alignment_button.grid(row=7, column=1, pady=5, sticky="w")
 
-        time_estimated_label = tk.Label(checkbox_panel, text="Estimated Time: N/A ", name="time_estimated_label") # TODO implement time estimation
-        time_estimated_label.grid(row=8, column=0, pady=5, sticky="w")
-
-        time_estimation_button = tk.Button(checkbox_panel, text="Estimate Time", command=self.estimate_time)
-        time_estimation_button.grid(row=8, column=1, pady=5, sticky="w")
-
 
         progress_bar = ttk.Progressbar(self.new_measurement_panel, orient="horizontal", length=320, mode="determinate", name="progress_bar")
         progress_bar.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
+        self.autosave_var = tk.IntVar()
+
+        autosave_checkbox = tk.Checkbutton(self.new_measurement_panel, text="Autosave", name="autosave_checkbox", variable=self.autosave_var)
+        autosave_checkbox.grid(row=4, column=1, pady=5, sticky="nsew")
+        autosave_checkbox.select()
+
         #Set up Big Buttons
+        #self.new_measurement_panel.grid_rowconfigure(3, weight=10)
+
         start_button = tk.Button(self.new_measurement_panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
-        start_button.grid(row=4, column=0, padx=10, pady=5, sticky = "w")
+        start_button.grid(row=5, column=0, padx=10, pady=5, sticky = "w")
 
         save_button = tk.Button(self.new_measurement_panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
-        save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
+        save_button.grid(row=5, column=1, padx=10, pady=5, sticky="e")
 
         stop_button = tk.Button(self.new_measurement_panel, text="STOP", name="stop_button", command=self.stop_button_pushed, width = 40, height = 6)
-        stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
+        stop_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
 
     def create_load_measurement_panel(self, parent):
         self.load_measurement_panel = tk.Frame(parent)
@@ -304,13 +313,13 @@ class UserInterface:
         hexapod_y_label.grid(row=1, column=0, pady=5, sticky="e")
         self.hexapod_y_entry = tk.Entry(self.help_panel)
         self.hexapod_y_entry.grid(row=1, column=1, pady=5, sticky="w")
-        self.hexapod_y_entry.insert(0, "0.2")
+        self.hexapod_y_entry.insert(0, "0.3")
 
         hexapod_z_label = tk.Label(self.help_panel, text="Hexapod Z: ")
         hexapod_z_label.grid(row=2, column=0, pady=5, sticky="e")
         self.hexapod_z_entry = tk.Entry(self.help_panel)
         self.hexapod_z_entry.grid(row=2, column=1, pady=5, sticky="w")
-        self.hexapod_z_entry.insert(0, "-7.8")
+        self.hexapod_z_entry.insert(0, "-7.4")
 
         manual_align_button = tk.Button(self.help_panel, text="Manual Align", command=self.manual_alignment)
         manual_align_button.grid(row=3, column=0, columnspan=2, pady=5, sticky="n")
@@ -1146,31 +1155,17 @@ class UserInterface:
 
 
         # Initialize the plot if it hasn't been initialized yet
-        if not hasattr(tab, 'previous_points'):
-            tab.previous_points, = ax.plot([], [], 'o', color='black')
+        if not hasattr(tab, 'current_point'):
+            
             tab.current_point, = ax.plot([], [], 'o', color='red')
         else:
             # Plot the current point in red
             current_x = current_measurement_data['Signal_xpos']
             current_y = current_measurement_data['Signal_ypos']
-            tab.current_point.set_data(current_x, current_y)
-            # TODO: depreciation warning
-
-        '''
-        # Plot all previous points in black
-        for measurement_id in range(1, int(self.current_measurement_id)):
-            previous_measurement_data = data["Measurements"][str(measurement_id)]
-            ax.plot(previous_measurement_data['Signal_xpos'], previous_measurement_data['Signal_ypos'], 'o', color='black')
-        '''
-            
+            tab.current_point.set_data([current_x], [current_y])
 
 
-        '''
-        # Update the previous points in black # TODO decide on whether to keep this
-        previous_x = current_measurement_data['Signal_xpos']
-        previous_y = current_measurement_data['Signal_ypos']
-        self.previous_points.set_data(previous_x, previous_y)
-        '''
+        
 
         sensor_plot_frame.canvas.draw()
 
@@ -1340,7 +1335,9 @@ class UserInterface:
 
         # Define the HDF5 file path
         date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        hdf5_file_path = os.path.join(data_folder, 'data_'+str(date)+'.h5')
+        probe_name = self.probe_name_entry.get()
+
+        hdf5_file_path = os.path.join(data_folder, str(probe_name)+"_"+str(date)+'.h5')
 
         #convert data --> ensure that all data is in the correct format
         data = self.convert_data(data)
@@ -1431,10 +1428,10 @@ class UserInterface:
         step_size = self.step_size_entry.get()
         step_size = tuple(map(float, step_size.split(',')))
 
-        # TODO fix this this is wrong!
+       
         measurement_points = int((grid_size[0]+1)/(step_size[0])) * int((grid_size[1]+1)/(step_size[1])) * int((grid_size[2]+1)/(step_size[2]))
 
-        measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
+        #measurement_points = (grid_size[0]+1) * (grid_size[1]+1) * (grid_size[2]+1) / (step_size[0] * step_size[1] * step_size[2])
         
         self.time_estimated = measurement_points * one_measurement_time
         if int(self.time_estimated) > 60:
@@ -1443,7 +1440,7 @@ class UserInterface:
         else :
             self.time_estimated = str(int(self.time_estimated)) + " [s]"
 
-        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("time_estimated_label").config(text=self.time_estimated)
+        self.new_measurement_panel.nametowidget("input_frame").nametowidget("time_estimated_label").config(text="est. time: "+self.time_estimated)
 
         self.log_event(f"Estimated time:  {self.time_estimated}")
 
@@ -1548,12 +1545,21 @@ class UserInterface:
             last_point = next_point # Update the last point
 
             self.doMeasurement(self.data, self.sensor, self.hexapod, i)
+            self.current_measurement_id = i
             self.log_event(f"Performed measurement {i+1} / {self.measurement_points}")
 
-            # update 
-            measurement_slider.set(str(i+1)) # TODO fix current measurement id!!!
-            self.update_progress_bar(progress_bar, i+1)
-            self.update_tab()
+            # update only every ~100 measurements to save time by not updating the UI every step
+            update_interval = self.measurement_points // 10
+            if i%update_interval == 0:
+                measurement_slider.set(i)
+                self.update_tab()
+                self.update_progress_bar(progress_bar, i+1)
+                self.elapsed_time = int((time.time() - self.start_time)/60)
+                self.data["info"]["elapsed_time"] = self.elapsed_time
+                
+
+         
+            
 
             self.elapsed_time = int((time.time() - self.start_time)/60)
             self.data["info"]["elapsed_time"] = self.elapsed_time
@@ -1570,13 +1576,25 @@ class UserInterface:
         self.log_event("Starting data processing")
         self.create_slices(self.data)
 
+        # Final Update
+        measurement_slider.set(self.measurement_points)
         self.update_tab()
+        self.update_progress_bar(progress_bar,self.measurement_points)
 
-        # TODO implement auto save checkbox
+        # autosave data
+        if self.autosave_var.get() == 1:
+            folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
+            file_path = self.save_data(folder_path, self.data)
+            self.log_event("Data saved automatically to:" + file_path)
 
         self.measurement_running = False # end threading
 
     def create_slices(self, data):
+        # Sort Measurment Points by x coordinate 
+        # reverse=True because x coordinates are descending <0
+        sorted_measurements = sorted(data["Measurements"].items(), key=lambda item: item[1]["Measurement_point"][0], reverse=True)
+        
+        
         last_x = None
         last_measurement_id = 0
         slice_index = 1 # Start with slice 1
@@ -1584,11 +1602,11 @@ class UserInterface:
 
         current_slice = {}
 
-        for measurement_id in data["Measurements"]:
-            measurement = data["Measurements"][str(measurement_id)]
+        for measurement_id, measurement in sorted_measurements:
+            #measurement = data["Measurements"][str(measurement_id)]
             point = measurement["Measurement_point"]
             current_x = point[0] # slice at different x coordinates
-            # HAS something to do with this function!!! TODO
+            
 
             if last_x is None:
                 last_x = current_x # for first iteration

@@ -1,5 +1,5 @@
 # Objects.py
-#from pylablib.devices import Thorlabs # TODO uncomment later
+from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
 import cv2
@@ -47,7 +47,7 @@ class Sensor(Object3D):
 
     def initialize_stage(self): 
         try:
-            #self.stage = Thorlabs.KinesisQuadDetector("69251980") 
+            self.stage = Thorlabs.KinesisQuadDetector("69251980") 
             pass        
         except Exception as e:
             print(f"Error: {e}")
