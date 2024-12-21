@@ -104,7 +104,7 @@ def generate_grid(grid_size, step_size):
 if __name__ == "__main__":
     # Set up Measurement Grid
     grid_size = [1, 1, 1]  # [mm]
-    step_size = [0.5,1,1] # [mm]
+    step_size = [0.1,1,1] # [mm]
     X, Y, Z = generate_grid(grid_size, step_size)
     print(X.shape, Y.shape, Z.shape)
 

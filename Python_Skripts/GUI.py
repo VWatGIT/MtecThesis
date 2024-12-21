@@ -18,9 +18,11 @@ from probe_tip_detection import crop_coordinate_transform
 from alignment import fine_alignment
 from alignment import rough_alignment
 from detect_markers import detect_markers
+from data_handling import save_data, load_data
+from Beam_Visualisation import create_heatmap
+
 
 import os
-import h5py
 import time
 from datetime import datetime
 
@@ -946,8 +948,10 @@ class UserInterface:
       
         # Create a canvas for the slice plot
         fig, ax = plt.subplots()
-        ax.set_xlabel('Y')
-        ax.set_ylabel('Z')
+        ax.set_xlabel('Y Coordinate')
+        ax.set_ylabel('Z Coordinate')
+        ax.set_title('Heatmap of Laser Beam')
+
 
         canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         canvas.draw()
@@ -1206,31 +1210,28 @@ class UserInterface:
             for measurement_id in slice:
                 point = slice[measurement_id]["Measurement_point"]
                 sum = slice[measurement_id]["Signal_sum"]
-                sum = int(sum*100) # scale the sum value
+
                 points.append(point)
                 sum_values.append(sum)
-                #print(f"Point: {point}, Sum: {sum}")
+                
 
-        
-            y_coords = [point[1] for point in points]
-            z_coords = [point[2] for point in points] 
-
-            # slice X coordinates
-
-            # Create grid data
-            y = np.linspace(min(y_coords), max(y_coords), 100) # TODO maybe be related to len(sum_values)
-            z = np.linspace(min(z_coords), max(z_coords), 100)
-            X, Y = np.meshgrid(y, z)
-            Z = np.zeros_like(X)
+            heatmap = create_heatmap(points, sum_values)
+          
 
             # Interpolate sum values onto the grid
-            interpolation_method = 'nearest' if interpolation_var == 0 else 'cubic'
-            Z = griddata((y_coords, z_coords), sum_values, (X, Y), method=interpolation_method)
-            
+            interpolation_method = 'nearest' if interpolation_var == 0 else 'bilinear'
 
             # Update the slice plot
             ax.clear()
-            contour = ax.contourf(X, Y, Z, levels=contour_levels, cmap='hot') # TODO 
+
+            cax = ax.imshow(heatmap, cmap='hot', interpolation=interpolation_method)
+            fig = ax.get_figure()
+
+            if not hasattr(plot_frame, 'check'):
+                plot_frame.check = True
+                fig.colorbar(cax, ax=ax, label='Signal Sum')
+            #fig.colorbar = colorbar
+            
             canvas.draw()
 
 
@@ -1257,12 +1258,15 @@ class UserInterface:
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
         directory = filedialog.askdirectory(initialdir=folder_path, title="Select Directory")
         if directory:  
-            file_name = self.save_data(directory, self.data)
+            probe_name = self.probe_name_entry.get()
+            file_name = save_data(directory, self.data, probe_name)
             self.log_event(f"Data saved to {file_name}")
     def load_button_pushed(self):
         file_path = filedialog.askopenfilename(filetypes=[("hdf5 files", "*.h5")])
+        print(file_path)
         if file_path:
-            self.data = self.load_data(file_path)
+            self.data = load_data(file_path)
+            
             #pprint.pprint(self.data)
             #self.print_data_with_types(self.data)
             self.create_tab()
@@ -1288,103 +1292,6 @@ class UserInterface:
         self.hexapod.send_command("stop") # Stop the Hexapod
         self.log_event("Stopped Measurements")
 
-    # Data Handling
-    def print_data_with_types(self, data, indent=0):
-        # Print the data with types
-        # Fix saving issues with h5py format
-        # TODO delete this function
-
-        indent_str = ' ' * indent
-        if isinstance(data, dict):
-            for key, value in data.items():
-                print(f"{indent_str}{key}:")
-                self.print_data_with_types(value, indent + 2)
-        elif isinstance(data, (list, tuple)):
-            for i, value in enumerate(data):
-                print(f"{indent_str}[{i}]: {value} (type: {type(value)})")
-                self.print_data_with_types(value, indent + 2)
-        elif isinstance(data, np.ndarray):
-            print(f"{indent_str}{data} (type: {data.dtype})")
-        else:
-            print(f"{indent_str}{data} (type: {type(data)})")
-
-    def convert_data(self, data):
-        try:
-            if isinstance(data, dict):
-                return {key: self.convert_data(value) for key, value in data.items()}
-            elif isinstance(data, (list, tuple)):
-                return np.array(data, dtype=np.float64)  # Convert lists or tuples to numpy arrays of floats
-            elif isinstance(data, np.ndarray):
-                if data.dtype == object or data.dtype.kind in {'i', 'u'}:
-                    print(f"object array: {data}") # Convert object arrays to float arrays
-                    return data.astype(np.float64)
-                else:
-                    return data
-            else:
-                return data
-
-        except TypeError as e:
-            print(f"Error converting data: {e}")
-            print(f"Type of data: {type(data)}, dtype: {data.dtype if isinstance(data, np.ndarray) else 'N/A'}")
-            raise
-    def save_data(self, data_folder, data):
-
-        # Ensure the folder exists
-        if not os.path.exists(data_folder):
-            os.makedirs(data_folder)
-
-        # Define the HDF5 file path
-        date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        probe_name = self.probe_name_entry.get()
-
-        hdf5_file_path = os.path.join(data_folder, str(probe_name)+"_"+str(date)+'.h5')
-
-        #convert data --> ensure that all data is in the correct format
-        data = self.convert_data(data)
-        #pprint.pprint(data)
-        #self.print_data_with_types(data)
-
-        # Recursive function to save nested dictionaries
-        def save_group(group, data):
-            for key, value in data.items():
-                key_str = str(key)  # Convert key to string
-                if isinstance(value, dict):
-                    if value:  # Check if the dictionary is not empty
-                        subgroup = group.create_group(key_str)
-                        save_group(subgroup, value)
-                    else:
-                        print(f"Skipping empty dictionary for {key_str}")
-                else:
-                    if value is not None:
-                        group.create_dataset(key_str, data=value)
-                    else:
-                        print(f"Skipping None value for {key_str}")
-
-
-        # Write data to HDF5
-        with h5py.File(hdf5_file_path, 'w') as hdf5_file:
-            save_group(hdf5_file, data)
-                
-        return hdf5_file_path
-    def load_data(self, hdf5_file_path):
-        # Recursive function to load nested dictionaries
-        def load_group(group): 
-            data = {}
-            for key in group.keys():
-                #print(f'{key} +{group[key]}')
-                item = group[key]
-                if isinstance(item, h5py.Group):
-                    data[key] = load_group(item)
-                else:
-                    data[key] = item[()]
-
-            return data
-
-
-        with h5py.File(hdf5_file_path, 'r') as hdf5_file:
-            data = load_group(hdf5_file)
-
-        return data
     def add_meta_data(self, data):
         data["camera"] = {
          
