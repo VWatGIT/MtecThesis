@@ -767,6 +767,11 @@ class UserInterface:
         self.tab_group.add(new_tab, text=name)
         #self.tabs[self.tab_count] = new_tab
 
+        self.create_subtabs(new_tab)
+
+
+        '''
+
         # Configure the grid layout within the new_tab
         for i in range(4):
             new_tab.grid_columnconfigure(i, weight=1)
@@ -777,17 +782,19 @@ class UserInterface:
 
 
         self.create_sensor_info_frame(new_tab)
-        self.create_path_plot_frame(new_tab)
-        self.create_measurement_info_frame(new_tab)
+        
+        
         self.create_results_frame(new_tab)
         
 
         sensor_info_frame = new_tab.nametowidget("sensor_info_frame")
         sensor_info_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
 
+        self.create_path_plot_frame(new_tab)
         path_plot_frame = new_tab.nametowidget("path_plot_frame")
         path_plot_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
+        self.create_measurement_info_frame(new_tab)
         measurement_info_frame = new_tab.nametowidget("measurement_info_frame")
         measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
         new_tab.grid_columnconfigure(1, weight=1, minsize=100)
@@ -795,6 +802,8 @@ class UserInterface:
         results_frame = new_tab.nametowidget("results_frame")
         results_frame.grid(row=0, column=2, rowspan = 2, columnspan = 2, sticky="nsew", padx=10, pady=10)
         new_tab.columnconfigure(2, weight=100)
+
+        '''
 
         close_button = tk.Button(new_tab, text="Close Tab", command=lambda: self.close_tab(new_tab), name="close_button") # create this last in create_tab
         close_button.place(relx=1, rely=0, anchor="ne")  # Place the close button in the top-right corner
@@ -804,10 +813,41 @@ class UserInterface:
         self.bind_resize_event(new_tab) # Bind the resize event to the new tab widgets for debugging flickering
         # Log the creation of a new tab
         self.log_event(f"Created Tab {self.tab_count}") 
+
+
     def close_tab(self, tab):
         self.tab_group.forget(tab)
         self.log_event("Closed Tab") 
     
+    def create_subtabs(self, parent):
+        subtab_group = ttk.Notebook(parent, name="subtab_group")
+        subtab_group.pack(side="right", fill="both", expand=True)
+
+        self.create_results_frame(subtab_group)
+        results_frame = subtab_group.nametowidget("results_frame")
+        results_frame.pack(side="right", fill="both", expand=True)
+        
+        sensor_path_frame = tk.Frame(subtab_group, name="sensor_path_frame")
+        
+        self.create_sensor_info_frame(sensor_path_frame)
+        sensor_info_frame = sensor_path_frame.nametowidget("sensor_info_frame")
+        sensor_info_frame.pack(side="left", fill="both", expand=True)
+
+        self.create_path_plot_frame(sensor_path_frame)
+        path_plot_frame = sensor_path_frame.nametowidget("path_plot_frame")
+        path_plot_frame.pack(side="right", fill="both", expand=True)
+
+
+        self.create_measurement_info_frame(subtab_group)
+        measurement_info_frame = subtab_group.nametowidget("measurement_info_frame")
+        measurement_info_frame.pack(side="right", fill="both", expand=True)
+
+        subtab_group.add(sensor_path_frame, text="Measurement")
+        subtab_group.add(results_frame, text="Results")
+        subtab_group.add(measurement_info_frame, text="Info")
+        
+
+
     def create_event_log_panel(self, paned_window):
         self.event_log_panel = tk.LabelFrame(paned_window, text="Event Log")
         self.event_log_panel.pack(side="right", fill="x", padx=10, pady=10)
@@ -949,10 +989,10 @@ class UserInterface:
       
         # Create a canvas for the slice plot
         fig, ax = plt.subplots()
-        ax.set_xlabel('Y Coordinate')
-        ax.set_ylabel('Z Coordinate')
+        ax.set_xlabel('Y')
+        ax.set_ylabel('Z')
         ax.set_title('Heatmap of Laser Beam')
-
+        ax.invert_yaxis()  # invert y axis
 
         canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         canvas.draw()
@@ -1042,13 +1082,16 @@ class UserInterface:
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
 
-        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+        subtab_group = tab.nametowidget("subtab_group")
+        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+
+        measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         self.current_measurement_id = str(measurement_slider.get())
 
 
         if tab:
-            self.update_measurement_info_frame(tab, self.data)
-            self.update_sensor_info_frame(tab, self.data)
+            self.update_measurement_info_frame(self.data)
+            self.update_sensor_info_frame(self.data)
 
             if self.data["Slices"] != {}:
                 self.update_slice_plot()
@@ -1056,16 +1099,20 @@ class UserInterface:
 
 
         #self.log_event("Updated Tab: " + str(tab_name))
-    def update_measurement_info_frame(self, tab, data):
+    def update_measurement_info_frame(self, data):
         
         # update labels here
-        measurement_info_frame = tab.nametowidget("measurement_info_frame")
+        tab_name = self.tab_group.select()
+        tab = self.tab_group.nametowidget(tab_name)
+
+        subtab_group = tab.nametowidget("subtab_group")
+        measurement_info_frame = subtab_group.nametowidget("measurement_info_frame")
         measurement_points_label = measurement_info_frame.nametowidget("measurement_points_label")
         step_size_label = measurement_info_frame.nametowidget("step_size_label")
         time_elapsed_label = measurement_info_frame.nametowidget("time_elapsed_label")
         time_estimated_label = measurement_info_frame.nametowidget("time_estimated_label")
 
-        print(f'3D Data: {data["3D"]["measurement_points"]}')
+        #print(f'3D Data: {data["3D"]["measurement_points"]}')
 
         measurement_points_label.config(text=f"Measurement Points: {data['3D']['measurement_points']}")
         step_size_label.config(text=f"Step Size: {data['3D']['step_size']}")
@@ -1074,7 +1121,8 @@ class UserInterface:
 
         # update path plot here
         #results_frame = tab.nametowidget("results_frame")
-        path_plot_frame = tab.nametowidget("path_plot_frame")
+        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+        path_plot_frame = sensor_path_frame.nametowidget("path_plot_frame")
         canvas = path_plot_frame.canvas
         ax = canvas.figure.axes[0]
 
@@ -1129,9 +1177,13 @@ class UserInterface:
         
         progress_bar["value"] = measurements_done
         progress_bar.update_idletasks()
-    def update_sensor_info_frame(self, tab, data):
-            
-        sensor_info_frame = tab.nametowidget("sensor_info_frame")
+    def update_sensor_info_frame(self, data):
+        tab_name = self.tab_group.select()
+        tab = self.tab_group.nametowidget(tab_name)
+
+        subtab_group = tab.nametowidget("subtab_group")
+        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+        sensor_info_frame = sensor_path_frame.nametowidget("sensor_info_frame")
         sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
 
         current_measurement_data = data["Measurements"][self.current_measurement_id]
@@ -1182,7 +1234,8 @@ class UserInterface:
 
         data = self.data # TODO implement multiple different data storages handling
 
-        results_frame = tab.nametowidget("results_frame")
+        subtab_group = tab.nametowidget("subtab_group")
+        results_frame = subtab_group.nametowidget("results_frame")
         slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
         plot_frame = slice_plot_frame.nametowidget("plot_frame")
 
@@ -1198,20 +1251,16 @@ class UserInterface:
         interpolation_var = interpolation_checkbox.value.get()
         interpolation = interpolation_var
 
-        slice_index = slice_slider.get()-1 
-        #self.log_event(f"Slice Index: {slice_index}")
+        slice_index = slice_slider.get() 
 
         #only update if data is available
         if data["Visualization"] != {}:
 
+            slice= data['Visualization']["Slices"][f'Slice_{slice_index}'] # Get the slice data
             
-            all_heatmaps = data["Visualization"]['all_heatmaps']
-            print(all_heatmaps)
-            print(slice_index)
-
-            heatmap = all_heatmaps[slice_index]
+            heatmap = slice['heatmap']
           
-            # Interpolate sum values onto the grid
+            # Interpolation Method with checkbox
             interpolation_method = 'nearest' if interpolation_var == 0 else 'bilinear'
 
             # Update the slice plot
@@ -1220,16 +1269,12 @@ class UserInterface:
             cax = ax.imshow(heatmap, cmap='hot', interpolation=interpolation_method)
             fig = ax.get_figure()
 
+            # Plot colorbar once
             if not hasattr(plot_frame, 'check'):
                 plot_frame.check = True
                 fig.colorbar(cax, ax=ax, label='Signal Sum')
-            #fig.colorbar = colorbar
             
             canvas.draw()
-
-
-            self.update_measurement_info_frame(tab, data)
-        
 
             #self.log_event("Updated Slice Plot")
         else:
@@ -1271,11 +1316,15 @@ class UserInterface:
             tab_name = self.tab_group.select()
             tab = self.root.nametowidget(tab_name)
 
-            measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+            subtab_group = tab.nametowidget("subtab_group")
+            sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+
+            measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
             measurement_slider.config(to=self.measurement_points)
             measurement_slider.set(self.current_measurement_id+1)
 
-            slice_slider = tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
+
+            slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
             slice_slider.config(from_=1, to=len(self.data["Slices"]))
             
 
@@ -1315,9 +1364,7 @@ class UserInterface:
             "path": path, 
             "measurement_points": len(path)
         } 
-    def add_visualization_data(self, data):
-        #TODO: add in dictionary 
-        pass
+   
     # Measurement Handling
     def estimate_time(self):
         one_measurement_time = 1 # [second] 
@@ -1420,7 +1467,10 @@ class UserInterface:
 
         self.measurement_points = self.data["3D"]["measurement_points"]
 
-        measurement_slider = tab.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
+        # Update the UI
+        subtab_group = tab.nametowidget("subtab_group")
+        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+        measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         measurement_slider.config(to=self.measurement_points)
 
         progress_bar = self.new_measurement_panel.nametowidget("progress_bar")
@@ -1510,11 +1560,10 @@ class UserInterface:
         # Set Slider limits
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
+        subtab_group = tab.nametowidget("subtab_group")
 
-        slice_slider = tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
+        slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
         slice_slider.config(from_=1, to=len(data["Slices"]))
-
-
 
         
     def doMeasurement(self, data, sensor, hexapod, i):
