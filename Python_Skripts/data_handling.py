@@ -71,7 +71,7 @@ def convert_data(data):
             return np.array(data, dtype=np.float64)  # Convert lists or tuples to numpy arrays of floats
         elif isinstance(data, np.ndarray):
             if data.dtype == object or data.dtype.kind in {'i', 'u'}:
-                print(f"object array: {data}") # Convert object arrays to float arrays
+                #print(f"object array: {data}") # Convert object arrays to float arrays
                 return data.astype(np.float64)
             else:
                 return data

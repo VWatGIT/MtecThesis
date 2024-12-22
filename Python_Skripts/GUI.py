@@ -19,7 +19,9 @@ from alignment import fine_alignment
 from alignment import rough_alignment
 from detect_markers import detect_markers
 from data_handling import save_data, load_data
-from Beam_Visualisation import create_heatmap
+from Beam_Visualization import create_heatmap
+from Beam_Visualization import process_slices
+from Beam_Visualization import create_slices
 
 
 import os
@@ -40,6 +42,7 @@ class UserInterface:
         self.data["3D"] = {}
         self.data["Measurements"] = {}
         self.data['Info'] = {}
+        self.data['Visualization'] = {}
 
         #implement support for multiple data tabs
         
@@ -842,9 +845,7 @@ class UserInterface:
 
         measurment_slider.set(1)
         measurment_slider.config(resolution=1, state="normal", command=self.update_tab)
-        #measurment_slider.bind("<ButtonRelease-1>", self.update_tab)
-        #measurment_slider.bind("<Motion>", self.update_tab) TODO find correct event to update when incrementing slider
-
+    
         sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
         sensor_readings_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
 
@@ -1037,7 +1038,7 @@ class UserInterface:
 
 
     # Update Functions
-    def update_tab(self, event=None):    # TODO implement data input parameter
+    def update_tab(self, event=None):   
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
 
@@ -1063,6 +1064,8 @@ class UserInterface:
         step_size_label = measurement_info_frame.nametowidget("step_size_label")
         time_elapsed_label = measurement_info_frame.nametowidget("time_elapsed_label")
         time_estimated_label = measurement_info_frame.nametowidget("time_estimated_label")
+
+        print(f'3D Data: {data["3D"]["measurement_points"]}')
 
         measurement_points_label.config(text=f"Measurement Points: {data['3D']['measurement_points']}")
         step_size_label.config(text=f"Step Size: {data['3D']['step_size']}")
@@ -1101,7 +1104,6 @@ class UserInterface:
             tab.path.set_data(path_x, path_y)
             tab.path.set_3d_properties(path_z)
 
-            # TODO: depreciation warning
 
         # Plot the seethrough plane
         ''' TODO fix this
@@ -1196,28 +1198,19 @@ class UserInterface:
         interpolation_var = interpolation_checkbox.value.get()
         interpolation = interpolation_var
 
-        slice_index = str(slice_slider.get()) 
+        slice_index = slice_slider.get()-1 
         #self.log_event(f"Slice Index: {slice_index}")
 
         #only update if data is available
-        if data["Slices"] != {}:
-            # Get the slice from the data
-            slice = data["Slices"][slice_index]
+        if data["Visualization"] != {}:
+
             
-            points = []
-            sum_values = []
+            all_heatmaps = data["Visualization"]['all_heatmaps']
+            print(all_heatmaps)
+            print(slice_index)
 
-            for measurement_id in slice:
-                point = slice[measurement_id]["Measurement_point"]
-                sum = slice[measurement_id]["Signal_sum"]
-
-                points.append(point)
-                sum_values.append(sum)
-                
-
-            heatmap = create_heatmap(points, sum_values)
+            heatmap = all_heatmaps[slice_index]
           
-
             # Interpolate sum values onto the grid
             interpolation_method = 'nearest' if interpolation_var == 0 else 'bilinear'
 
@@ -1414,12 +1407,12 @@ class UserInterface:
         X, Y, Z = generate_grid(self.grid_size, self.step_size)
         self.grid = (X, Y, Z)
         self.path_points = generate_snake_path(X, Y, Z)
-        self.log_event(f'Path Points: \n {self.path_points}')
+        #self.log_event(f'Path Points: \n {self.path_points}')
 
         self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
-         
-        
-        
+        self.log_event("Added 3D Data")
+        #print(self.data['3D'])
+
         self.start_time = time.time()
         self.elapsed_time = 0
 
@@ -1453,9 +1446,16 @@ class UserInterface:
 
             self.doMeasurement(self.data, self.sensor, self.hexapod, i)
             self.current_measurement_id = i
-            self.log_event(f"Performed measurement {i+1} / {self.measurement_points}")
 
-            # update only every ~100 measurements to save time by not updating the UI every step
+            if i > 0: # TODO make this work
+                #self.event_log.delete("end-2l", "end-1l")
+                #self.event_log.insert("end-1l", f"Performed measurement {i+1} / {self.measurement_points}\n")
+                self.log_event(f"Performed measurement {i+1} / {self.measurement_points}")
+            else:
+                self.log_event(f"Performed measurement {i+1} / {self.measurement_points}")
+            
+
+            # update only every ~10% of measurements to save time by not updating the UI every step
             update_interval = self.measurement_points // 10
             if i%update_interval == 0:
                 measurement_slider.set(i)
@@ -1471,17 +1471,20 @@ class UserInterface:
             self.elapsed_time = int((time.time() - self.start_time)/60)
             self.data["info"]["elapsed_time"] = self.elapsed_time
 
-        #pprint.pprint(self.data)   # Show Data structure in Console
+        
 
         measurement_slider.config(state = "normal")
         self.new_measurement_panel.nametowidget("save_button").config(state="normal")
         self.log_event("Done with measurements")     
 
-        self.hexapod.move_to_default_position() 
-
-        self.log_event("Moved Hexapod to default position")
+        if self.hexapod.connection_status is True:
+            self.hexapod.move_to_default_position() 
+            self.log_event("Moved Hexapod to default position")
+            
         self.log_event("Starting data processing")
-        self.create_slices(self.data)
+        self.process_data(self.data)
+
+        #pprint.pprint(self.data)   # Show Data structure in Console
 
         # Final Update
         measurement_slider.set(self.measurement_points)
@@ -1496,42 +1499,13 @@ class UserInterface:
 
         self.measurement_running = False # end threading
 
-    def create_slices(self, data):
-        # Sort Measurment Points by x coordinate 
-        # reverse=True because x coordinates are descending <0
-        sorted_measurements = sorted(data["Measurements"].items(), key=lambda item: item[1]["Measurement_point"][0], reverse=True)
-        
-        
-        last_x = None
-        last_measurement_id = 0
-        slice_index = 1 # Start with slice 1
-        
-
-        current_slice = {}
-
-        for measurement_id, measurement in sorted_measurements:
-            #measurement = data["Measurements"][str(measurement_id)]
-            point = measurement["Measurement_point"]
-            current_x = point[0] # slice at different x coordinates
-            
-
-            if last_x is None:
-                last_x = current_x # for first iteration
-
-            if current_x != last_x:
-                # Store the current slice
-                data["Slices"][str(slice_index)] = current_slice
-                slice_index += 1
-                current_slice = {}
-
-            current_slice[measurement_id] = measurement
-            last_x = current_x
-            last_measurement_id = measurement_id
-
-        # Store the last slice
-        if current_slice:
-            data["Slices"][str(slice_index)] = current_slice
-
+    def process_data(self, data):
+        # Process the data
+        self.log_event("Processing data")
+        create_slices(data)
+        self.log_event("Created Slices")
+        process_slices(data)
+        self.log_event("Processed Slices")
 
         # Set Slider limits
         tab_name = self.tab_group.select()
@@ -1539,9 +1513,10 @@ class UserInterface:
 
         slice_slider = tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
         slice_slider.config(from_=1, to=len(data["Slices"]))
-        #pprint.pprint(data["Slices"])
 
-        self.log_event("Created Slices")
+
+
+        
     def doMeasurement(self, data, sensor, hexapod, i):
 
         # Get data from the sensor
@@ -1571,10 +1546,6 @@ class UserInterface:
             'Measurement_point': measurement_point,
             'Hexapod_position': hexapod_position
         }
-        
-    def process_data(self, data):
-        # Process the data
-        self.log_event("Processing data")
 
     def on_resize(self, event):
         #self.log_event(f"Resized: {event.widget} to {event.width}x{event.height}")
