@@ -35,16 +35,7 @@ class UserInterface:
         self.root.geometry("1920x1080")
         self.root.wm_state("zoomed")
 
-        self.tab_count = 0
-    
-        self.data = {}
-        self.data["Slices"] = {}
-        self.data["3D"] = {}
-        self.data["Measurements"] = {}
-        self.data['Info'] = {}
-        self.data['Visualization'] = {}
-
-        #implement support for multiple data tabs
+        self.tab_count = -1
         
         # Create the objects
         self.sensor = Sensor()
@@ -55,14 +46,15 @@ class UserInterface:
         self.grid_size = (1, 6, 6) #mm
 
         self.step_size = (1,1,1) #mm
+        
+        # TODO attach these values to tab
         self.measurement_points = 1
         self.time_estimated = 0
-        self.elapsed_time = 0
-
+        self.elapsed_time = 0 
         self.current_measurement_id = 0
+
         self.measurement_running = False
-        
-        # TODO make callback function for values changed in entry fields
+
 
         os.environ["PYLON_CAMEMU"] = "1" # Enable the pylon camera emulator for testing at home
         self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
@@ -90,6 +82,17 @@ class UserInterface:
         self.connect_stage() # TODO decide if necessary
         self.connect_hexapod()
     
+    def new_data(self): # attach this to the new tab
+        data = {}
+        data["Slices"] = {}
+        data["3D"] = {}
+        data["Measurements"] = {}
+        data['Info'] = {}
+        data['Visualization'] = {}
+        
+        return data
+        
+
     def create_menu(self):
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
@@ -277,7 +280,7 @@ class UserInterface:
         return_button = tk.Button(self.load_measurement_panel, text="Return", command=self.show_home_panel, width=20, height=3)
         return_button.pack(pady=30)
     def create_camera_panel(self, parent):
-        self.camera_panel = tk.LabelFrame(parent, name="camera_panel")
+        self.camera_panel = ttk.Notebook(parent, name="camera_panel") # notebook to save time TODO rename
         self.camera_panel.place(relx=1, rely=1, anchor="center", relheight=1, relwidth=1)
 
         for i in range(2):
@@ -287,16 +290,24 @@ class UserInterface:
  
         self.create_camera_settings_frame(self.camera_panel)
         self.create_camera_calibration_frame(self.camera_panel)
-        self.create_camera_detection_frame(self.camera_panel)
+        self.create_probe_detection_frame(self.camera_panel)
+        self.create_marker_detection_frame(self.camera_panel)
         
+        
+        self.probe_detection_frame = self.camera_panel.nametowidget("probe_detection_frame")
+        self.marker_detection_frame = self.camera_panel.nametowidget("marker_detection_frame")
         self.camera_settings_frame = self.camera_panel.nametowidget("camera_settings_frame")
-        self.camera_settings_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10) 
-
         self.camera_calibration_frame = self.camera_panel.nametowidget("camera_calibration_frame")
-        self.camera_calibration_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        
+        
+        #self.marker_detection_frame.pack(side = "right", fill="both", expand=True)
+        #self.probe_detection_frame.pack(side = "left", fill="both", expand=True)
 
-        self.camera_detection_frame = self.camera_panel.nametowidget("camera_detection_frame")
-        self.camera_detection_frame.grid(row=1, column=0,columnspan=2, sticky="nsew", padx=10, pady=10)
+        self.camera_panel.add(self.camera_calibration_frame, text="Calibration")
+        self.camera_panel.add(self.probe_detection_frame, text="Probe-Tip")
+        self.camera_panel.add(self.marker_detection_frame, text="Markers")
+        self.camera_panel.add(self.camera_settings_frame, text="Info")
+        
 
         return_button = tk.Button(self.camera_panel, text="Return", command= lambda: self.camera_panel.place_forget())
         return_button.place(relx=1, rely= 0, anchor="ne")
@@ -371,16 +382,6 @@ class UserInterface:
         self.camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         toggle_camera_button = tk.Checkbutton(self.camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera)
         toggle_camera_button.pack(side = "top", pady=5)
-    def create_camera_detection_frame(self, parent):
-        camera_detection_frame = tk.LabelFrame(parent, text="Detection", name="camera_detection_frame")
-
-        self.create_probe_detection_frame(camera_detection_frame)
-        self.probe_detection_frame = camera_detection_frame.nametowidget("probe_detection_frame")
-        self.probe_detection_frame.pack(side = "left", fill="both", expand=True)
-
-        self.create_marker_detection_frame(camera_detection_frame)
-        self.marker_detection_frame = camera_detection_frame.nametowidget("marker_detection_frame")
-        self.marker_detection_frame.pack(side = "right", fill="both", expand=True)
 
     def create_probe_detection_frame(self, parent):
         probe_detection_frame = tk.LabelFrame(parent, text="Probe Tip", name="probe_detection_frame")
@@ -430,9 +431,10 @@ class UserInterface:
         self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5)
         self.threshold_slider = tk.Scale(probe_detection_input_frame, from_=0, to=255, orient="horizontal", name="threshold_slider")
         self.threshold_slider.grid(row=2, column=1, rowspan=2, pady=5)
+        self.threshold_slider.config(command=self.take_probe_image)
 
 
-        self.take_probe_image_button = tk.Button(probe_detection_input_frame, text="Take Image", command=self.take_probe_image) # TODO implement crop_image
+        self.take_probe_image_button = tk.Button(probe_detection_input_frame, text="Take Image", command=self.take_probe_image) 
         self.take_probe_image_button.grid(row=4, column=0, columnspan=2,rowspan = 2,pady=5)
 
         probe_detection_input_frame.grid_rowconfigure(3, weight=3) #weight row for gap
@@ -759,13 +761,17 @@ class UserInterface:
         self.tab_group.pack(side="right", fill="both", expand=True)
 
         self.create_tab() # Create the Default Tab
-    def create_tab(self):
+    def create_tab(self, data = None):
         self.tab_count += 1
-        name = str(self.probe_name_entry.get())
+        name = str(self.probe_name_entry.get()).lower() 
 
-        new_tab = ttk.Frame(self.tab_group, name=f"tab{self.tab_count}") # TODO change naming sheme with probe names
+        new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
         #self.tabs[self.tab_count] = new_tab
+        if data == None:
+            new_tab.data = self.new_data()
+        else:
+            new_tab.data = data 
 
         self.create_subtabs(new_tab)
 
@@ -813,8 +819,6 @@ class UserInterface:
         self.bind_resize_event(new_tab) # Bind the resize event to the new tab widgets for debugging flickering
         # Log the creation of a new tab
         self.log_event(f"Created Tab {self.tab_count}") 
-
-
     def close_tab(self, tab):
         self.tab_group.forget(tab)
         self.log_event("Closed Tab") 
@@ -1082,28 +1086,30 @@ class UserInterface:
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
 
+        data = tab.data
+
         subtab_group = tab.nametowidget("subtab_group")
         sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
 
         measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         self.current_measurement_id = str(measurement_slider.get())
 
+        self.update_measurement_info_frame()
+        self.update_sensor_info_frame()
 
-        if tab:
-            self.update_measurement_info_frame(self.data)
-            self.update_sensor_info_frame(self.data)
-
-            if self.data["Slices"] != {}:
-                self.update_slice_plot()
+        if data["Slices"] != {}:
+            self.update_slice_plot()
 
 
 
         #self.log_event("Updated Tab: " + str(tab_name))
-    def update_measurement_info_frame(self, data):
+    def update_measurement_info_frame(self):
         
         # update labels here
         tab_name = self.tab_group.select()
         tab = self.tab_group.nametowidget(tab_name)
+
+        data = tab.data
 
         subtab_group = tab.nametowidget("subtab_group")
         measurement_info_frame = subtab_group.nametowidget("measurement_info_frame")
@@ -1177,9 +1183,10 @@ class UserInterface:
         
         progress_bar["value"] = measurements_done
         progress_bar.update_idletasks()
-    def update_sensor_info_frame(self, data):
+    def update_sensor_info_frame(self):
         tab_name = self.tab_group.select()
         tab = self.tab_group.nametowidget(tab_name)
+        data = tab.data
 
         subtab_group = tab.nametowidget("subtab_group")
         sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
@@ -1232,7 +1239,7 @@ class UserInterface:
         tab_name = self.tab_group.select()
         tab = self.root.nametowidget(tab_name)
 
-        data = self.data # TODO implement multiple different data storages handling
+        data = tab.data 
 
         subtab_group = tab.nametowidget("subtab_group")
         results_frame = subtab_group.nametowidget("results_frame")
@@ -1282,6 +1289,11 @@ class UserInterface:
 
     # Button Functions
     def start_button_pushed(self):
+        
+        if self.tab_count == 0:
+            self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
+
+
         self.create_tab()
 
         # Threading to make interaction with UI possible while measurements are running
@@ -1293,24 +1305,30 @@ class UserInterface:
         else:
             self.log_event("Measurements already running")
     def save_button_pushed(self):
+        if self.tab_count == 0:
+            self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
+
+
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
         directory = filedialog.askdirectory(initialdir=folder_path, title="Select Directory")
+
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+        data = tab.data
         if directory:  
             probe_name = self.probe_name_entry.get()
-            file_name = save_data(directory, self.data, probe_name)
+            file_name = save_data(directory, data, probe_name)
             self.log_event(f"Data saved to {file_name}")
     def load_button_pushed(self):
         file_path = filedialog.askopenfilename(filetypes=[("hdf5 files", "*.h5")])
         print(file_path)
         if file_path:
-            self.data = load_data(file_path)
+            data = load_data(file_path)
             
-            #pprint.pprint(self.data)
-            #self.print_data_with_types(self.data)
-            self.create_tab()
+            self.create_tab(data)
             self.update_tab()
 
-            self.measurement_points = self.data["3D"]["measurement_points"]
+            self.measurement_points = data["3D"]["measurement_points"] # TODO also attach this to tab?
             self.current_measurement_id = 0
 
             tab_name = self.tab_group.select()
@@ -1325,7 +1343,7 @@ class UserInterface:
 
 
             slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
-            slice_slider.config(from_=1, to=len(self.data["Slices"]))
+            slice_slider.config(from_=1, to=len(data["Slices"]))
             
 
             self.log_event(f"Data loaded from {file_path}")
@@ -1442,6 +1460,7 @@ class UserInterface:
     def run_measurements(self):
         tab_name = self.tab_group.select()
         tab = self.tab_group.nametowidget(tab_name)
+        data = tab.data
 
         # Get the grid size and step size
         self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
@@ -1456,16 +1475,15 @@ class UserInterface:
         self.path_points = generate_snake_path(X, Y, Z)
         #self.log_event(f'Path Points: \n {self.path_points}')
 
-        self.add_3D_data(self.data, self.grid, self.grid_size, self.step_size, self.path_points)
+        self.add_3D_data(data, self.grid, self.grid_size, self.step_size, self.path_points)
         self.log_event("Added 3D Data")
-        #print(self.data['3D'])
 
         self.start_time = time.time()
         self.elapsed_time = 0
 
-        self.add_meta_data(self.data)
+        self.add_meta_data(data)
 
-        self.measurement_points = self.data["3D"]["measurement_points"]
+        self.measurement_points = data["3D"]["measurement_points"]
 
         # Update the UI
         subtab_group = tab.nametowidget("subtab_group")
@@ -1494,7 +1512,7 @@ class UserInterface:
 
             last_point = next_point # Update the last point
 
-            self.doMeasurement(self.data, self.sensor, self.hexapod, i)
+            self.doMeasurement(data, self.sensor, self.hexapod, i)
             self.current_measurement_id = i
 
             if i > 0: # TODO make this work
@@ -1512,14 +1530,14 @@ class UserInterface:
                 self.update_tab()
                 self.update_progress_bar(progress_bar, i+1)
                 self.elapsed_time = int((time.time() - self.start_time)/60)
-                self.data["info"]["elapsed_time"] = self.elapsed_time
+                data["info"]["elapsed_time"] = self.elapsed_time
                 
 
          
             
 
             self.elapsed_time = int((time.time() - self.start_time)/60)
-            self.data["info"]["elapsed_time"] = self.elapsed_time
+            data["info"]["elapsed_time"] = self.elapsed_time
 
         
 
@@ -1532,9 +1550,7 @@ class UserInterface:
             self.log_event("Moved Hexapod to default position")
             
         self.log_event("Starting data processing")
-        self.process_data(self.data)
-
-        #pprint.pprint(self.data)   # Show Data structure in Console
+        self.process_data(data)
 
         # Final Update
         measurement_slider.set(self.measurement_points)
@@ -1544,7 +1560,7 @@ class UserInterface:
         # autosave data
         if self.autosave_var.get() == 1:
             folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
-            file_path = self.save_data(folder_path, self.data)
+            file_path = self.save_data(folder_path, data)
             self.log_event("Data saved automatically to:" + file_path)
 
         self.measurement_running = False # end threading
