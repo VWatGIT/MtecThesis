@@ -17,16 +17,15 @@ def generate_snake_path(X, Y, Z):
     ordered_dim_values = [dim_value for dim_value, _ in sorted_dims]
     ordered_dim_index = [dim for _, dim in sorted_dims]
    
-    # TODO still wrong , always goes to x first
-    # Path goes to the axis with most points first to improve efficiency
+    # Path should go to the axis with most points first to improve efficiency
     first_dim = ordered_dim_values[0]
     second_dim = ordered_dim_values[1]
     last_dim = ordered_dim_values[2]
 
-    for second in range(second_dim):
-        if second % 2 == 0:  # Even layers
-            for last in range(last_dim):
-                if last % 2 == 0:  # Even rows
+    for last in range(last_dim):
+        if last % 2 == 0:  # Even layers
+            for second in range(second_dim):
+                if second % 2 == 0:  # Even rows
                     for first in range(first_dim):
                         coords = [0, 0, 0]
                         coords[ordered_dim_index[0]] = first
@@ -45,8 +44,8 @@ def generate_snake_path(X, Y, Z):
                                             Y[coords[0], coords[1], coords[2]], 
                                             Z[coords[0], coords[1], coords[2]]])
         else:  # Odd layers
-            for last in range(last_dim-1, -1, -1):
-                if last % 2 == 0:  # Even rows
+            for second in range(second_dim-1, -1, -1):
+                if second % 2 == 0:  # Even rows
                     for first in range(first_dim-1, -1, -1):
                         coords = [0, 0, 0]
                         coords[ordered_dim_index[0]] = first
@@ -64,27 +63,7 @@ def generate_snake_path(X, Y, Z):
                         path_points.append([X[coords[0], coords[1], coords[2]], 
                                             Y[coords[0], coords[1], coords[2]], 
                                             Z[coords[0], coords[1], coords[2]]])
-    '''
-
-    for y in range(y_dim):
-        if y % 2 == 0:  # Even layers
-            for x in range(x_dim):
-                if x % 2 == 0:  # Even rows
-                    for z in range(z_dim):
-                        path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
-                else:  # Odd rows
-                    for z in range(z_dim-1, -1, -1):
-                        path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
-        else:  # Odd layers
-            for x in range(x_dim-1, -1, -1):
-                if x % 2 == 0:  # Even rows
-                    for z in range(z_dim-1, -1, -1):
-                        path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
-                else:  # Odd rows
-                    for z in range(z_dim):
-                        path_points.append([X[x, y, z], Y[x, y, z], Z[x, y, z]])
-    '''
-                        
+   
     return np.array(path_points)
 
 def generate_grid(grid_size, step_size):
@@ -104,7 +83,7 @@ def generate_grid(grid_size, step_size):
 if __name__ == "__main__":
     # Set up Measurement Grid
     grid_size = [1, 1, 1]  # [mm]
-    step_size = [0.1,1,1] # [mm]
+    step_size = [0.5,0.2,0.3] # [mm]
     X, Y, Z = generate_grid(grid_size, step_size)
     print(X.shape, Y.shape, Z.shape)
 

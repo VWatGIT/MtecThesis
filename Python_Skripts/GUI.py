@@ -91,6 +91,7 @@ class UserInterface:
         data["Measurements"] = {}
         data['Info'] = {}
         data['Visualization'] = {}
+        data['Beam_Parameters'] = {}
         
         return data
         
