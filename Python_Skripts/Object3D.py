@@ -44,7 +44,6 @@ class Sensor(Object3D):
         self.stage = None
         #self.initialize_stage() # TODO uncomment later
         
-
     def initialize_stage(self): 
         try:
             self.stage = Thorlabs.KinesisQuadDetector("69251980") 

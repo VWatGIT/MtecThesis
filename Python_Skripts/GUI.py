@@ -937,12 +937,16 @@ class UserInterface:
 
         for i in range(2):
             results_frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(1):
             results_frame.grid_rowconfigure(i, weight=1)
         
 
         self.create_slice_plot_frame(results_frame)
-        self.create_measurement_info_frame(results_frame)
+        self.create_measurement_info_frame(results_frame) # TODO delete?
+        self.create_beam_plot_frame(results_frame)
+
+        beam_plot_frame = results_frame.nametowidget("beam_plot_frame")
+        beam_plot_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
         slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
         slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
@@ -993,6 +997,24 @@ class UserInterface:
 
         slice_slider.config(command=self.update_slice_plot)
         interpolation_checkbox.config(command=self.update_slice_plot) 
+    def create_beam_plot_frame(self, parent):
+        
+        beam_plot_frame = tk.LabelFrame(parent, text="Beam Plot", name="beam_plot_frame")
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        ax.set_title('Beam Plot')
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+
+        canvas = FigureCanvasTkAgg(fig, master=beam_plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill= "both", expand=True)
+        beam_plot_frame.canvas = canvas
+
+        pass
 
     def create_measurement_info_frame(self, parent):
         measurement_info_frame = tk.LabelFrame(parent, text="Info", name="measurement_info_frame") 
@@ -1225,7 +1247,7 @@ class UserInterface:
             extent = data['Visualization']['Slices']['Slice_1']['heatmap_extent']
 
             # Interpolation Method with checkbox
-            interpolation_method = 'nearest' if interpolation_var == 0 else 'bilinear'
+            interpolation_method = 'nearest' if interpolation_var == 0 else 'gaussian'
 
             # Update the slice plot
             ax.clear()
@@ -1243,6 +1265,40 @@ class UserInterface:
             #self.log_event("Updated Slice Plot")
         else:
             self.log_event("No Slice Data available")
+    def update_beam_plot(self, event = None):
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+        data = tab.data
+
+        subtab_group = tab.nametowidget("subtab_group")
+        results_frame = subtab_group.nametowidget("results_frame")
+        beam_plot_frame = results_frame.nametowidget("beam_plot_frame")
+
+        canvas = beam_plot_frame.canvas
+        ax = canvas.figure.axes[0]
+
+        # Update the beam plot
+        ax.clear()
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        ax.set_title('Beam Plot')
+        grid_size = data['3D']['grid_size']
+        ax.set_xlim(-grid_size[0],0)
+        ax.set_ylim(-grid_size[1]/2, grid_size[1]/2)
+        ax.set_zlim(-grid_size[2]/2, grid_size[2]/2)
+
+        ax.set_box_aspect([grid_size[1], grid_size[1], grid_size[2]])
+
+
+        # Plot the beam
+        all_beam_points = data['Visualization']['Beam_Model']['beam_points']
+        hull_simplices = data['Visualization']['Beam_Model']['hull_simplices']
+        if hull_simplices is not None:
+                ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
+        ax.legend()
+        canvas.draw()
+
 
     # Button Functions
     def start_button_pushed(self):
@@ -1302,7 +1358,7 @@ class UserInterface:
             slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
             slice_slider.config(from_=1, to=len(data["Slices"]))
             
-
+            self.update_beam_plot()
             self.log_event(f"Data loaded from {file_path}")
     def stop_button_pushed(self):
         self.measurement_running = False
@@ -1516,11 +1572,12 @@ class UserInterface:
         measurement_slider.set(self.measurement_points)
         self.update_tab()
         self.update_progress_bar(progress_bar,self.measurement_points)
+        self.update_beam_plot()
 
         # autosave data
         if self.autosave_var.get() == 1:
             folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
-            file_path = self.save_data(folder_path, data)
+            file_path = save_data(folder_path, data)
             self.log_event("Data saved automatically to:" + file_path)
 
         subtab_group = tab.nametowidget("subtab_group")

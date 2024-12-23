@@ -107,35 +107,62 @@ def extract_slice_data(slice):
 
     return points, sum_values
 
+def find_slice_beam_center(points, sum_values):
+    # Find the center of the beam in the slice
+    # Weigh the points by their sum values
+
+    # Convert points and sum_values to numpy arrays if they are not already
+    points = np.array(points)
+    sum_values = np.array(sum_values)
+    exp_weights = sum_values**2  # Square the sum values to emphasize the importance of the points
+    # Calculate the weighted sum of the points
+    weighted_sum = np.sum(points * exp_weights[:, np.newaxis], axis=0)
+
+    # Calculate the total sum of the sum values
+    total_sum = np.sum(exp_weights)
+
+    # Calculate the weighted average (beam center)
+    beam_center = weighted_sum / total_sum
+    print(f'Beam center: {beam_center}')
+
+    return beam_center
+
+
 def analyze_slice_2D(slice, data):
-    try:
-        points, sum_values = extract_slice_data(slice)
-    except Exception as e:
-        print(f'Error extracting slice data: {e}')
-    try:
-        heatmap, heatmap_extent = create_heatmap(points, sum_values, data)
-    except Exception as e:
-        print(f'Error creating heatmap: {e}')
+
+    points, sum_values = extract_slice_data(slice)
+    heatmap, heatmap_extent = create_heatmap(points, sum_values, data)
+    beam_points = detect_beam_points(points, sum_values)
+    beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
+    beam_center = find_slice_beam_center(points, sum_values)
+    edge_points_2D, hull_2D = select_edge_points(beam_points_2D)
+
+    slice_data = {
+        'points': points,
+        'sum_values': sum_values,
+        'beam_center': beam_center,
+        'beam_points': beam_points,
+        'beam_points_2D': beam_points_2D,
+        'edge_points_2D': edge_points_2D,
+        'hull_2D_vertices': hull_2D.vertices,
+        'hull_2D_simplices': hull_2D.simplices,
+        'heatmap': heatmap,
+        'heatmap_extent': heatmap_extent
+        }
+
+    return slice_data
+
+def calculate_beam_trajectory_LR(data):
+    # TODO weigh points by their sum values
+    center_points = data['Visualization']['Beam_Model']['center_points']
     
-    try: 
-        beam_points = detect_beam_points(points, sum_values)
-        beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
-    except Exception as e:
-        print(f'Error detecting beam points: {e}')
-    try:
-        edge_points_2D, hull_2D = select_edge_points(beam_points_2D)
-    except Exception as e:
-        print(f'Error selecting edge points: {e}')
 
-    return points, sum_values, heatmap, heatmap_extent, beam_points_2D, edge_points_2D, hull_2D
-
-def calculate_beam_trajectory_LR(data, points):
-    # Fit a line to the points from the center of the first beam slice
-    start_point = np.mean(data['Visualization']['Slices']['Slice_1']['edge_points_2D'], axis=0)
-    start_point = np.array([0, start_point[0], start_point[1]])
+    # Fit a line to the center_points from the center of the first beam slice
+    start_point = center_points[0]
+    start_point = np.array([0, start_point[1], start_point[2]])
 
     # Shift the points to be relative to the start point
-    shifted_points = points - start_point
+    shifted_points = center_points - start_point
 
     # Perform linear regression on the shifted points
     X = shifted_points[:, 0].reshape(-1, 1)  # Independent variable (x-axis)
@@ -242,7 +269,8 @@ def fit_ellipse(edge_points):
 def process_slices(data):
     slices = data['Slices']
     all_beam_points = []
-    all_heatmaps = []
+    all_sum_values = []
+    all_center_points = []
     
     data['Visualization'] = {}
     data['Visualization']['Slices'] = {}
@@ -252,46 +280,43 @@ def process_slices(data):
 
     for key in sorted_keys:
         slice = slices[key]
-        #print(f'slice {key} with x = {slice[next(iter(slice))]["Measurement_point"][0]}')
+
+        slice_data = analyze_slice_2D(slice, data)
+
+        data['Visualization']['Slices'][f'Slice_{key}'] = slice_data
      
-        points, sum_values, heatmap, heatmap_extent, beam_points_2D, edge_points_2D, hull_2D = analyze_slice_2D(slice, data)
+        sum_values = slice_data['sum_values']
+        beam_center = slice_data['beam_center']
+        beam_points = slice_data['beam_points']
 
-        data['Visualization']['Slices'][f'Slice_{key}'] = {
-            'points': points,
-            'sum_values': sum_values,
-
-            'beam_points_2D': beam_points_2D,
-            'edge_points_2D': edge_points_2D,
-            'hull_2D_vertices': hull_2D.vertices,
-            'hull_2D_simplices': hull_2D.simplices,
-            'heatmap': heatmap,
-            'heatmap_extent': heatmap_extent
-        }
-
-        beam_points = detect_beam_points(points, sum_values)
+        all_center_points.append(beam_center)
         all_beam_points.append(beam_points)
+        all_sum_values.append(sum_values)
 
-    try:
-        all_beam_points = np.vstack(all_beam_points)
-        edge_points, hull = select_edge_points(all_beam_points)
-        
-        # TODO decide on wheather to pass all_beam_points or edge_points or edge_points_2D
-        trajectory = calculate_beam_trajectory_LR(data, all_beam_points) 
-        angles = calculate_angles(trajectory)
-        print(f'angles: {angles}')
+    all_center_points = np.vstack(all_center_points)
+    all_sum_values = np.vstack(all_sum_values)
+    all_beam_points = np.vstack(all_beam_points)
+    edge_points, hull = select_edge_points(all_beam_points)
+    
+    data['Visualization']['Beam_Model'] = {
+        'beam_points': all_beam_points,
+        'sum_values': all_sum_values,
+        'center_points': all_center_points,
+        'edge_points': edge_points,   
+        # 'hull': hull, not saved because not hdf5 compatible
+        'hull_vertices': hull.vertices,
+        'hull_simplices': hull.simplices,
+    }
 
-        data['Visualization']['Beam_Model'] = {
-            'beam_points': all_beam_points,
-            'edge_points': edge_points,   
-            # 'hull': hull, not saved because not hdf5 compatible
-            'hull_vertices': hull.vertices,
-            'hull_simplices': hull.simplices,
-            'trajectory': trajectory,
-            'angles': angles
-            #'all_heatmaps' : all_heatmaps, # now in ['Visualization']['Slices']
-        }
-    except Exception as e:
-        print(f'Error processing beam model: {e}')
+    # TODO maybe move trajectory and angles to a separate file?
+    trajectory = calculate_beam_trajectory_LR(data) 
+    angles = calculate_angles(trajectory)
+    
+    data['Visualization']['Beam_Model']['trajectory'] = trajectory
+    data['Visualization']['Beam_Model']['angles'] = angles
+
+
+
 
     return data    
 
@@ -395,12 +420,16 @@ def plot_beam(data):
     ax_3d.set_ylim(-grid_size[1]/2, grid_size[1]/2)
     ax_3d.set_zlim(-grid_size[2]/2, grid_size[2]/2)
 
+    ax_3d.set_box_aspect([grid_size[1], grid_size[1], grid_size[2]])
+
     # Plot Points 
     all_beam_points = data['Visualization']['Beam_Model']['beam_points']
     edge_points = data['Visualization']['Beam_Model']['edge_points']
-    
-    ax_3d.scatter(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], c='red', s=1, label='Beam Points')
-    ax_3d.scatter(edge_points[:, 0], edge_points[:, 1], edge_points[:, 2], c='green', s=5, label = 'Edge Points')
+    center_points = data['Visualization']['Beam_Model']['center_points']
+
+    #ax_3d.scatter(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], c='red', s=1, label='Beam Points')
+    #ax_3d.scatter(edge_points[:, 0], edge_points[:, 1], edge_points[:, 2], c='green', s=5, label = 'Edge Points')
+    ax_3d.scatter(center_points[:, 0], center_points[:, 1], center_points[:, 2], c='blue', s=5, label='Center Points')
 
     # Plot the convex hull
     hull_simplices = data['Visualization']['Beam_Model']['hull_simplices']
@@ -410,14 +439,12 @@ def plot_beam(data):
     # Plot the trajectory
     trajectory = data['Visualization']['Beam_Model']['trajectory']
     print(f'trajectory:{trajectory}')
+    print(f'angles:{data["Visualization"]["Beam_Model"]["angles"]}')
 
 
+    start_point = center_points[0]
+    start_point = np.array([0, start_point[1], start_point[2]]) 
 
-    start_point = np.mean(data['Visualization']['Slices']['Slice_1']['edge_points_2D'], axis=0)
-    print(f'start_point2D:{start_point}')
-    start_point = np.array([0.5, start_point[0], start_point[1]]) 
-
-    print(f'start_point:{start_point}')
 
     # Plot the trajectory vector as an arrow
     ax_3d.quiver(start_point[0], start_point[1], start_point[2],

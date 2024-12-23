@@ -8,6 +8,8 @@ class Gauss_Beam:
         self.I_0 = I_0 # Intensity at z = 0, r = 0
         self.z_r = np.pi * w_0**2 / wavelength # Rayleigh length
 
+        self.theta = self.w_0 / self.z_r
+
     def get_Intensity(self, r, z):
 
         w_z = self.get_Beam_Radius(z)
