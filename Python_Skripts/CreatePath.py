@@ -17,7 +17,7 @@ def generate_snake_path(X, Y, Z):
     ordered_dim_values = [dim_value for dim_value, _ in sorted_dims]
     ordered_dim_index = [dim for _, dim in sorted_dims]
    
-
+    # TODO still wrong , always goes to x first
     # Path goes to the axis with most points first to improve efficiency
     first_dim = ordered_dim_values[0]
     second_dim = ordered_dim_values[1]

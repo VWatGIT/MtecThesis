@@ -7,6 +7,8 @@ from scipy.spatial import ConvexHull
 from matplotlib.widgets import Slider
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
+from matplotlib.patches import Ellipse
+from scipy.interpolate import griddata
 
 
 def create_slices(data):
@@ -45,39 +47,42 @@ def create_slices(data):
 
     return data
 
-def create_heatmap(points, sum_values):
+def create_heatmap(points, sum_values, data):
     
     # Convert points to numpy array for easier manipulation
     points = np.array(points)
     sum_values = np.array(sum_values)
 
-    points = points[:, 1:]  # Remove the first column
+    if len(points[0] > 3):
+        points = points[:, 1:]  # Remove the first column
+   
     # Determine the size of the grid
-    min_x, min_y = np.min(points, axis=0)
-    max_x, max_y = np.max(points, axis=0)
-    #print(max_x, max_y, min_x, min_y)
+    grid_size = data['3D']['grid_size'] # [x, y, z]
+    step_size = data['3D']['step_size'] # [x, y, z]
 
-    # Shift points to start from zero
-    shifted_points = points - [min_x, min_y] # TODO maybe dont shift
+    num_elements_y = int(grid_size[2] / step_size[2])
+    num_elements_x = int(grid_size[1] / step_size[1])
 
-    # Determine the size of the grid
-    grid_width = int(max_x - min_x) + 1
-    grid_height = int(max_y - min_y) + 1
+    x_min = int(-grid_size[1] / 2)
+    x_max = int(grid_size[1] / 2)
+    y_min = int(-grid_size[2] / 2)
+    y_max = int(grid_size[2] / 2)
 
-    # Create grid for plotting
-    heatmap = np.zeros((grid_height, grid_width), dtype=np.uint8)
+    x,y = np.meshgrid(np.linspace(x_min, x_max, num_elements_x), np.linspace(y_min, y_max, num_elements_y))
+    
+    z = griddata(points, sum_values, (x, y), method='nearest')
+    
+    heatmap_extent = [x_min, x_max, y_min, y_max]
 
-    # Populate the heatmap with the normalized sum values
-    for i, point in enumerate(shifted_points):
-        x, y = int(point[0]), int(point[1])
-        heatmap[y, x] = sum_values[i]
+    heatmap = z
+    #heatmap = [z, extent]
 
-    return heatmap
+    return heatmap, heatmap_extent
 
-def detect_beam_points(points, sum_values, sum_treshhold = 3):
+def detect_beam_points(points, sum_values, treshhold = 3):
     beam_points = []
     for i, sum in enumerate(sum_values):
-        if sum > sum_treshhold:
+        if sum > treshhold:
             # assume sum>3 is enough for a point to be part of the beam
             beam_points.append(points[i])
 
@@ -102,15 +107,27 @@ def extract_slice_data(slice):
 
     return points, sum_values
 
-def analyze_slice_2D(slice):
-    points, sum_values = extract_slice_data(slice)
-    heatmap = create_heatmap(points, sum_values)
+def analyze_slice_2D(slice, data):
+    try:
+        points, sum_values = extract_slice_data(slice)
+    except Exception as e:
+        print(f'Error extracting slice data: {e}')
+    try:
+        heatmap, heatmap_extent = create_heatmap(points, sum_values, data)
+    except Exception as e:
+        print(f'Error creating heatmap: {e}')
+    
+    try: 
+        beam_points = detect_beam_points(points, sum_values)
+        beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
+    except Exception as e:
+        print(f'Error detecting beam points: {e}')
+    try:
+        edge_points_2D, hull_2D = select_edge_points(beam_points_2D)
+    except Exception as e:
+        print(f'Error selecting edge points: {e}')
 
-    beam_points = detect_beam_points(points, sum_values)
-    beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
-    edge_points_2D, hull_2D = select_edge_points(beam_points_2D)
-
-    return points, sum_values, heatmap, beam_points_2D, edge_points_2D, hull_2D
+    return points, sum_values, heatmap, heatmap_extent, beam_points_2D, edge_points_2D, hull_2D
 
 def calculate_beam_trajectory_LR(data, points):
     # Fit a line to the points from the center of the first beam slice
@@ -195,6 +212,33 @@ def calculate_angles(trajectory):
 
     return angles
 
+def create_beam_approximation(data):
+    slices = data['Visualization']['Slices']
+    first_slice = slices['Slice_1']
+    last_slice = slices[f'Slice_{len(slices)+1}']
+
+    ellipse = fit_ellipse(first_slice['edge_points_2D'])
+    # TODO extrapolate
+
+def fit_ellipse(edge_points):
+    # Perform PCA on the edge points
+    pca = PCA(n_components=2)
+    pca.fit(edge_points)
+
+    # Get the center of the ellipse
+    center = np.mean(edge_points, axis=0)
+
+    # Get the lengths of the semi-major and semi-minor axes
+    axes_lengths = np.sqrt(pca.explained_variance_)
+
+    # Get the angle of rotation of the ellipse
+    angle = np.degrees(np.arctan2(pca.components_[0, 1], pca.components_[0, 0]))
+
+    # create the ellipse
+    ellipse = Ellipse(xy=center, width=2*axes_lengths[0], height=2*axes_lengths[1], angle=angle, edgecolor='blue', facecolor='none')
+   
+    return ellipse
+
 def process_slices(data):
     slices = data['Slices']
     all_beam_points = []
@@ -209,9 +253,8 @@ def process_slices(data):
     for key in sorted_keys:
         slice = slices[key]
         #print(f'slice {key} with x = {slice[next(iter(slice))]["Measurement_point"][0]}')
-
      
-        points, sum_values, heatmap, beam_points_2D, edge_points_2D, hull_2D = analyze_slice_2D(slice)
+        points, sum_values, heatmap, heatmap_extent, beam_points_2D, edge_points_2D, hull_2D = analyze_slice_2D(slice, data)
 
         data['Visualization']['Slices'][f'Slice_{key}'] = {
             'points': points,
@@ -221,32 +264,34 @@ def process_slices(data):
             'edge_points_2D': edge_points_2D,
             'hull_2D_vertices': hull_2D.vertices,
             'hull_2D_simplices': hull_2D.simplices,
-            'heatmap': heatmap
+            'heatmap': heatmap,
+            'heatmap_extent': heatmap_extent
         }
 
         beam_points = detect_beam_points(points, sum_values)
         all_beam_points.append(beam_points)
 
-    all_beam_points = np.vstack(all_beam_points)
-    edge_points, hull = select_edge_points(all_beam_points)
-    
-    # TODO decide on wheather to pass all_beam_points or edge_points or edge_points_2D
-    trajectory = calculate_beam_trajectory_LR(data, all_beam_points) 
-    angles = calculate_angles(trajectory)
-    print(f'angles: {angles}')
+    try:
+        all_beam_points = np.vstack(all_beam_points)
+        edge_points, hull = select_edge_points(all_beam_points)
+        
+        # TODO decide on wheather to pass all_beam_points or edge_points or edge_points_2D
+        trajectory = calculate_beam_trajectory_LR(data, all_beam_points) 
+        angles = calculate_angles(trajectory)
+        print(f'angles: {angles}')
 
-    
-
-    data['Visualization']['Beam_Model'] = {
-        'beam_points': all_beam_points,
-        'edge_points': edge_points,   
-        # 'hull': hull, not saved because not hdf5 compatible
-        'hull_vertices': hull.vertices,
-        'hull_simplices': hull.simplices,
-        'trajectory': trajectory,
-        'angles': angles
-        #'all_heatmaps' : all_heatmaps, # now in ['Visualization']['Slices']
-    }
+        data['Visualization']['Beam_Model'] = {
+            'beam_points': all_beam_points,
+            'edge_points': edge_points,   
+            # 'hull': hull, not saved because not hdf5 compatible
+            'hull_vertices': hull.vertices,
+            'hull_simplices': hull.simplices,
+            'trajectory': trajectory,
+            'angles': angles
+            #'all_heatmaps' : all_heatmaps, # now in ['Visualization']['Slices']
+        }
+    except Exception as e:
+        print(f'Error processing beam model: {e}')
 
     return data    
 
@@ -258,11 +303,12 @@ def plot_slice(data):
 
     # Plot the initial heatmap
     heatmap = data['Visualization']['Slices']['Slice_1']['heatmap']
+    extent = data['Visualization']['Slices']['Slice_1']['heatmap_extent']
 
-    heatmap_plot = ax1.imshow(heatmap, cmap='hot', interpolation='nearest')
+    heatmap_plot = ax1.imshow(heatmap, extent=extent,cmap='hot', interpolation='nearest')
     fig.colorbar(heatmap_plot, ax=ax1, label='Signal Sum')
     
-    ax1.invert_yaxis()  # invert y axis 
+    #ax1.invert_yaxis()  # invert y axis 
     ax1.set_title('Heatmap')
     ax1.set_xlabel('X Coordinate')
     ax1.set_ylabel('Y Coordinate')
@@ -283,6 +329,10 @@ def plot_slice(data):
     # Plot the convex hull
     hull_simplices = data['Visualization']['Slices']['Slice_1']['hull_2D_simplices']
     
+    # plot the ellipse
+    ellipse = fit_ellipse(edge_points)
+    ax2.add_patch(ellipse)
+
     for simplex in hull_simplices:
         ax2.plot(beam_points[simplex, 0], beam_points[simplex, 1], 'k-')
         # TODO test simply plotting the edge points
@@ -307,6 +357,12 @@ def plot_slice(data):
         ax2.scatter(current_slice['edge_points_2D'][:, 0], current_slice['edge_points_2D'][:, 1], c='green', s=5)
         for simplex in current_slice['hull_2D_simplices']:
             ax2.plot(current_slice['beam_points_2D'][simplex, 0], current_slice['beam_points_2D'][simplex, 1], 'k-')
+       
+        # plot the ellipse
+        edge_points = current_slice['edge_points_2D']
+        ellipse = fit_ellipse(edge_points)
+        ax2.add_patch(ellipse)
+       
         ax2.set_title('2D Edge Points')
         ax2.set_xlabel('X Coordinate')
         ax2.set_ylabel('Y Coordinate')
@@ -349,7 +405,7 @@ def plot_beam(data):
     # Plot the convex hull
     hull_simplices = data['Visualization']['Beam_Model']['hull_simplices']
     if hull_simplices is not None:
-        ax_3d.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='red', label='Convex Hull')
+        ax_3d.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
 
     # Plot the trajectory
     trajectory = data['Visualization']['Beam_Model']['trajectory']

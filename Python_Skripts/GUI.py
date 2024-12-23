@@ -22,7 +22,8 @@ from data_handling import save_data, load_data
 from Beam_Visualization import create_heatmap
 from Beam_Visualization import process_slices
 from Beam_Visualization import create_slices
-
+from Gauss_Beam import Gauss_Beam # Used for testing
+from Gauss_Beam import create_Test_Beam # Used for testing
 
 import os
 import time
@@ -41,6 +42,7 @@ class UserInterface:
         self.sensor = Sensor()
         self.probe = Probe()
         self.hexapod = Hexapod()
+        self.gauss_beam = create_Test_Beam() 
 
         # Default values
         self.grid_size = (1, 6, 6) #mm
@@ -257,7 +259,7 @@ class UserInterface:
 
         autosave_checkbox = tk.Checkbutton(self.new_measurement_panel, text="Autosave", name="autosave_checkbox", variable=self.autosave_var)
         autosave_checkbox.grid(row=4, column=1, pady=5, sticky="nsew")
-        autosave_checkbox.select()
+        #autosave_checkbox.select()
 
         #Set up Big Buttons
         #self.new_measurement_panel.grid_rowconfigure(3, weight=10)
@@ -776,41 +778,6 @@ class UserInterface:
         self.create_subtabs(new_tab)
 
 
-        '''
-
-        # Configure the grid layout within the new_tab
-        for i in range(4):
-            new_tab.grid_columnconfigure(i, weight=1)
-        for i in range(2):
-            new_tab.grid_rowconfigure(i, weight=1)
-
-        new_tab.grid_columnconfigure(3, weight=100)
-
-
-        self.create_sensor_info_frame(new_tab)
-        
-        
-        self.create_results_frame(new_tab)
-        
-
-        sensor_info_frame = new_tab.nametowidget("sensor_info_frame")
-        sensor_info_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
-
-        self.create_path_plot_frame(new_tab)
-        path_plot_frame = new_tab.nametowidget("path_plot_frame")
-        path_plot_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
-
-        self.create_measurement_info_frame(new_tab)
-        measurement_info_frame = new_tab.nametowidget("measurement_info_frame")
-        measurement_info_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
-        new_tab.grid_columnconfigure(1, weight=1, minsize=100)
-
-        results_frame = new_tab.nametowidget("results_frame")
-        results_frame.grid(row=0, column=2, rowspan = 2, columnspan = 2, sticky="nsew", padx=10, pady=10)
-        new_tab.columnconfigure(2, weight=100)
-
-        '''
-
         close_button = tk.Button(new_tab, text="Close Tab", command=lambda: self.close_tab(new_tab), name="close_button") # create this last in create_tab
         close_button.place(relx=1, rely=0, anchor="ne")  # Place the close button in the top-right corner
 
@@ -984,11 +951,11 @@ class UserInterface:
         slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
         for i in range(4):
             slice_plot_frame.grid_rowconfigure(i, weight=1)
-        for i in range(2): 
+        for i in range(1): 
             slice_plot_frame.grid_columnconfigure(i, weight=1)
         
         plot_frame = tk.LabelFrame(slice_plot_frame, name="plot_frame")
-        plot_frame.grid(row=0, column=0, rowspan=1, columnspan=2, sticky="nsew", padx=5, pady=5)
+        plot_frame.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
         slice_plot_frame.grid_rowconfigure(0, weight=100) #weight for correct sizing of the slider
       
         # Create a canvas for the slice plot
@@ -1007,19 +974,12 @@ class UserInterface:
         slice_slider_label = ttk.Label(slice_plot_frame, text="Slice Index:", name="slice_slider_label")
         slice_slider_label.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
 
-        contour_levels_slider_label = ttk.Label(slice_plot_frame, text="Contour Levels:", name="contour_levels_slider_label")
-        contour_levels_slider_label.grid(row=1, column=1, rowspan = 1, columnspan=1, sticky="w", padx=5)
-
         # Create a slider for the slice plot
         slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="slice_slider")
         slice_slider.grid(row=2, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
         slice_slider.set(1) # set default value
         slice_slider.config(resolution=1) # set slider resolution
 
-        contour_levels_slider = tk.Scale(slice_plot_frame, from_=1, to=30, orient="horizontal", name="contour_levels_slider")
-        contour_levels_slider.grid(row=2, column=1, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        contour_levels_slider.set(10) # set default value
-        contour_levels_slider.config(resolution=1)
 
         # Create a checkbox for the slice plot
         interpolation_var = tk.IntVar()
@@ -1032,7 +992,6 @@ class UserInterface:
         tab = self.root.nametowidget(tab_name)
 
         slice_slider.config(command=self.update_slice_plot)
-        contour_levels_slider.config(command=self.update_slice_plot)
         interpolation_checkbox.config(command=self.update_slice_plot) 
 
     def create_measurement_info_frame(self, parent):
@@ -1252,9 +1211,6 @@ class UserInterface:
         slice_slider = slice_plot_frame.nametowidget("slice_slider")
         interpolation_checkbox = slice_plot_frame.nametowidget("interpolation_checkbox")
 
-        contour_levels_slider = slice_plot_frame.nametowidget("contour_levels_slider")
-        contour_levels = contour_levels_slider.get()
-        
         interpolation_var = interpolation_checkbox.value.get()
         interpolation = interpolation_var
 
@@ -1266,14 +1222,15 @@ class UserInterface:
             slice= data['Visualization']["Slices"][f'Slice_{slice_index}'] # Get the slice data
             
             heatmap = slice['heatmap']
-          
+            extent = data['Visualization']['Slices']['Slice_1']['heatmap_extent']
+
             # Interpolation Method with checkbox
             interpolation_method = 'nearest' if interpolation_var == 0 else 'bilinear'
 
             # Update the slice plot
             ax.clear()
 
-            cax = ax.imshow(heatmap, cmap='hot', interpolation=interpolation_method)
+            cax = ax.imshow(heatmap,extent=extent, cmap='hot', interpolation=interpolation_method)
             fig = ax.get_figure()
 
             # Plot colorbar once
@@ -1290,8 +1247,8 @@ class UserInterface:
     # Button Functions
     def start_button_pushed(self):
         
-        if self.tab_count == 0:
-            self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
+        #if self.tab_count == 0:
+            #self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
 
 
         self.create_tab()
@@ -1305,8 +1262,8 @@ class UserInterface:
         else:
             self.log_event("Measurements already running")
     def save_button_pushed(self):
-        if self.tab_count == 0:
-            self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
+        #if self.tab_count == 0:
+            #self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
 
 
         folder_path = 'C:/Users/Valen/OneDrive/Dokumente/uni_Dokumente/Classes/WiSe2025/Thesis/Actual Work/data'
@@ -1550,7 +1507,10 @@ class UserInterface:
             self.log_event("Moved Hexapod to default position")
             
         self.log_event("Starting data processing")
-        self.process_data(data)
+        try:
+            self.process_data(data)
+        except Exception as e:
+            self.log_event(f"Error during data processing: {e}")
 
         # Final Update
         measurement_slider.set(self.measurement_points)
@@ -1562,6 +1522,11 @@ class UserInterface:
             folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
             file_path = self.save_data(folder_path, data)
             self.log_event("Data saved automatically to:" + file_path)
+
+        subtab_group = tab.nametowidget("subtab_group")
+        subtab_group.select(subtab_group.nametowidget("results_frame"))
+
+
 
         self.measurement_running = False # end threading
 
@@ -1580,9 +1545,13 @@ class UserInterface:
 
         slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
         slice_slider.config(from_=1, to=len(data["Slices"]))
-
-        
+    
     def doMeasurement(self, data, sensor, hexapod, i):
+        # Get the current (theoretical) measurement point
+        measurement_point = self.path_points[i]
+
+        # Get the absolute Hexapod position for the measurement point 
+        hexapod_position = hexapod.position
 
         # Get data from the sensor
         if self.sensor.stage is not None:
@@ -1590,14 +1559,16 @@ class UserInterface:
         
         else:
             signal = sensor.get_test_signal()
-            # TODO delete this later
+
+            # convert path coordinates to zylindrical coordinates
+            r = np.sqrt(measurement_point[1]**2 + measurement_point[2]**2)*1e-3 # convert to mm
+            z = -measurement_point[0]*1e-3 # convert to mm
+            #self.log_event(f"r: {r}, z: {z}")
 
 
-        # Get the current (theoretical) measurement point
-        measurement_point = self.path_points[i]
-
-        # Get the absolute Hexapod position for the measurement point 
-        hexapod_position = hexapod.position
+            intensity = self.gauss_beam.get_Intensity(r, z)
+            #print(f"Intensity: {intensity}")
+            signal.sum = intensity
 
         measurement_id_str = str(i+1)  # Convert measurement_id to string
         data["Measurements"][measurement_id_str] = {

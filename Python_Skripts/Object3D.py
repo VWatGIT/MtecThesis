@@ -53,8 +53,6 @@ class Sensor(Object3D):
             print(f"Error: {e}")
             self.stage = None
         
-
-
     def get_signal(self):
         self.stage.open()
         signal = self.stage.get_readings()
