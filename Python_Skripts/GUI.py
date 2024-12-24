@@ -1293,8 +1293,8 @@ class UserInterface:
 
 
         # Plot the beam
-        all_beam_points = data['Visualization']['Beam_Model']['beam_points']
-        hull_simplices = data['Visualization']['Beam_Model']['hull_simplices']
+        all_beam_points = data['Visualization']['Beam_Model']['Measured_Beam']['beam_points']
+        hull_simplices = data['Visualization']['Beam_Model']['Measured_Beam']['hull_simplices']
         if hull_simplices is not None:
                 ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
         ax.legend()

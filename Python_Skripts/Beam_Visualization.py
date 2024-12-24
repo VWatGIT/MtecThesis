@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from matplotlib.patches import Ellipse
 from scipy.interpolate import griddata
-
+from scipy.spatial.transform import Rotation as R
 
 def create_slices(data):
     # Sort Measurment Points by x coordinate 
@@ -81,12 +81,14 @@ def create_heatmap(points, sum_values, data):
 
 def detect_beam_points(points, sum_values, treshhold = 3):
     beam_points = []
+    beam_sum_values = []
     for i, sum in enumerate(sum_values):
         if sum > treshhold:
             # assume sum>3 is enough for a point to be part of the beam
             beam_points.append(points[i])
+            beam_sum_values.append(sum)
 
-    return beam_points
+    return beam_points, beam_sum_values
 
 def select_edge_points(beam_points):
     # Use ConvexHull to find the outermost points
@@ -123,18 +125,24 @@ def find_slice_beam_center(points, sum_values):
 
     # Calculate the weighted average (beam center)
     beam_center = weighted_sum / total_sum
-    print(f'Beam center: {beam_center}')
+    #print(f'Beam center: {beam_center}')
 
     return beam_center
-
 
 def analyze_slice_2D(slice, data):
 
     points, sum_values = extract_slice_data(slice)
     heatmap, heatmap_extent = create_heatmap(points, sum_values, data)
-    beam_points = detect_beam_points(points, sum_values)
+    
+    # First find the beam center
+    beam_center = find_slice_beam_center(points, sum_values)  
+    # Then use the beam center to find the beam points with w(z)
+    beam_points, beam_sum_values = detect_beam_points(points, sum_values)
+    beam_points = np.array(beam_points)
+    beam_sum_values = np.array(beam_sum_values)
     beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
-    beam_center = find_slice_beam_center(points, sum_values)
+
+
     edge_points_2D, hull_2D = select_edge_points(beam_points_2D)
 
     slice_data = {
@@ -142,6 +150,7 @@ def analyze_slice_2D(slice, data):
         'sum_values': sum_values,
         'beam_center': beam_center,
         'beam_points': beam_points,
+        'beam_sum_values': beam_sum_values,
         'beam_points_2D': beam_points_2D,
         'edge_points_2D': edge_points_2D,
         'hull_2D_vertices': hull_2D.vertices,
@@ -152,11 +161,7 @@ def analyze_slice_2D(slice, data):
 
     return slice_data
 
-def calculate_beam_trajectory_LR(data):
-    # TODO weigh points by their sum values
-    center_points = data['Visualization']['Beam_Model']['center_points']
-    
-
+def calculate_beam_trajectory_LR(center_points):
     # Fit a line to the center_points from the center of the first beam slice
     start_point = center_points[0]
     start_point = np.array([0, start_point[1], start_point[2]])
@@ -190,31 +195,6 @@ def calculate_beam_trajectory_LR(data):
 
     return trajectory_vector
 
-def calculate_beam_trajectory_PCA(points, weights=None):
-    # TODO delete this function if not used 
-    # use of weights is wrong
-    if weights is None:
-        weights = np.array([100, 1, 1])  # Default weights 
-
-    # Scale the  points by the weights
-    # Scaling to make the x axis more important
-    points = points * weights
-
-    # Perform PCA on the 3D edge points
-    pca = PCA(n_components=1)
-    pca.fit(points)
-    
-    # Get the first principal component
-    principal_component = pca.components_[0]
-    
-    # Scale the principal component back to the original scale
-    trajectory = principal_component / weights
-    trajectory = -trajectory # invert x axis
-
-    trajectory = trajectory / np.linalg.norm(trajectory)  # Normalize the vector
-
-    return trajectory 
-
 def calculate_angles(trajectory):
     # Normalize the trajectory vector
     trajectory = trajectory / np.linalg.norm(trajectory)
@@ -230,12 +210,14 @@ def calculate_angles(trajectory):
     angle_y = np.arctan2(np.abs(y_component), np.sqrt(x_component**2 + z_component**2))
     angle_z = np.arctan2(np.abs(z_component), np.sqrt(x_component**2 + y_component**2))
 
+    '''
     # Convert the angles from radians to degrees
     angle_x = np.degrees(angle_x)
     angle_y = np.degrees(angle_y)
     angle_z = np.degrees(angle_z)
-
-    angles = np.array([angle_x, angle_y, angle_z])
+    '''
+    
+    angles = np.degrees(np.array([angle_x, angle_y, angle_z]))
 
     return angles
 
@@ -247,7 +229,7 @@ def create_beam_approximation(data):
     ellipse = fit_ellipse(first_slice['edge_points_2D'])
     # TODO extrapolate
 
-def fit_ellipse(edge_points):
+def fit_ellipse(edge_points): # TODO delete
     # Perform PCA on the edge points
     pca = PCA(n_components=2)
     pca.fit(edge_points)
@@ -269,7 +251,7 @@ def fit_ellipse(edge_points):
 def process_slices(data):
     slices = data['Slices']
     all_beam_points = []
-    all_sum_values = []
+    all_beam_sum_values = []
     all_center_points = []
     
     data['Visualization'] = {}
@@ -285,22 +267,24 @@ def process_slices(data):
 
         data['Visualization']['Slices'][f'Slice_{key}'] = slice_data
      
-        sum_values = slice_data['sum_values']
+        beam_sum_values = slice_data['beam_sum_values']
         beam_center = slice_data['beam_center']
         beam_points = slice_data['beam_points']
 
         all_center_points.append(beam_center)
         all_beam_points.append(beam_points)
-        all_sum_values.append(sum_values)
+        all_beam_sum_values.extend(beam_sum_values)
 
     all_center_points = np.vstack(all_center_points)
-    all_sum_values = np.vstack(all_sum_values)
+    all_beam_sum_values = np.vstack(all_beam_sum_values)
     all_beam_points = np.vstack(all_beam_points)
     edge_points, hull = select_edge_points(all_beam_points)
     
-    data['Visualization']['Beam_Model'] = {
+    data['Visualization']['Beam_Models'] = {}
+
+    data['Visualization']['Beam_Models']['Measured_Beam'] = {
         'beam_points': all_beam_points,
-        'sum_values': all_sum_values,
+        'beam_sum_values': all_beam_sum_values,
         'center_points': all_center_points,
         'edge_points': edge_points,   
         # 'hull': hull, not saved because not hdf5 compatible
@@ -309,16 +293,39 @@ def process_slices(data):
     }
 
     # TODO maybe move trajectory and angles to a separate file?
-    trajectory = calculate_beam_trajectory_LR(data) 
+    trajectory = calculate_beam_trajectory_LR(all_center_points) 
     angles = calculate_angles(trajectory)
     
-    data['Visualization']['Beam_Model']['trajectory'] = trajectory
-    data['Visualization']['Beam_Model']['angles'] = angles
+    data['Visualization']['Beam_Models']['Measured_Beam']['trajectory'] = trajectory
+    data['Visualization']['Beam_Models']['Measured_Beam']['angles'] = angles
+    
+    # Rotate the beam to align with the x-axis
+    beam = data['Visualization']['Beam_Models']['Measured_Beam']
+    beam = rotate_beam(beam, angles)
 
-
-
+    data['Visualization']['Beam_Models']['Rotated_Beam'] = beam
 
     return data    
+
+def rotate_beam(beam, angles):
+    # pass the beam dictionary
+
+    # get the rotation matrix
+    desired_angles = np.array([90, 0, 0]) # desired trj = [1, 0, 0]
+    angles_to_rotate = desired_angles - angles
+    rotation = R.from_euler('xyz', angles_to_rotate, degrees=True)
+
+    # rotate the beam points
+    rotated_beam = {}
+    rotated_beam['beam_points'] = rotation.apply(beam['beam_points'])
+    rotated_beam['center_points'] = rotation.apply(beam['center_points'])
+    rotated_beam['edge_points'] = rotation.apply(beam['edge_points'])
+    rotated_beam['trajectory'] = rotation.apply(beam['trajectory'])
+    rotated_beam['angles'] = desired_angles
+    rotated_beam['hull_simplices'] = beam['hull_simplices']
+    rotated_beam['hull_vertices'] = beam['hull_vertices']
+
+    return rotated_beam
 
 def plot_slice(data):
     
@@ -403,7 +410,7 @@ def plot_slice(data):
 
     plt.show()
 
-def plot_beam(data):
+def plot_beam(data, beam_model='Measured_Beam'):
 
     # Create a new figure for the 3D plot
     fig_3d = plt.figure()
@@ -415,32 +422,32 @@ def plot_beam(data):
     ax_3d.set_zlabel('Z')
 
     grid_size = data['3D']['grid_size'] 
+    grid_size[1] += 2
+    grid_size[2] += 2
+    grid_size[0] += 2
 
-    ax_3d.set_xlim(-grid_size[0],0)
+    ax_3d.set_xlim(-grid_size[0],1)
     ax_3d.set_ylim(-grid_size[1]/2, grid_size[1]/2)
     ax_3d.set_zlim(-grid_size[2]/2, grid_size[2]/2)
 
     ax_3d.set_box_aspect([grid_size[1], grid_size[1], grid_size[2]])
 
     # Plot Points 
-    all_beam_points = data['Visualization']['Beam_Model']['beam_points']
-    edge_points = data['Visualization']['Beam_Model']['edge_points']
-    center_points = data['Visualization']['Beam_Model']['center_points']
+    all_beam_points = data['Visualization']['Beam_Models'][beam_model]['beam_points']
+    edge_points = data['Visualization']['Beam_Models'][beam_model]['edge_points']
+    center_points = data['Visualization']['Beam_Models'][beam_model]['center_points']
 
     #ax_3d.scatter(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], c='red', s=1, label='Beam Points')
     #ax_3d.scatter(edge_points[:, 0], edge_points[:, 1], edge_points[:, 2], c='green', s=5, label = 'Edge Points')
     ax_3d.scatter(center_points[:, 0], center_points[:, 1], center_points[:, 2], c='blue', s=5, label='Center Points')
 
     # Plot the convex hull
-    hull_simplices = data['Visualization']['Beam_Model']['hull_simplices']
+    hull_simplices = data['Visualization']['Beam_Models'][beam_model]['hull_simplices']
     if hull_simplices is not None:
         ax_3d.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
 
     # Plot the trajectory
-    trajectory = data['Visualization']['Beam_Model']['trajectory']
-    print(f'trajectory:{trajectory}')
-    print(f'angles:{data["Visualization"]["Beam_Model"]["angles"]}')
-
+    trajectory = data['Visualization']['Beam_Models'][beam_model]['trajectory']
 
     start_point = center_points[0]
     start_point = np.array([0, start_point[1], start_point[2]]) 
@@ -465,7 +472,10 @@ if __name__ == "__main__":
     process_slices(data)
     
     plot_slice(data)
-    plot_beam(data)
+    plot_beam(data, beam_model='Measured_Beam')
+    plot_beam(data, beam_model='Rotated_Beam')
+    print(data['Visualization']['Beam_Models']['Measured_Beam']['trajectory'])
+    print(data['Visualization']['Beam_Models']['Rotated_Beam']['trajectory'])
     
     '''
     folder_path = r'C:/Users/Valen/Documents/Git-Repositorys/MtecThesis/Python_Skripts/Experiment_data'

@@ -22,7 +22,8 @@ using a function that takes M_i as input and returns L as output
 '''
 
 def get_Beam_Parameters(data):
-    I_0, w_0 = get_I_0_and_w_0(data)
+    I_0 = get_I_0(data)
+    w_0 = get_w_0(data)
     wavelength = get_wavelength(data)
     z_r = get_z_r(w_0, wavelength)
     theta = get_theta(w_0, z_r)
@@ -38,12 +39,15 @@ def get_wavelength(data=None):
     # TODO: implement wavelength extraction from data
     return wavelength
 
-def get_I_0_and_w_0(data):
+def get_I_0(data):
     I_0 = None
+    
+    return I_0
+
+def get_w_0(data):
     w_0 = None
 
-
-    return I_0, w_0
+    return w_0
 
 def get_theta(w_0, z_r):
     theta = w_0 / z_r
@@ -54,8 +58,9 @@ def get_z_r(w_0, wavelength):
     return z_r
 
 if __name__ == "__main__": 
-    
-
-
     wave_length = 1000e-9
+
+
+
+
     
