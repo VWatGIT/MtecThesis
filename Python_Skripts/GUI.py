@@ -1293,8 +1293,8 @@ class UserInterface:
 
 
         # Plot the beam
-        all_beam_points = data['Visualization']['Beam_Model']['Measured_Beam']['beam_points']
-        hull_simplices = data['Visualization']['Beam_Model']['Measured_Beam']['hull_simplices']
+        all_beam_points = data['Visualization']['Beam_Models']['Measured_Beam']['beam_points']
+        hull_simplices = data['Visualization']['Beam_Models']['Measured_Beam']['hull_simplices']
         if hull_simplices is not None:
                 ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
         ax.legend()
@@ -1564,10 +1564,8 @@ class UserInterface:
             self.log_event("Moved Hexapod to default position")
             
         self.log_event("Starting data processing")
-        try:
-            self.process_data(data)
-        except Exception as e:
-            self.log_event(f"Error during data processing: {e}")
+        self.process_data(data)
+        self.log_event(f"Finished data processing")
 
         # Final Update
         measurement_slider.set(self.measurement_points)
@@ -1619,12 +1617,13 @@ class UserInterface:
             signal = sensor.get_test_signal()
 
             # convert path coordinates to zylindrical coordinates
-            r = np.sqrt(measurement_point[1]**2 + measurement_point[2]**2)*1e-3 # convert to mm
-            z = -measurement_point[0]*1e-3 # convert to mm
+            #r = np.sqrt(measurement_point[1]**2 + measurement_point[2]**2)*1e-3 # convert to mm
+            #z = -measurement_point[0]*1e-3 # convert to mm
             #self.log_event(f"r: {r}, z: {z}")
+            #intensity = self.gauss_beam.get_Intensity(r, z)
+            test_trj = np.array([-0.9727202, -0.09483338, 0.21171216])
+            intensity = self.gauss_beam.get_Intensity(point = measurement_point, trj= test_trj)
 
-
-            intensity = self.gauss_beam.get_Intensity(r, z)
             #print(f"Intensity: {intensity}")
             signal.sum = intensity
 

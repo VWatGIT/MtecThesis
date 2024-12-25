@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from rotate_points import get_rotation_matrix
 
 class Gauss_Beam:
     def __init__(self, wavelength, w_0, I_0):
@@ -10,11 +11,22 @@ class Gauss_Beam:
 
         self.theta = self.w_0 / self.z_r
 
-    def get_Intensity(self, r, z):
+    def get_Intensity(self, r= None, z= None, point = None, trj = None):
+
+        if trj is not None and point is not None:
+            # Simulate angled beam
+            default_trj = np.array([-1, 0, 0])
+            rotation_matrix = get_rotation_matrix(default_trj, trj)
+            point = np.dot(point, rotation_matrix.T)
+
+        if point is not None:
+            # convert path coordinates to zylindrical coordinates
+            r = np.sqrt(point[1]**2 + point[2]**2)*1e-3 # convert to mm
+            z = point[0]*1e-3 # convert to mm
 
         w_z = self.get_Beam_Radius(z)
-
         I_rz = self.I_0 * (self.w_0 / w_z)**2 * np.exp(-2 * r**2 / w_z**2)
+        #print(f"Intensity at point {point} is {I_rz:.2e} W/m^2")
         return I_rz
     
     def get_Beam_Radius(self, z):
@@ -54,7 +66,7 @@ if __name__ == "__main__":
 
     for i in range(len(z)):
         r = np.linspace(-2*gauss_beam.w_0, 2*gauss_beam.w_0, 100)
-        I_rz = gauss_beam.get_Intensity(r, z[i])
+        I_rz = gauss_beam.get_Intensity(r = r, z = z[i])
         ax.plot(r, I_rz, label = 'z = ' + str(z[i]) + ' m')
         
     ax.legend()
