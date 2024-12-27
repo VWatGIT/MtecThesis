@@ -26,6 +26,26 @@ def rotate_points(points, rotation_matrix):
 
     return rotated_point
 
+def rotate_alpha_beta(vector, alpha, beta):
+    # Convert angles from degrees to radians
+    alpha = np.radians(alpha)
+    beta = np.radians(beta)
+
+    # Rotation matrix around the x-axis
+    R_x = np.array([[1, 0, 0],
+                    [0, np.cos(alpha), -np.sin(alpha)],
+                    [0, np.sin(alpha), np.cos(alpha)]])
+
+    # Rotation matrix around the y-axis
+    R_y = np.array([[np.cos(beta), 0, np.sin(beta)],
+                    [0, 1, 0],
+                    [-np.sin(beta), 0, np.cos(beta)]])
+
+    # Apply the rotations
+    rotated_vector = np.dot(R_y, np.dot(R_x, vector))
+
+    return rotated_vector
+
 if __name__ == "__main__":
 
     trj = np.array([-0.9727202, -0.09483338, 0.21171216])

@@ -818,8 +818,6 @@ class UserInterface:
         subtab_group.add(results_frame, text="Results")
         subtab_group.add(measurement_info_frame, text="Info")
         
-
-
     def create_event_log_panel(self, paned_window):
         self.event_log_panel = tk.LabelFrame(paned_window, text="Event Log")
         self.event_log_panel.pack(side="right", fill="x", padx=10, pady=10)
@@ -1621,7 +1619,7 @@ class UserInterface:
             #z = -measurement_point[0]*1e-3 # convert to mm
             #self.log_event(f"r: {r}, z: {z}")
             #intensity = self.gauss_beam.get_Intensity(r, z)
-            test_trj = np.array([-0.9727202, -0.09483338, 0.21171216])
+            test_trj = np.array([-0.6727202, -0.3483338, 0.21171216])
             intensity = self.gauss_beam.get_Intensity(point = measurement_point, trj= test_trj)
 
             #print(f"Intensity: {intensity}")

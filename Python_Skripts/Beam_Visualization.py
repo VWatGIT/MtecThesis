@@ -11,11 +11,20 @@ from matplotlib.patches import Ellipse
 from scipy.interpolate import griddata
 from rotate_points import get_rotation_matrix
 from rotate_points import rotate_points
+import pprint 
 
-def create_slices(data):
+
+
+def create_slices(data, orientation='vertical'):
     # Sort Measurment Points by x coordinate 
     # reverse=True because x coordinates are descending <0
-    sorted_measurements = sorted(data["Measurements"].items(), key=lambda item: item[1]["Measurement_point"][0], reverse=True)
+    data['Slices'][orientation] = {}
+    if orientation == 'vertical':
+        coord_index = 0
+    if orientation == 'horizontal':
+        coord_index = 2
+
+    sorted_measurements = sorted(data["Measurements"].items(), key=lambda item: item[1]["Measurement_point"][coord_index], reverse=True)
     
     last_x = None
     last_measurement_id = 0
@@ -26,7 +35,7 @@ def create_slices(data):
     for measurement_id, measurement in sorted_measurements:
         #measurement = data["Measurements"][str(measurement_id)]
         point = measurement["Measurement_point"]
-        current_x = point[0] # slice at different x coordinates
+        current_x = point[coord_index] # slice at different x coordinates
         
 
         if last_x is None:
@@ -34,7 +43,7 @@ def create_slices(data):
 
         if current_x != last_x:
             # Store the current slice
-            data["Slices"][str(slice_index)] = current_slice
+            data['Slices'][orientation][str(slice_index)] = current_slice
             slice_index += 1
             current_slice = {}
 
@@ -44,9 +53,61 @@ def create_slices(data):
 
     # Store the last slice
     if current_slice:
-        data["Slices"][str(slice_index)] = current_slice
+        data['Slices'][orientation][str(slice_index)] = current_slice
 
     return data
+
+def create_theoretical_slice_points(data, center_point):
+    # Calculate the theoretical slice points based on the center point and the beam points
+    grid_size = data['3D']['grid_size']
+    step_size = data['3D']['step_size']
+
+    x = center_point[0]
+    num_elements_y = int(grid_size[1] / step_size[1])
+    num_elements_z = int(grid_size[2] / step_size[2])
+    
+    y_min = -grid_size[1] / 2
+    y_max = grid_size[1] / 2
+    z_min = -grid_size[2] / 2
+    z_max = grid_size[2] / 2
+
+    y = np.linspace(y_min, y_max, num_elements_y)
+    z = np.linspace(z_min, z_max, num_elements_z)
+
+    # Create a meshgrid for the y and z coordinates
+    Y, Z = np.meshgrid(y, z)
+
+    # Create the theoretical slice points
+    slice_points = np.zeros((num_elements_y * num_elements_z, 3))
+    slice_points[:, 0] = x
+    slice_points[:, 1] = Y.flatten()
+    slice_points[:, 2] = Z.flatten()
+
+    return slice_points
+
+def get_theoretical_slice_point_sums(slice_points, data):
+    slice_sum_values = np.zeros(len(slice_points))
+    step_size = data['3D']['step_size']
+
+    for i, point in enumerate(slice_points):
+        # find the closes point in the beam points
+        closest_point = None
+        closest_sum = None
+        closest_distance = np.inf
+        beam_points = data['Visualization']['Beam_Models']['Measured_Beam']['beam_points']
+        sum_values = data['Visualization']['Beam_Models']['Measured_Beam']['beam_sum_values']
+        
+        for j, beam_point in enumerate(beam_points):
+            distance = np.linalg.norm(point - beam_point)
+            if distance < closest_distance and distance < step_size[0]: # TODO decide on distance
+                closest_distance = distance
+                closest_point = beam_point
+                closest_sum = sum_values[j]
+            else:
+                closest_sum = 0
+
+        slice_sum_values[i] = closest_sum
+    return slice_sum_values
 
 def create_slices_non_uniform_x(data, beam_model = 'Rotated_Beam'):
     # Works but too few points? 
@@ -59,31 +120,44 @@ def create_slices_non_uniform_x(data, beam_model = 'Rotated_Beam'):
     
     data['Visualization']['Rotated_Slices'] = {}
     for i, center_point in enumerate(center_points):
-        og_slice_point_amount = len(data['Slices']['1'].keys())
+        og_slice_point_amount = len(data['Slices']['vertical']['1'].keys())
         #slice_points = np.zeros((og_slice_point_amount, len(points[0])))
         #slice_sum_values = np.zeros(og_slice_point_amount)
+         
+        slice_points = create_theoretical_slice_points(data, center_point)
+        slice_sum_values = get_theoretical_slice_point_sums(slice_points, data)
 
+        print(len(slice_points))
+        print(len(slice_sum_values))
+
+        '''
         slice_points = []
         slice_sum_values = []
         for j, point in enumerate(points):
+
             
             threshhold = 0.1
             if np.isclose(point[0], center_point[0], rtol=threshhold): # TODO decide on R_tol
                 slice_points.append(point)
                 slice_sum_values.append(sum_values[j])
-
+        '''
+                
         if len(slice_points) < 3:
             slice_points.extend([points[0], points[1], points[2]])
             slice_sum_values.extend([sum_values[0], sum_values[1], sum_values[2]])
 
         heatmap, extent = create_heatmap(slice_points, slice_sum_values, data)
         beam_points, beam_sum_values = detect_beam_points(slice_points, slice_sum_values)
+        
         beam_points_2D = np.array(beam_points)[:, 1:]  # Remove the first column
         edge_points_2D, hull = select_edge_points(beam_points_2D) 
+
+        distances_to_center = np.linalg.norm(slice_points - center_point, axis=1)
 
         slice = {
             'points': slice_points,
             'sum_values': slice_sum_values,
+            'distances_to_center': distances_to_center,
             'beam_center': center_point,
             'beam_points': beam_points,
             'beam_points_2D': beam_points_2D,
@@ -97,48 +171,63 @@ def create_slices_non_uniform_x(data, beam_model = 'Rotated_Beam'):
     
         data['Visualization']['Rotated_Slices'][f'Slice_{i+1}'] = slice  
 
-def create_heatmap(points, sum_values, data):
+def create_heatmap(points, sum_values, data, orientation='vertical'):
     
     # Convert points to numpy array for easier manipulation
     points = np.array(points)
     sum_values = np.array(sum_values)
 
-    if len(points[0] > 3):
-        points = points[:, 1:]  # Remove the first column
+    if len(points[0] == 3):
+        if orientation == 'vertical':
+            points = points[:, 1:]
+        if orientation == 'horizontal':
+            points = points[:, :2]
    
     # Determine the size of the grid
     grid_size = data['3D']['grid_size'] # [x, y, z]
     step_size = data['3D']['step_size'] # [x, y, z]
 
-    num_elements_y = int(grid_size[2] / step_size[2])
-    num_elements_x = int(grid_size[1] / step_size[1])
+    if orientation == 'vertical':
+        num_elements_y = int(grid_size[2] / step_size[2])
+        num_elements_x = int(grid_size[1] / step_size[1])
 
-    x_min = int(-grid_size[1] / 2)
-    x_max = int(grid_size[1] / 2)
-    y_min = int(-grid_size[2] / 2)
-    y_max = int(grid_size[2] / 2)
+        x_min = int(-grid_size[1] / 2)
+        x_max = int(grid_size[1] / 2)
+        y_min = int(-grid_size[2] / 2)
+        y_max = int(grid_size[2] / 2)
+    if orientation == 'horizontal':
+        num_elements_y = int(grid_size[1] / step_size[1])
+        num_elements_x = int(grid_size[0] / step_size[0])
+
+        x_min = int(-grid_size[0])
+        x_max = int(0)
+        y_min = int(-grid_size[1] / 2)
+        y_max = int(grid_size[1] / 2)
 
     x,y = np.meshgrid(np.linspace(x_min, x_max, num_elements_x), np.linspace(y_min, y_max, num_elements_y))
     
+    '''
     z = np.zeros_like(x, dtype=float)
     # Assign values to the grid cells based on the nearest points
     for point, value in zip(points, sum_values):
         # Find the nearest grid cell
-        xi = int((point[0] - x_min) / step_size[1])
-        yi = int((point[1] - y_min) / step_size[2])
-        
+        xi = int((point[0] - x_min) / step_size[0])
+        yi = int((point[1] - y_min) / step_size[1])
+
         # Ensure the indices are within bounds
         if 0 <= xi < num_elements_x and 0 <= yi < num_elements_y:
-            z[yi, xi] = value
+            # Ensure value is a scalar
+            if np.isscalar(value):
+                z[yi, xi] = value
+            else:
+                z[yi, xi] = value.item()  # Extract the single element from the array
+    '''
 
-
-
-    #z = griddata(points, sum_values, (x, y), method='nearest', fill_value=0)
+    z = griddata(points, sum_values, (x, y), method='nearest', fill_value=0)
     
     heatmap_extent = [x_min, x_max, y_min, y_max]
 
     heatmap = z
-
     return heatmap, heatmap_extent
 
 def detect_beam_points(points, sum_values):
@@ -200,10 +289,12 @@ def find_slice_beam_center(points, sum_values):
 def analyze_slice_2D(slice, data):
 
     points, sum_values = extract_slice_data(slice)
-    heatmap, heatmap_extent = create_heatmap(points, sum_values, data)
+    heatmap, heatmap_extent = create_heatmap(points, sum_values, data, orientation='vertical')
+    
     
     # First find the beam center
     beam_center = find_slice_beam_center(points, sum_values)  
+    distances_to_center = np.linalg.norm(points - beam_center, axis=1)
     # Then use the beam center to find the beam points with w(z)
     beam_points, beam_sum_values = detect_beam_points(points, sum_values)
     beam_points = np.array(beam_points)
@@ -217,6 +308,7 @@ def analyze_slice_2D(slice, data):
         'points': points,
         'sum_values': sum_values,
         'beam_center': beam_center,
+        'distances_to_center': distances_to_center,
         'beam_points': beam_points,
         'beam_sum_values': beam_sum_values,
         'beam_points_2D': beam_points_2D,
@@ -224,7 +316,7 @@ def analyze_slice_2D(slice, data):
         'hull_2D_vertices': hull_2D.vertices,
         'hull_2D_simplices': hull_2D.simplices,
         'heatmap': heatmap,
-        'heatmap_extent': heatmap_extent
+        'heatmap_extent': heatmap_extent,
         }
 
     return slice_data
@@ -282,13 +374,32 @@ def calculate_angles(trajectory):
     return angles
 
 def process_slices(data):
-    slices = data['Slices']
+    data['Slices'] = {}
+    data['Visualization'] = {}
+    data['Visualization']['Slices'] = {}
+    data['Visualization']['Slices']['vertical'] = {}
+    data['Visualization']['Slices']['horizontal'] = {}
+    create_slices(data, orientation='vertical')
+    create_slices(data, orientation='horizontal')
+
+    for key in data ['Slices']['horizontal']:
+        slice = data['Slices']['horizontal'][key]
+        h_points, h_sum_values = extract_slice_data(slice)
+        h_heatmap, h_heatmap_extent = create_heatmap(h_points, h_sum_values, data, orientation='horizontal')
+        data['Visualization']['Slices']['horizontal'][key] = {
+            'points': h_points,
+            'sum_values': h_sum_values,
+            'heatmap': h_heatmap,
+            'heatmap_extent': h_heatmap_extent
+        } 
+    
+
+    slices = data['Slices']['vertical']
+    
     all_beam_points = []
     all_beam_sum_values = []
     all_center_points = []
     
-    data['Visualization'] = {}
-    data['Visualization']['Slices'] = {}
 
     # Sort the keys in ascending order
     sorted_keys = sorted(slices.keys(), key=int)
@@ -298,7 +409,7 @@ def process_slices(data):
 
         slice_data = analyze_slice_2D(slice, data)
 
-        data['Visualization']['Slices'][f'Slice_{key}'] = slice_data
+        data['Visualization']['Slices']['vertical'][f'Slice_{key}'] = slice_data
      
         beam_sum_values = slice_data['beam_sum_values']
         beam_center = slice_data['beam_center']
@@ -331,16 +442,11 @@ def process_slices(data):
     
     data['Visualization']['Beam_Models']['Measured_Beam']['trajectory'] = trajectory
     data['Visualization']['Beam_Models']['Measured_Beam']['angles'] = angles
-
-    print (f'Trajectory: {trajectory}')
-    print (f'Angles: {angles}')
     
     # Rotate the beam to align with the x-axis
     beam = data['Visualization']['Beam_Models']['Measured_Beam']
     beam = rotate_beam(beam)
     data['Visualization']['Beam_Models']['Rotated_Beam'] = beam
-
-    create_slices_non_uniform_x(data, beam_model='Rotated_Beam')
 
     return data    
 
@@ -364,19 +470,29 @@ def rotate_beam(beam):
 
     return rotated_beam
 
-def plot_slice(data, Slice_type = 'Slices'):
+def plot_slice(data):
     
-    # Create the figure and axes
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+     # Create the figure and axes with a 2x2 grid layout
+    fig = plt.figure(figsize=(12, 8))
     plt.subplots_adjust(left=0.1, bottom=0.25)
+
+    # Create subplots in a 2x2 grid
+    ax1 = plt.subplot2grid((1, 2), (0, 0))
+    ax2 = plt.subplot2grid((1, 2), (0, 1))
+   
+    #ax1.set_aspect('equal', 'box')
+    ax2.set_aspect('equal', 'box')
+    ax2.set_aspect('equal', 'box')
 
     
     # Plot the initial heatmap
-    keys = data['Visualization'][Slice_type].keys()
+    #TODO add ['Slices']['vertical'] in GUI
+    #TODO fix vertical heatmap error
+    keys = data['Visualization']['Slices']['vertical'].keys()
     first_key = next(iter(keys))
 
-    heatmap = data['Visualization'][Slice_type][first_key]['heatmap']
-    extent = data['Visualization'][Slice_type][first_key]['heatmap_extent']
+    heatmap = data['Visualization']['Slices']['vertical'][first_key]['heatmap']
+    extent = data['Visualization']['Slices']['vertical'][first_key]['heatmap_extent']
 
     heatmap_plot = ax1.imshow(heatmap,origin = 'lower', extent=extent,cmap='hot', interpolation='nearest')
     fig.colorbar(heatmap_plot, ax=ax1, label='Signal Sum')
@@ -393,21 +509,21 @@ def plot_slice(data, Slice_type = 'Slices'):
     ax2.set_ylim(-3, 3)
 
     # Plot the beam points
-    beam_points = data['Visualization'][Slice_type][first_key]['beam_points_2D']
-    edge_points = data['Visualization'][Slice_type][first_key]['edge_points_2D']
+    beam_points = data['Visualization']['Slices']['vertical'][first_key]['beam_points_2D']
+    edge_points = data['Visualization']['Slices']['vertical'][first_key]['edge_points_2D']
 
     ax2.scatter(beam_points[:, 0], beam_points[:, 1], c='red', s=1)
     ax2.scatter(edge_points[:, 0], edge_points[:, 1], c='green', s=5)
 
     # Plot the convex hull
-    hull_simplices = data['Visualization'][Slice_type][first_key]['hull_2D_simplices']
+    hull_simplices = data['Visualization']['Slices']['vertical'][first_key]['hull_2D_simplices']
 
     for simplex in hull_simplices:
         ax2.plot(beam_points[simplex, 0], beam_points[simplex, 1], 'k-')
         # TODO test simply plotting the edge points
-    
+
     # Create a slider for changing the slice
-    slices = data['Slices']
+    slices = data['Slices']['vertical']
     min_slice_index = min(int(key) for key in slices.keys())
     max_slice_index = max(int(key) for key in slices.keys())
 
@@ -419,12 +535,12 @@ def plot_slice(data, Slice_type = 'Slices'):
     # Update function for the slider
     def update(val):
         try: 
-            slices = data['Visualization'][Slice_type]
+            slices = data['Visualization']['Slices']['vertical']
             slice_index = int(slice_slider.val)
             current_slice = slices[f'Slice_{slice_index}']
 
             # Update heatmap
-            heatmap_plot.set_data(current_slice['heatmap'])
+            heatmap_plot.set_data(current_slice['heatmap_horizontal'])
 
             # Update beam points and convex hull
             ax2.clear()
@@ -479,12 +595,6 @@ def plot_beam(data, beam_model='Measured_Beam'):
     edge_points = data['Visualization']['Beam_Models'][beam_model]['edge_points']
     center_points = data['Visualization']['Beam_Models'][beam_model]['center_points']
     
-    if beam_model == 'Rotated_Beam':
-        example_slice_points = data['Visualization']['Rotated_Slices']['Slice_5']['points']
-    else:
-        example_slice_points = data['Visualization']['Slices']['Slice_5']['points']
-
-
     #ax_3d.scatter(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], c='red', s=1, label='Beam Points')
     #ax_3d.scatter(edge_points[:, 0], edge_points[:, 1], edge_points[:, 2], c='green', s=5, label = 'Edge Points')
     ax_3d.scatter(center_points[:, 0], center_points[:, 1], center_points[:, 2], c='blue', s=5, label='Center Points')
@@ -511,6 +621,54 @@ def plot_beam(data, beam_model='Measured_Beam'):
 
     plt.show()
     
+def plot_horizontal_slice(data):
+    slices = data['Visualization']['Slices']['horizontal']
+
+    # Create the figure and axes
+    fig, ax = plt.subplots(figsize=(12, 8))
+    plt.subplots_adjust(left=0.1, bottom=0.25)
+
+    # Plot the initial heatmap
+    keys = list(slices.keys())
+    first_key = keys[0]
+
+    heatmap = slices[first_key]['heatmap']
+    extent = slices[first_key]['heatmap_extent']
+
+    heatmap_plot = ax.imshow(heatmap, origin='lower', extent=extent, cmap='hot', interpolation='nearest')
+    fig.colorbar(heatmap_plot, ax=ax, label='Signal Sum')
+
+    # Set titles and labels
+    ax.set_title('Horizontal Slice Heatmap')
+    ax.set_xlabel('X Coordinate')
+    ax.set_ylabel('Y Coordinate')
+    ax.set_aspect(aspect=0.5)
+
+
+    # Create a slider for changing the slice
+    min_slice_index = 0
+    max_slice_index = len(keys) - 1
+
+    ax_slider = plt.axes([0.1, 0.1, 0.8, 0.03], facecolor='lightgoldenrodyellow')
+    slice_slider = Slider(ax_slider, 'Slice', min_slice_index, max_slice_index, valinit=min_slice_index, valstep=1)
+
+    # Update function for the slider
+    def update(val):
+        slice_index = int(slice_slider.val)
+        current_key = keys[slice_index]
+        current_slice = slices[current_key]
+
+        # Update heatmap
+        heatmap_plot.set_data(current_slice['heatmap'])
+        heatmap_plot.set_extent(current_slice['heatmap_extent'])
+        ax.set_aspect(aspect=0.2)
+        # Redraw the figure
+        fig.canvas.draw_idle()
+
+    # Connect the slider to the update function
+    slice_slider.on_changed(update)
+
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -521,12 +679,14 @@ if __name__ == "__main__":
     data['Visualization'] = {}
     process_slices(data)
     
-    plot_slice(data, Slice_type = 'Slices')
-    plot_slice(data, Slice_type = 'Rotated_Slices')
+    plot_horizontal_slice(data)
+
+    plot_slice(data)
+    #plot_slice(data, Slice_type = 'Rotated_Slices')
     plot_beam(data, beam_model='Measured_Beam')
-    plot_beam(data, beam_model='Rotated_Beam')
+    #plot_beam(data, beam_model='Rotated_Beam')
     print(data['Visualization']['Beam_Models']['Measured_Beam']['trajectory'])
-    print(data['Visualization']['Beam_Models']['Rotated_Beam']['trajectory'])
+    #print(data['Visualization']['Beam_Models']['Rotated_Beam']['trajectory'])
     
     '''
     folder_path = r'C:/Users/Valen/Documents/Git-Repositorys/MtecThesis/Python_Skripts/Experiment_data'

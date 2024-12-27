@@ -22,7 +22,7 @@ class Gauss_Beam:
         if point is not None:
             # convert path coordinates to zylindrical coordinates
             r = np.sqrt(point[1]**2 + point[2]**2)*1e-3 # convert to mm
-            z = point[0]*1e-3 # convert to mm
+            z = -point[0]*1e-3 # convert to mm
 
         w_z = self.get_Beam_Radius(z)
         I_rz = self.I_0 * (self.w_0 / w_z)**2 * np.exp(-2 * r**2 / w_z**2)
