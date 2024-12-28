@@ -26,7 +26,6 @@ class Gauss_Beam:
 
         w_z = self.get_Beam_Radius(z)
         I_rz = self.I_0 * (self.w_0 / w_z)**2 * np.exp(-2 * r**2 / w_z**2)
-        #print(f"Intensity at point {point} is {I_rz:.2e} W/m^2")
         return I_rz
     
     def get_Beam_Radius(self, z):

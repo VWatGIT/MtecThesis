@@ -24,6 +24,8 @@ from Beam_Visualization import process_slices
 from Beam_Visualization import create_slices
 from Gauss_Beam import Gauss_Beam # Used for testing
 from Gauss_Beam import create_Test_Beam # Used for testing
+from Beam_Trajectory import calculate_alpha_beta
+from Beam_Trajectory import plot_alpha_beta
 
 import os
 import time
@@ -42,7 +44,7 @@ class UserInterface:
         self.sensor = Sensor()
         self.probe = Probe()
         self.hexapod = Hexapod()
-        self.gauss_beam = create_Test_Beam() 
+        self.gauss_beam = create_Test_Beam(w_0 = 5e-4) 
 
         # Default values
         self.grid_size = (1, 6, 6) #mm
@@ -83,7 +85,6 @@ class UserInterface:
     def setup(self):
         self.connect_stage() # TODO decide if necessary
         self.connect_hexapod()
-    
     def new_data(self): # attach this to the new tab
         data = {}
         data["Slices"] = {}
@@ -94,7 +95,6 @@ class UserInterface:
         data['Beam_Parameters'] = {}
         
         return data
-        
 
     def create_menu(self):
         menubar = tk.Menu(self.root)
@@ -105,7 +105,6 @@ class UserInterface:
         menubar.add_command(label="Load", command=self.show_load_measurement_panel)
         menubar.add_command(label="Camera", command=self.show_camera_panel)
         menubar.add_command(label="Help", command=self.show_help_panel)
-
     def create_left_panel(self):
         self.left_panel = tk.Frame(self.root, width=340) # TODO change this depending on needed menu size
         self.left_panel.pack(side="left", fill="both")
@@ -365,7 +364,6 @@ class UserInterface:
         self.help_panel.place_forget()
         self.camera_panel.place_forget()
         self.tab_group.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
-    
     def hide_all_panels(self):
         self.home_panel.place_forget()
         self.new_measurement_panel.place_forget()
@@ -385,7 +383,6 @@ class UserInterface:
         self.camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         toggle_camera_button = tk.Checkbutton(self.camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera)
         toggle_camera_button.pack(side = "top", pady=5)
-
     def create_probe_detection_frame(self, parent):
         probe_detection_frame = tk.LabelFrame(parent, text="Probe Tip", name="probe_detection_frame")
         
@@ -459,7 +456,6 @@ class UserInterface:
 
         self.camera_plot_frame.grid(row=0, column=0, pady=5, sticky="nsew")
         marker_stats_frame.grid(row=1, column=0, pady=5, sticky="nsew")
-
     def create_marker_stats_frame(self, parent):
         marker_stats_frame = tk.Frame(parent, name="marker_stats_frame")
 
@@ -758,7 +754,6 @@ class UserInterface:
         self.root.after(200, lambda: self.paned_window.sashpos(0, 840)) # set initial position of sash, after for short delay (bugfix)
         
         self.update_log()
-        
     def create_tab_group(self, parent):
         self.tab_group = ttk.Notebook(parent, name="tab_group")
         self.tab_group.pack(side="right", fill="both", expand=True)
@@ -778,19 +773,16 @@ class UserInterface:
 
         self.create_subtabs(new_tab)
 
-
         close_button = tk.Button(new_tab, text="Close Tab", command=lambda: self.close_tab(new_tab), name="close_button") # create this last in create_tab
         close_button.place(relx=1, rely=0, anchor="ne")  # Place the close button in the top-right corner
 
         self.tab_group.select(new_tab)
 
-        self.bind_resize_event(new_tab) # Bind the resize event to the new tab widgets for debugging flickering
         # Log the creation of a new tab
         self.log_event(f"Created Tab {self.tab_count}") 
     def close_tab(self, tab):
         self.tab_group.forget(tab)
         self.log_event("Closed Tab") 
-    
     def create_subtabs(self, parent):
         subtab_group = ttk.Notebook(parent, name="subtab_group")
         subtab_group.pack(side="right", fill="both", expand=True)
@@ -817,7 +809,6 @@ class UserInterface:
         subtab_group.add(sensor_path_frame, text="Measurement")
         subtab_group.add(results_frame, text="Results")
         subtab_group.add(measurement_info_frame, text="Info")
-        
     def create_event_log_panel(self, paned_window):
         self.event_log_panel = tk.LabelFrame(paned_window, text="Event Log")
         self.event_log_panel.pack(side="right", fill="x", padx=10, pady=10)
@@ -885,7 +876,6 @@ class UserInterface:
 
         ydiff_label = ttk.Label(sensor_readings_frame, text="Y Diff: N/A", name="ydiff_label")
         ydiff_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
-
     def create_sensor_position_frame(self, parent):    
         # Sensor Position Panel TODO delete or implement
         sensor_position_frame = tk.LabelFrame(parent, text="Sensor Position", name="sensor_position_frame")
@@ -936,30 +926,32 @@ class UserInterface:
 
         for i in range(2):
             results_frame.grid_columnconfigure(i, weight=1)
-        for i in range(1):
+        for i in range(2):
             results_frame.grid_rowconfigure(i, weight=1)
         
 
         self.create_slice_plot_frame(results_frame)
-        self.create_measurement_info_frame(results_frame) # TODO delete?
         self.create_beam_plot_frame(results_frame)
+        self.create_trajectory_plot_frame(results_frame)
 
         beam_plot_frame = results_frame.nametowidget("beam_plot_frame")
         beam_plot_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
-        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
-        slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
+        trajectory_plot_frame = results_frame.nametowidget("trajectory_plot_frame")
+        trajectory_plot_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
+        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
+        slice_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
     def create_slice_plot_frame(self, parent):
         slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
-        for i in range(4):
+        for i in range(7):
             slice_plot_frame.grid_rowconfigure(i, weight=1)
         for i in range(1): 
             slice_plot_frame.grid_columnconfigure(i, weight=1)
         
-        plot_frame = tk.LabelFrame(slice_plot_frame, name="plot_frame")
-        plot_frame.grid(row=0, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
-        slice_plot_frame.grid_rowconfigure(0, weight=100) #weight for correct sizing of the slider
+        vertical_plot_frame = tk.LabelFrame(slice_plot_frame, name="vertical_plot_frame")
+        vertical_plot_frame.grid(row=2, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+        slice_plot_frame.grid_rowconfigure(2, weight=100) #weight for correct sizing of the slider
       
         # Create a canvas for the slice plot
         fig, ax = plt.subplots()
@@ -968,33 +960,57 @@ class UserInterface:
         ax.set_title('Heatmap of Laser Beam')
         ax.invert_yaxis()  # invert y axis
 
-        canvas = FigureCanvasTkAgg(fig, master=plot_frame)
+        canvas = FigureCanvasTkAgg(fig, master=vertical_plot_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill= "both", expand=True)  # Span the canvas across all columns
-        plot_frame.canvas = canvas
+        canvas.get_tk_widget().pack(fill= "both")
+        vertical_plot_frame.canvas = canvas
         
         # Create Labels for the Sliders
-        slice_slider_label = ttk.Label(slice_plot_frame, text="Slice Index:", name="slice_slider_label")
-        slice_slider_label.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
+        slice_slider_label = ttk.Label(slice_plot_frame, text=" Vertical Slice Index:", name="slice_slider_label")
+        slice_slider_label.grid(row=0, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
 
         # Create a slider for the slice plot
-        slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="slice_slider")
-        slice_slider.grid(row=2, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        slice_slider.set(1) # set default value
-        slice_slider.config(resolution=1) # set slider resolution
+        vertical_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="vertical_slice_slider")
+        vertical_slice_slider.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
+        vertical_slice_slider.set(1) # set default value
+        vertical_slice_slider.config(resolution=1) # set slider resolution
 
+        # Create the horizontal plot frame
+        horizontal_plot_frame = tk.LabelFrame(slice_plot_frame, name="horizontal_plot_frame")
+        horizontal_plot_frame.grid(row=4, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+
+        # Create a canvas for the horizonatl slice plot
+        fig, ax = plt.subplots()
+        ax.set_xlabel('X')
+        ax.set_ylabel('Z')
+        ax.set_title('Horizontal Slice')
+        
+        canvas = FigureCanvasTkAgg(fig, master=horizontal_plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill= "both")  
+        horizontal_plot_frame.canvas = canvas
+
+
+
+        # Create a Slider for horizontal slice plot
+        horizontal_slice_slider_label = ttk.Label(slice_plot_frame, text="Horizontal Slice Index:", name="horizontal_slice_slider_label")
+        horizontal_slice_slider_label.grid(row=5, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
+
+        horizontal_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="horizontal_slice_slider")
+        horizontal_slice_slider.grid(row=6, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
+        horizontal_slice_slider.set(1) # set default value
+        horizontal_slice_slider.config(resolution=1) # set slider resolution
+
+        slice_plot_frame.grid_rowconfigure(4, weight=100) #weight for correct sizing of the slider
 
         # Create a checkbox for the slice plot
         interpolation_var = tk.IntVar()
         interpolation_checkbox = tk.Checkbutton(slice_plot_frame, text="Interpolation", name="interpolation_checkbox", variable=interpolation_var)
-        interpolation_checkbox.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
+        interpolation_checkbox.grid(row=3, column=0, columnspan=1, sticky="w", padx=5, pady=5)
         interpolation_checkbox.value = interpolation_var
 
-        # trying to fix the slider bug
-        tab_name = self.tab_group.select()
-        tab = self.root.nametowidget(tab_name)
-
-        slice_slider.config(command=self.update_slice_plot)
+        vertical_slice_slider.config(command=self.update_slice_plot)
+        horizontal_slice_slider.config(command=self.update_slice_plot)
         interpolation_checkbox.config(command=self.update_slice_plot) 
     def create_beam_plot_frame(self, parent):
         
@@ -1014,10 +1030,8 @@ class UserInterface:
         beam_plot_frame.canvas = canvas
 
         pass
-
     def create_measurement_info_frame(self, parent):
         measurement_info_frame = tk.LabelFrame(parent, text="Info", name="measurement_info_frame") 
-        measurement_info_frame.bind("<Configure>", self.on_resize)
 
         # Configure the grid layout within the sensor_info_frame LabelFrame
         for i in range(1):
@@ -1059,7 +1073,14 @@ class UserInterface:
         ax.set_zlabel('Z')
         ax.set_title('Path')
         ax.grid(True)
+    def create_trajectory_plot_frame(self, parent):
+        trajectory_plot_frame = tk.LabelFrame(parent, text="Trajectory", name="trajectory_plot_frame")
 
+        fig, ax = plt.subplots()
+        canvas = FigureCanvasTkAgg(fig, master=trajectory_plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill= "both", expand=True)
+        trajectory_plot_frame.canvas = canvas
 
     # Update Functions
     def update_tab(self, event=None):   
@@ -1144,7 +1165,7 @@ class UserInterface:
         if data["Slices"] != {}:
 
             # Extract Meshgrid from Data
-            slice_index = str(tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider").get())
+            slice_index = str(tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider").get())
             first_measurement_id = list(data["Slices"][slice_index].keys())[0]
             x = int(data["Slices"][slice_index][first_measurement_id]["Measurement_point"][0]) # Get the x value of the first measurement point in the slice
             
@@ -1224,26 +1245,28 @@ class UserInterface:
         subtab_group = tab.nametowidget("subtab_group")
         results_frame = subtab_group.nametowidget("results_frame")
         slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
-        plot_frame = slice_plot_frame.nametowidget("plot_frame")
+        vertical_plot_frame = slice_plot_frame.nametowidget("vertical_plot_frame")
 
-        canvas = plot_frame.canvas
+        canvas = vertical_plot_frame.canvas
         ax = canvas.figure.axes[0]
 
-        slice_slider = slice_plot_frame.nametowidget("slice_slider")
+        vertical_slice_slider = slice_plot_frame.nametowidget("vertical_slice_slider")
         interpolation_checkbox = slice_plot_frame.nametowidget("interpolation_checkbox")
 
         interpolation_var = interpolation_checkbox.value.get()
         interpolation = interpolation_var
 
-        slice_index = slice_slider.get() 
+        slice_index = vertical_slice_slider.get() 
 
         #only update if data is available
         if data["Visualization"] != {}:
-
-            slice= data['Visualization']["Slices"][f'Slice_{slice_index}'] # Get the slice data
             
-            heatmap = slice['heatmap']
-            extent = data['Visualization']['Slices']['Slice_1']['heatmap_extent']
+            # Update the vertical slice plot
+            vertical_slice= data['Visualization']["Slices"]['vertical'][str(slice_index)] # Get the slice data
+            heatmap = vertical_slice['heatmap']
+            keys = data['Visualization']['Slices']['vertical'].keys()
+            first_key = next(iter(keys))
+            extent = data['Visualization']['Slices']['vertical'][first_key]['heatmap_extent']
 
             # Interpolation Method with checkbox
             interpolation_method = 'nearest' if interpolation_var == 0 else 'gaussian'
@@ -1255,13 +1278,35 @@ class UserInterface:
             fig = ax.get_figure()
 
             # Plot colorbar once
-            if not hasattr(plot_frame, 'check'):
-                plot_frame.check = True
+            if not hasattr(vertical_plot_frame, 'check'):
+                vertical_plot_frame.check = True
                 fig.colorbar(cax, ax=ax, label='Signal Sum')
             
             canvas.draw()
 
-            #self.log_event("Updated Slice Plot")
+            # Update the horizontal slice plot
+            horizontal_plot_frame = slice_plot_frame.nametowidget("horizontal_plot_frame")
+            canvas = horizontal_plot_frame.canvas
+            ax = canvas.figure.axes[0]
+
+            horizontal_slice_slider = slice_plot_frame.nametowidget("horizontal_slice_slider")
+            horizontal_slice_index = horizontal_slice_slider.get()
+
+            horizontal_slice = data['Visualization']["Slices"]['horizontal'][str(horizontal_slice_index)] # Get the slice data
+            heatmap = horizontal_slice['heatmap']
+            extent = data['Visualization']['Slices']['horizontal'][str(horizontal_slice_index)]['heatmap_extent']
+
+            # Update the horizontal slice plot
+            ax.clear()
+            cax = ax.imshow(heatmap,extent=extent, cmap='hot', interpolation=interpolation_method)
+            fig = ax.get_figure()
+
+            # Plot colorbar once
+            if not hasattr(horizontal_plot_frame, 'check'):
+                horizontal_plot_frame.check = True
+                fig.colorbar(cax, ax=ax, label='Signal Sum')
+
+            canvas.draw()
         else:
             self.log_event("No Slice Data available")
     def update_beam_plot(self, event = None):
@@ -1297,7 +1342,19 @@ class UserInterface:
                 ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
         ax.legend()
         canvas.draw()
+    def update_trajectory_plot(self, event = None):
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+        data = tab.data
 
+        subtab_group = tab.nametowidget("subtab_group")
+        results_frame = subtab_group.nametowidget("results_frame")
+        trajectory_plot_frame = results_frame.nametowidget("trajectory_plot_frame")
+
+        canvas = trajectory_plot_frame.canvas
+        ax = canvas.figure.axes[0]
+        
+        plot_alpha_beta(data, ax)
 
     # Button Functions
     def start_button_pushed(self):
@@ -1332,13 +1389,14 @@ class UserInterface:
             file_name = save_data(directory, data, probe_name)
             self.log_event(f"Data saved to {file_name}")
     def load_button_pushed(self):
+        self.log_event("Loading Data")
         file_path = filedialog.askopenfilename(filetypes=[("hdf5 files", "*.h5")])
-        print(file_path)
         if file_path:
             data = load_data(file_path)
             
             self.create_tab(data)
             self.update_tab()
+            self.update_trajectory_plot()
 
             self.measurement_points = data["3D"]["measurement_points"] # TODO also attach this to tab?
             self.current_measurement_id = 0
@@ -1354,9 +1412,12 @@ class UserInterface:
             measurement_slider.set(self.current_measurement_id+1)
 
 
-            slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
-            slice_slider.config(from_=1, to=len(data["Slices"]))
+            vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
+            vertical_slice_slider.config(from_=1, to=len(data["Slices"]['vertical']), state="normal")
             
+            horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
+            horizontal_slice_slider.config(from_=1, to=len(data["Slices"]['horizontal']), state="normal")
+
             self.update_beam_plot()
             self.log_event(f"Data loaded from {file_path}")
     def stop_button_pushed(self):
@@ -1427,7 +1488,6 @@ class UserInterface:
         if self.sensor.stage is not None:
             self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("stage_connected").select()
             self.log_event("Stage connected")
-        
     def connect_hexapod(self):
         #TODO implement hexapod connection
 
@@ -1456,13 +1516,11 @@ class UserInterface:
         
         self.hexapod.move((x, y, z, 0, 0, 0), flag = "absolute") 
         self.log_event("Manual Alignment done")
-
     def rough_alignment(self):
         #TODO implement rough alignment
 
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
         self.log_event("Rough Alignment done")
-    
     def fine_alignment(self):
         fine_alignment(self.sensor, self.hexapod) # imported from another file
 
@@ -1569,7 +1627,20 @@ class UserInterface:
         measurement_slider.set(self.measurement_points)
         self.update_tab()
         self.update_progress_bar(progress_bar,self.measurement_points)
+        self.update_trajectory_plot()
         self.update_beam_plot()
+
+        # Set Slider limits
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+        subtab_group = tab.nametowidget("subtab_group")
+
+        vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
+        vertical_slice_slider.config(from_=1, to=len(data["Slices"]['vertical']), state="normal")
+
+        horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
+        horizontal_slice_slider.config(from_=1, to=len(data["Slices"]['horizontal']), state="normal")
+
 
         # autosave data
         if self.autosave_var.get() == 1:
@@ -1583,23 +1654,18 @@ class UserInterface:
 
 
         self.measurement_running = False # end threading
-
     def process_data(self, data):
         # Process the data
         self.log_event("Processing data")
-        create_slices(data)
-        self.log_event("Created Slices")
         process_slices(data)
-        self.log_event("Processed Slices")
+        self.log_event("Created Slices")
+        # TODO add more processing steps such as create_beam_model
+        self.log_event("Calculating Trajectory")
+        # TODO get w0 from user input
+        w_0 = 1e-3
+        calculate_alpha_beta(data, w_0 = w_0)
+        self.log_event("Calculated Trajectory")
 
-        # Set Slider limits
-        tab_name = self.tab_group.select()
-        tab = self.root.nametowidget(tab_name)
-        subtab_group = tab.nametowidget("subtab_group")
-
-        slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("slice_slider")
-        slice_slider.config(from_=1, to=len(data["Slices"]))
-    
     def doMeasurement(self, data, sensor, hexapod, i):
         # Get the current (theoretical) measurement point
         measurement_point = self.path_points[i]
@@ -1619,8 +1685,10 @@ class UserInterface:
             #z = -measurement_point[0]*1e-3 # convert to mm
             #self.log_event(f"r: {r}, z: {z}")
             #intensity = self.gauss_beam.get_Intensity(r, z)
-            test_trj = np.array([-0.6727202, -0.3483338, 0.21171216])
-            intensity = self.gauss_beam.get_Intensity(point = measurement_point, trj= test_trj)
+            #test_trj = np.array([-0.9961947,  -0.08715574,  0        ])
+            test_trj = [-0.70710678, -0.70710678,  0.        ]
+            #test_trj = None
+            intensity = self.gauss_beam.get_Intensity(point = measurement_point, trj = test_trj)
 
             #print(f"Intensity: {intensity}")
             signal.sum = intensity
@@ -1637,15 +1705,6 @@ class UserInterface:
             'Measurement_point': measurement_point,
             'Hexapod_position': hexapod_position
         }
-
-    def on_resize(self, event):
-        #self.log_event(f"Resized: {event.widget} to {event.width}x{event.height}")
-        pass
-        
-    def bind_resize_event(self, widget):
-        widget.bind("<Configure>", self.on_resize)
-        for child in widget.winfo_children():
-            self.bind_resize_event(child)
 
 if __name__ == "__main__":
     root = tk.Tk()
