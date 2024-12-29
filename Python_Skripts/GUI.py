@@ -27,6 +27,7 @@ from Gauss_Beam import create_Test_Beam # Used for testing
 from Beam_Trajectory import calculate_alpha_beta
 from Beam_Trajectory import plot_alpha_beta
 
+
 import os
 import time
 from datetime import datetime
@@ -44,7 +45,7 @@ class UserInterface:
         self.sensor = Sensor()
         self.probe = Probe()
         self.hexapod = Hexapod()
-        self.gauss_beam = create_Test_Beam(w_0 = 5e-4) 
+        self.gauss_beam = create_Test_Beam() 
 
         # Default values
         self.grid_size = (1, 6, 6) #mm
@@ -87,11 +88,11 @@ class UserInterface:
         self.connect_hexapod()
     def new_data(self): # attach this to the new tab
         data = {}
-        data["Slices"] = {}
         data["3D"] = {}
         data["Measurements"] = {}
         data['Info'] = {}
         data['Visualization'] = {}
+        data['Visualization']['Slices'] = {}
         data['Beam_Parameters'] = {}
         
         return data
@@ -143,7 +144,7 @@ class UserInterface:
         input_frame = tk.LabelFrame(self.new_measurement_panel,text ="New Measurement",name="input_frame")
         input_frame.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=10) 
 
-        for i in range(4):
+        for i in range(9):
             input_frame.grid_rowconfigure(i, weight=1)
         for i in range(2):
             input_frame.grid_columnconfigure(i, weight=1)
@@ -156,14 +157,14 @@ class UserInterface:
 
         # TODO maybe add aditional input fields for new measurement
 
-        measurement_space_label = tk.Label(input_frame, text="3D Size:")
+        measurement_space_label = tk.Label(input_frame, text="3D Size: [mm]")
         measurement_space_label.grid(row=1, column=0, pady=5, sticky="e")
         self.measurement_space_entry = tk.Entry(input_frame, name = "measurement_space_entry")
         self.measurement_space_entry.grid(row=1, column=1, pady=5, sticky="w")
         self.measurement_space_entry.insert(0, f"{self.grid_size[0]}, {self.grid_size[1]}, {self.grid_size[2]}")
 
         #Set up inputs for Step Size
-        step_size_label = tk.Label(input_frame, text="Step Size:")
+        step_size_label = tk.Label(input_frame, text="Step Size: [mm]")
         step_size_label.grid(row=2, column=0, pady=5, sticky="e")
         self.step_size_entry = tk.Entry(input_frame, name = "step_size_entry")
         self.step_size_entry.grid(row=2, column=1, pady=5, sticky="w")
@@ -175,6 +176,36 @@ class UserInterface:
 
         time_estimation_button = tk.Button(input_frame, text="Estimate Time", command=self.estimate_time)
         time_estimation_button.grid(row=3, column=1, pady=5, sticky="w")
+
+        wavelength_label = tk.Label(input_frame, text="Wavelength [nm]:")
+        wavelength_label.grid(row=4, column=0, pady=5, sticky="e")
+        self.wavelength_entry = tk.Entry(input_frame, name="wavelength_entry")
+        self.wavelength_entry.grid(row=4, column=1, pady=5, sticky="w")
+        self.wavelength_entry.insert(0, "1300")
+
+        w_0_label = tk.Label(input_frame, text="Beam Waist [mm]:")
+        w_0_label.grid(row=5, column=0, pady=5, sticky="e")
+        self.w_0_entry = tk.Entry(input_frame, name="w_0_entry")
+        self.w_0_entry.grid(row=5, column=1, pady=5, sticky="w")
+        self.w_0_entry.insert(0, "1")
+
+        i_0_label = tk.Label(input_frame, text="I_0 [W/m^2]:")
+        i_0_label.grid(row=6, column=0, pady=5, sticky="e")
+        self.i_0_entry = tk.Entry(input_frame, name="i_0_entry")
+        self.i_0_entry.grid(row=6, column=1, pady=5, sticky="w")
+        self.i_0_entry.insert(0, "60000")
+
+        alpha_label = tk.Label(input_frame, text="Simulate Pitch [deg]:")
+        alpha_label.grid(row=7, column=0, pady=5, sticky="e")
+        self.alpha_entry = tk.Entry(input_frame, name="alpha_entry")
+        self.alpha_entry.grid(row=7, column=1, pady=5, sticky="w")
+        self.alpha_entry.insert(0, "0")
+
+        beta_label = tk.Label(input_frame, text="Simulate Yaw [deg]:")
+        beta_label.grid(row=8, column=0, pady=5, sticky="e")
+        self.beta_entry = tk.Entry(input_frame, name="beta_entry")
+        self.beta_entry.grid(row=8, column=1, pady=5, sticky="w")
+        self.beta_entry.insert(0, "0")
 
         #Set up checkboxes
         checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
@@ -253,25 +284,28 @@ class UserInterface:
 
 
         progress_bar = ttk.Progressbar(self.new_measurement_panel, orient="horizontal", length=320, mode="determinate", name="progress_bar")
-        progress_bar.grid(row=3, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        progress_bar.grid(row=6, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+
+        self.simulate_var = tk.IntVar()
+        simulate_checkbox = tk.Checkbutton(self.new_measurement_panel, text="Simulate", name="simulate_checkbox", variable=self.simulate_var)
+        simulate_checkbox.grid(row=3, column=0, pady=5, sticky="nsew")
 
         self.autosave_var = tk.IntVar()
-
         autosave_checkbox = tk.Checkbutton(self.new_measurement_panel, text="Autosave", name="autosave_checkbox", variable=self.autosave_var)
-        autosave_checkbox.grid(row=4, column=1, pady=5, sticky="nsew")
+        autosave_checkbox.grid(row=3, column=1, pady=5, sticky="nsew")
         #autosave_checkbox.select()
 
         #Set up Big Buttons
         #self.new_measurement_panel.grid_rowconfigure(3, weight=10)
 
         start_button = tk.Button(self.new_measurement_panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
-        start_button.grid(row=5, column=0, padx=10, pady=5, sticky = "w")
+        start_button.grid(row=4, column=0, padx=10, pady=5, sticky = "w")
 
         save_button = tk.Button(self.new_measurement_panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
-        save_button.grid(row=5, column=1, padx=10, pady=5, sticky="e")
+        save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
 
-        stop_button = tk.Button(self.new_measurement_panel, text="STOP", name="stop_button", command=self.stop_button_pushed, width = 40, height = 6)
-        stop_button.grid(row=6, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
+        stop_button = tk.Button(self.new_measurement_panel, text="STOP", name="stop_button", command=self.stop_button_pushed, width = 30, height = 5)
+        stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
 
     def create_load_measurement_panel(self, parent):
         self.load_measurement_panel = tk.Frame(parent)
@@ -1031,33 +1065,63 @@ class UserInterface:
 
         pass
     def create_measurement_info_frame(self, parent):
-        measurement_info_frame = tk.LabelFrame(parent, text="Info", name="measurement_info_frame") 
+        measurement_info_frame = tk.LabelFrame(parent, name="measurement_info_frame") 
 
-        # Configure the grid layout within the sensor_info_frame LabelFrame
-        for i in range(1):
-            measurement_info_frame.grid_columnconfigure(i, weight=1)
-        for i in range(7):
-            measurement_info_frame.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            measurement_info_frame.rowconfigure(i, weight = 1)
+        for i in range(2):
+            measurement_info_frame.columnconfigure(i, weight = 1)
 
+        # General info 
+        general_info_frame = tk.LabelFrame(measurement_info_frame, text = 'Info', name='general_info_frame')
+        general_info_frame.grid(row = 0, column= 0)
         
+        measurement_points_label = ttk.Label(general_info_frame, text="Measurement Points: N/A" ,name="measurement_points_label")
+        measurement_points_label.pack(side='top', padx=5, pady = 5)
 
-        measurement_points_label = ttk.Label(measurement_info_frame, text="Measurement Points: N/A" ,name="measurement_points_label")
-        measurement_points_label.grid(row=0, column=0, sticky="w", padx=10, pady=5)
+        grid_size_label = ttk.Label(general_info_frame, text="Grid Size = N/A", name="grid_size_label")
+        grid_size_label.pack(side='top', padx=5, pady = 5)
 
-        slices_label = ttk.Label(measurement_info_frame, text="Slices: N/A", name="slices_label")
-        slices_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        step_size_label = ttk.Label(general_info_frame, text="Step Size = N/A", name="step_size_label")
+        step_size_label.pack(side='top', padx=5, pady = 5)
 
-        grid_size_label = ttk.Label(measurement_info_frame, text="Grid Size = N/A", name="grid_size_label")
-        grid_size_label.grid(row=2, column=0, sticky="w", padx=10, pady=5)
-
-        step_size_label = ttk.Label(measurement_info_frame, text="Step Size = N/A", name="step_size_label")
-        step_size_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
-
-        time_elapsed_label = ttk.Label(measurement_info_frame, text="Time Elapsed = N/A", name="time_elapsed_label")
-        time_elapsed_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+        time_elapsed_label = ttk.Label(general_info_frame, text="Time Elapsed = N/A", name="time_elapsed_label")
+        time_elapsed_label.pack(side='top', padx=5, pady = 5)
     
-        time_estimated_label = ttk.Label(measurement_info_frame, text="Time Estimated = N/A", name="time_estimated_label")
-        time_estimated_label.grid(row=5, column=0, sticky="w", padx=10, pady=5)    
+        time_estimated_label = ttk.Label(general_info_frame, text="Time Estimated = N/A", name="time_estimated_label")
+        time_estimated_label.pack(side='top', padx=5, pady = 5)   
+
+        # Laser info
+        laser_info_frame = tk.LabelFrame(measurement_info_frame, text = "Laser", name = 'laser_info_frame')
+        laser_info_frame.grid(row = 0, column = 1, rowspan= 2)
+
+        w_0_label = ttk.Label(laser_info_frame, text="w_0 = N/A", name="w_0_label")
+        w_0_label.pack(side='top', padx=5, pady = 5)
+
+        wavelength = ttk.Label(laser_info_frame, text="Wavelength = N/A", name="wavelength")
+        wavelength.pack(side='top', padx=5, pady = 5)
+
+        i_0_label = ttk.Label(laser_info_frame, text="I_0 = N/A", name="i_0_label")
+        i_0_label.pack(side='top', padx=5, pady = 5)
+
+        z_r_label = ttk.Label(laser_info_frame, text="z_r = N/A", name="z_r_label")
+        z_r_label.pack(side='top', padx=5, pady = 5)
+
+        pitch_label = ttk.Label(laser_info_frame, text="Pitch = N/A", name="pitch_label")
+        pitch_label.pack(side='top', padx=5, pady = 5)
+
+        yaw_label = ttk.Label(laser_info_frame, text="Yaw = N/A", name="yaw_label")
+        yaw_label.pack(side='top', padx=5, pady = 5)
+
+        # Probe info
+        probe_info_frame = tk.LabelFrame(measurement_info_frame, text='Probe', name = 'probe_info_frame')
+        probe_info_frame.grid(row = 1, column = 0)
+
+        probe_position_label = ttk.Label(probe_info_frame, text="Probe Position = N/A", name="probe_position_label")
+        probe_position_label.pack(side='top', padx=5, pady = 5)
+
+        distance_to_sensor_label = ttk.Label(probe_info_frame, text="Distance to Sensor = N/A", name="distance_to_sensor_label")
+        distance_to_sensor_label.pack(side='top', padx=5, pady = 5)
     def create_path_plot_frame(self, parent):
         path_plot_frame = tk.LabelFrame(parent, text="Path", name="path_plot_frame")
         
@@ -1095,10 +1159,10 @@ class UserInterface:
         measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
         self.current_measurement_id = str(measurement_slider.get())
 
-        self.update_measurement_info_frame()
         self.update_sensor_info_frame()
+        self.update_path_plot()
 
-        if data["Slices"] != {}:
+        if data['Visualization']["Slices"] != {}:
             self.update_slice_plot()
 
 
@@ -1109,77 +1173,40 @@ class UserInterface:
         # update labels here
         tab_name = self.tab_group.select()
         tab = self.tab_group.nametowidget(tab_name)
-
         data = tab.data
-
         subtab_group = tab.nametowidget("subtab_group")
         measurement_info_frame = subtab_group.nametowidget("measurement_info_frame")
-        measurement_points_label = measurement_info_frame.nametowidget("measurement_points_label")
-        step_size_label = measurement_info_frame.nametowidget("step_size_label")
-        time_elapsed_label = measurement_info_frame.nametowidget("time_elapsed_label")
-        time_estimated_label = measurement_info_frame.nametowidget("time_estimated_label")
 
-        #print(f'3D Data: {data["3D"]["measurement_points"]}')
+        general_info_frame = measurement_info_frame.nametowidget("general_info_frame")
+        measurement_points_label = general_info_frame.nametowidget("measurement_points_label")
+        grid_size_label = general_info_frame.nametowidget("grid_size_label")
+        step_size_label = general_info_frame.nametowidget("step_size_label")
+        time_elapsed_label = general_info_frame.nametowidget("time_elapsed_label")
+        time_estimated_label = general_info_frame.nametowidget("time_estimated_label")
 
         measurement_points_label.config(text=f"Measurement Points: {data['3D']['measurement_points']}")
         step_size_label.config(text=f"Step Size: {data['3D']['step_size']}")
+        grid_size_label.config(text=f"Grid Size: {data['3D']['grid_size']}")
         time_elapsed_label.config(text=f"Time Elapsed: {data['info']['elapsed_time']}")
         time_estimated_label.config(text=f"Time Estimated: {data['info']['time_estimated']}")
 
-        # update path plot here
-        #results_frame = tab.nametowidget("results_frame")
-        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
-        path_plot_frame = sensor_path_frame.nametowidget("path_plot_frame")
-        canvas = path_plot_frame.canvas
-        ax = canvas.figure.axes[0]
-
-        # Extract the path coordinates from the data
-        path = data['3D']['path']
-        path_x = path[:int(self.current_measurement_id), 0] # Extract path up to the current measurement
-        path_y = path[:int(self.current_measurement_id), 1]
-        path_z = path[:int(self.current_measurement_id), 2]
-
-    
-        if not hasattr(tab, 'grid_points'):
-            X_flat = data['3D']['X'].flatten()
-            Y_flat = data['3D']['Y'].flatten()
-            Z_flat = data['3D']['Z'].flatten()
-
-            ax.set_xlim(X_flat.min()-0.1, X_flat.max()+0.1)
-            ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
-            ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
-
-            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
-            #print("Initialized grid points")
-
-        if not hasattr(tab, 'path'):
-            tab.path, = ax.plot([], [], [], color='red', label='Path', linewidth = 1)
-            ax.legend()
-        else:
-            tab.path.set_data(path_x, path_y)
-            tab.path.set_3d_properties(path_z)
-
-
-        # Plot the seethrough plane
-        ''' TODO fix this
-        if data["Slices"] != {}:
-
-            # Extract Meshgrid from Data
-            slice_index = str(tab.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider").get())
-            first_measurement_id = list(data["Slices"][slice_index].keys())[0]
-            x = int(data["Slices"][slice_index][first_measurement_id]["Measurement_point"][0]) # Get the x value of the first measurement point in the slice
-            
-            Z_plane = data["3D"]["Z"][x,:,:]
-            Y_plane = data["3D"]["Y"][x,:,:]
-            X_plane = np.full_like(Z_plane, x)
-
-            # Plot the plane
-            ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
-            #self.log_event(f'Z Plane: {Z_plane}, Y Plane: {Y_plane}, X Plane: {X_plane}')
+        laser_info_frame = measurement_info_frame.nametowidget("laser_info_frame")
+        w_0_label = laser_info_frame.nametowidget("w_0_label")
+        wavelength_label = laser_info_frame.nametowidget("wavelength")
+        i_0_label = laser_info_frame.nametowidget("i_0_label")
+        z_r_label = laser_info_frame.nametowidget("z_r_label")
+        pitch_label = laser_info_frame.nametowidget("pitch_label")
+        yaw_label = laser_info_frame.nametowidget("yaw_label")
+        ''' TODO implement
+        w_0_label.config(text=f"w_0: {data['Beam_Parameters']['w_0']:.2f}")
+        wavelength_label.config(text="Wavelength: " + str(data['Beam_Parameters']['wavelength']))
+        i_0_label.config(text="I_0: " + str(data['Beam_Parameters']['i_0']))
+        z_r_label.config(text="z_r: " + str(data['Beam_Parameters']['z_r']))
         '''
-        canvas.draw()
+        pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['alpha']:.2f}")
+        yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['beta']:.2f}")
 
-        #self.log_event(f"Updated measurement info for Tab {self.tab_count}")
+
     def update_progress_bar(self, progress_bar, measurements_done):
         
         progress_bar["value"] = measurements_done
@@ -1307,6 +1334,10 @@ class UserInterface:
                 fig.colorbar(cax, ax=ax, label='Signal Sum')
 
             canvas.draw()
+
+            # Update Beam Plot for Seethrough Planes
+            self.update_beam_plot()
+
         else:
             self.log_event("No Slice Data available")
     def update_beam_plot(self, event = None):
@@ -1334,6 +1365,39 @@ class UserInterface:
 
         ax.set_box_aspect([grid_size[1], grid_size[1], grid_size[2]])
 
+        # Plot the seethrough planes
+        # get slider values
+        results_frame = subtab_group.nametowidget("results_frame")
+        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
+        vertical_slice_slider = slice_plot_frame.nametowidget("vertical_slice_slider")
+        horizontal_slice_slider = slice_plot_frame.nametowidget("horizontal_slice_slider")
+
+        vertical_index = str(int(vertical_slice_slider.get()))
+        horizontal_index = str(int(horizontal_slice_slider.get()))
+
+        # Extract coords
+        vertical_key = str(int(data['Visualization']['Slices']['vertical'][vertical_index]['measurement_ids'][0])) # first Measurement
+        horizontal_key = str(int(data['Visualization']['Slices']['horizontal'][horizontal_index]['measurement_ids'][0]))
+        x_coord = data['Measurements'][vertical_key]['Measurement_point'][0]
+        y_coord = data['Measurements'][horizontal_key]['Measurement_point'][2]
+        # TODO check correct coords
+
+        # Plot the planes
+        # Create meshgrid for planes
+        y = np.linspace(-grid_size[1] / 2, grid_size[1] / 2, 10)
+        z = np.linspace(-grid_size[2] / 2, grid_size[2] / 2, 10)
+        Y, Z = np.meshgrid(y, z)
+
+        # Vertical plane at x_coord
+        X_vertical = np.full_like(Y, x_coord)
+        ax.plot_surface(X_vertical, Y, Z, color='cyan', alpha=0.2, edgecolor='none')
+
+        # Horizontal plane at y_coord
+        x = np.linspace(-grid_size[0], 0, 10)
+        X, Z = np.meshgrid(x, z)
+        Y_horizontal = np.full_like(X, y_coord)
+        ax.plot_surface(X, Y_horizontal, Z, color='magenta', alpha=0.2, edgecolor='none')
+
 
         # Plot the beam
         all_beam_points = data['Visualization']['Beam_Models']['Measured_Beam']['beam_points']
@@ -1355,18 +1419,56 @@ class UserInterface:
         ax = canvas.figure.axes[0]
         
         plot_alpha_beta(data, ax)
+    def update_path_plot(self, event = None):
+        tab = self.tab_group.nametowidget(self.tab_group.select())
+        data = tab.data
+        
+        subtab_group = tab.nametowidget("subtab_group")
+        sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
+        path_plot_frame = sensor_path_frame.nametowidget("path_plot_frame")
+        canvas = path_plot_frame.canvas
+        ax = canvas.figure.axes[0]
+
+        # Extract the path coordinates from the data
+        path = data['3D']['path']
+        path_x = path[:int(self.current_measurement_id), 0] # Extract path up to the current measurement
+        path_y = path[:int(self.current_measurement_id), 1]
+        path_z = path[:int(self.current_measurement_id), 2]
+
+    
+        if not hasattr(tab, 'grid_points'):
+            X_flat = data['3D']['X'].flatten()
+            Y_flat = data['3D']['Y'].flatten()
+            Z_flat = data['3D']['Z'].flatten()
+
+            ax.set_xlim(X_flat.min()-0.1, X_flat.max()+0.1)
+            ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
+            ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
+
+            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
+            #print("Initialized grid points")
+
+        if not hasattr(tab, 'path'):
+            tab.path, = ax.plot([], [], [], color='red', label='Path', linewidth = 1)
+            ax.legend()
+        else:
+            tab.path.set_data(path_x, path_y)
+            tab.path.set_3d_properties(path_z)
+
+        canvas.draw()
 
     # Button Functions
     def start_button_pushed(self):
-        
-        #if self.tab_count == 0:
-            #self.close_tab(self.tab_group.nametowidget(self.tab_group.select()))
-
-
-        self.create_tab()
-
+        # TODO close default tab
         # Threading to make interaction with UI possible while measurements are running
         if not self.measurement_running:
+            
+            if self.simulate_var.get() == 0 and (self.sensor.stage is None or self.hexapod.connection_status == False):
+                        self.log_event("Please connect to Hexapod and/or Sensor")
+                        return
+
+            self.create_tab()
+                        
             self.measurement_running = True
             self.measurement_thread = threading.Thread(target=self.run_measurements)
             self.measurement_thread.start()
@@ -1397,6 +1499,7 @@ class UserInterface:
             self.create_tab(data)
             self.update_tab()
             self.update_trajectory_plot()
+            self.update_measurement_info_frame()
 
             self.measurement_points = data["3D"]["measurement_points"] # TODO also attach this to tab?
             self.current_measurement_id = 0
@@ -1413,10 +1516,10 @@ class UserInterface:
 
 
             vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
-            vertical_slice_slider.config(from_=1, to=len(data["Slices"]['vertical']), state="normal")
+            vertical_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['vertical']), state="normal")
             
             horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
-            horizontal_slice_slider.config(from_=1, to=len(data["Slices"]['horizontal']), state="normal")
+            horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
 
             self.update_beam_plot()
             self.log_event(f"Data loaded from {file_path}")
@@ -1532,12 +1635,24 @@ class UserInterface:
         tab = self.tab_group.nametowidget(tab_name)
         data = tab.data
 
+
         # Get the grid size and step size
         self.grid_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
         self.grid_size = tuple(map(float, self.grid_size.split(',')))
 
         self.step_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get()
         self.step_size = tuple(map(float, self.step_size.split(',')))
+
+        #
+        # Get Beam Parameters
+        alpha = float(self.alpha_entry.get())
+        beta = float(self.beta_entry.get())
+        self.gauss_beam.set_Trj(alpha, beta)
+
+        self.gauss_beam.w_0 = float(self.w_0_entry.get())*1e-3
+        self.gauss_beam.wavelength = float(self.wavelength_entry.get())*1e-9
+        self.gauss_beam.I_0 = float(self.i_0_entry.get())
+        
 
         # Get the Measurment points and path points
         X, Y, Z = generate_grid(self.grid_size, self.step_size)
@@ -1603,9 +1718,6 @@ class UserInterface:
                 data["info"]["elapsed_time"] = self.elapsed_time
                 
 
-         
-            
-
             self.elapsed_time = int((time.time() - self.start_time)/60)
             data["info"]["elapsed_time"] = self.elapsed_time
 
@@ -1624,34 +1736,33 @@ class UserInterface:
         self.log_event(f"Finished data processing")
 
         # Final Update
+        # Set Slider limits
+        tab_name = self.tab_group.select()
+        tab = self.root.nametowidget(tab_name)
+        subtab_group = tab.nametowidget("subtab_group")
+        subtab_group.select(subtab_group.nametowidget("results_frame"))
+        
+
+
+        vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
+        vertical_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['vertical']), state="normal")
+
+        horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
+        horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
+
         measurement_slider.set(self.measurement_points)
         self.update_tab()
         self.update_progress_bar(progress_bar,self.measurement_points)
         self.update_trajectory_plot()
         self.update_beam_plot()
-
-        # Set Slider limits
-        tab_name = self.tab_group.select()
-        tab = self.root.nametowidget(tab_name)
-        subtab_group = tab.nametowidget("subtab_group")
-
-        vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
-        vertical_slice_slider.config(from_=1, to=len(data["Slices"]['vertical']), state="normal")
-
-        horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
-        horizontal_slice_slider.config(from_=1, to=len(data["Slices"]['horizontal']), state="normal")
-
+        self.update_measurement_info_frame()
 
         # autosave data
         if self.autosave_var.get() == 1:
             folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
-            file_path = save_data(folder_path, data)
+            probe_name = str(self.probe_name_entry.get())
+            file_path = save_data(folder_path, data, probe_name)
             self.log_event("Data saved automatically to:" + file_path)
-
-        subtab_group = tab.nametowidget("subtab_group")
-        subtab_group.select(subtab_group.nametowidget("results_frame"))
-
-
 
         self.measurement_running = False # end threading
     def process_data(self, data):
@@ -1674,24 +1785,14 @@ class UserInterface:
         hexapod_position = hexapod.position
 
         # Get data from the sensor
-        if self.sensor.stage is not None:
-            signal = sensor.get_signal()
         
-        else:
+        if self.simulate_var.get() == 1:
             signal = sensor.get_test_signal()
 
-            # convert path coordinates to zylindrical coordinates
-            #r = np.sqrt(measurement_point[1]**2 + measurement_point[2]**2)*1e-3 # convert to mm
-            #z = -measurement_point[0]*1e-3 # convert to mm
-            #self.log_event(f"r: {r}, z: {z}")
-            #intensity = self.gauss_beam.get_Intensity(r, z)
-            #test_trj = np.array([-0.9961947,  -0.08715574,  0        ])
-            test_trj = [-0.70710678, -0.70710678,  0.        ]
-            #test_trj = None
-            intensity = self.gauss_beam.get_Intensity(point = measurement_point, trj = test_trj)
-
-            #print(f"Intensity: {intensity}")
+            intensity = self.gauss_beam.get_Intensity(point = measurement_point)
             signal.sum = intensity
+        else:
+            signal = sensor.get_signal()
 
         measurement_id_str = str(i+1)  # Convert measurement_id to string
         data["Measurements"][measurement_id_str] = {

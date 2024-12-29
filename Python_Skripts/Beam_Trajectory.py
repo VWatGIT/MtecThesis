@@ -171,7 +171,6 @@ def transform_points(all_points, intensities, origin = [0, 0, 0]):
     transform_points = np.array(transformed_points)
     intensities = np.array(intensities)
 
-    print("transformed_points shape:",transform_points.shape)
     return transform_points, transformed_intensities
 def scale_intensities(points, intensities, w_0 = 1e-3, wavelength = 1000e-9):
     scaled_intensities = []

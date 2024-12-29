@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from rotate_points import get_rotation_matrix
+from scipy.spatial.transform import Rotation as R
 
 class Gauss_Beam:
     def __init__(self, wavelength, w_0, I_0):
@@ -11,18 +12,31 @@ class Gauss_Beam:
 
         self.theta = self.w_0 / self.z_r
 
-    def get_Intensity(self, r= None, z= None, point = None, trj = None):
+        self.alpha = 0
+        self.beta = 0
+        self.default_trj = [1, 0, 0]
+        self.trj = self.default_trj
 
-        if trj is not None and point is not None:
+    def set_Trj(self, alpha, beta):
+        self.alpha = alpha
+        self.beta = beta
+        
+        rotation = R.from_euler('zy', [alpha,beta], degrees=True)
+        self.trj = rotation.apply(self.default_trj)
+       
+
+    def get_Intensity(self, r= None, z= None, point = None):
+
+        if np.all(self.trj != self.default_trj) and point is not None:
             # Simulate angled beam
-            default_trj = np.array([-1, 0, 0])
-            rotation_matrix = get_rotation_matrix(default_trj, trj)
+            rotation_matrix = get_rotation_matrix(self.default_trj, self.trj)
             point = np.dot(point, rotation_matrix.T)
 
         if point is not None:
             # convert path coordinates to zylindrical coordinates
             r = np.sqrt(point[1]**2 + point[2]**2)*1e-3 # convert to mm
-            z = -point[0]*1e-3 # convert to mm
+            z = -point[0]*1e-3 # convert to mm  flip the x coordinate to match the coordinate system
+            # TODO check for correct trajectory
 
         w_z = self.get_Beam_Radius(z)
         I_rz = self.I_0 * (self.w_0 / w_z)**2 * np.exp(-2 * r**2 / w_z**2)
@@ -36,7 +50,7 @@ class Gauss_Beam:
         R_z = z * (1 + (self.z_r / z)**2)
         return R_z
     
-def create_Test_Beam(wavelength = 1000e-9, w_0 = 1e-3, I_0 = 6.37e+04):
+def create_Test_Beam(wavelength = 1300e-9, w_0 = 1e-3, I_0 = 6.37e+04):
     # Create Gauss_Beam 
     gauss_beam = Gauss_Beam(wavelength, w_0, I_0)
     return gauss_beam
