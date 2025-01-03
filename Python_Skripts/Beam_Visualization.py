@@ -226,6 +226,7 @@ def create_heatmap(points, sum_values, data, orientation='vertical'):
             else:
                 z[yi, xi] = value.item()  # Extract the single element from the array
     '''
+    # TODO flip y axis of heatmap?
     if len(points) == 0:
         points = np.array([[0, 0]])
         sum_values = np.array([0])
