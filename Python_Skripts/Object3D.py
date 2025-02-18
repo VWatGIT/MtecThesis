@@ -1,5 +1,5 @@
 # Objects.py
-from pylablib.devices import Thorlabs # TODO uncomment later
+#from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
 import cv2
@@ -53,15 +53,18 @@ class Sensor(Object3D):
             self.stage = None
         
     def get_signal(self):
-        self.stage.open()
-        signal = self.stage.get_readings()
-        self.xpos = signal.xpos
-        self.ypos = signal.ypos
-        self.xdiff = signal.xdiff
-        self.ydiff = signal.ydiff
-        self.sum = signal.sum
-        self.stage.close()
-        return signal # TODO decide weather to decide to return signal or always get values from sensor object
+        if self.stage is None:
+            return self.get_test_signal()
+        else:
+            self.stage.open() # TODO: improve performance
+            signal = self.stage.get_readings()
+            self.xpos = signal.xpos
+            self.ypos = signal.ypos
+            self.xdiff = signal.xdiff
+            self.ydiff = signal.ydiff
+            self.sum = signal.sum
+            self.stage.close()
+            return signal 
 
     def get_test_signal(self): # used for working at home
         self.xpos = (np.random.rand()-0.5)*10
@@ -69,16 +72,9 @@ class Sensor(Object3D):
         self.xdiff = (np.random.rand()-0.5)*10
         self.ydiff = (np.random.rand()-0.5)*10
         self.sum = np.random.rand()*100
-        signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
+        test_signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
         
-        """
-        # change size of random numbers
-        keys = list(signal.__dict__.keys())
-        for key in keys:
-            signal.__dict__[key] = (signal.__dict__[key] - 0.5) * 0.5
-
-        """
-        return signal
+        return test_signal
 
 
     def __repr__(self):
@@ -135,7 +131,7 @@ class Hexapod():
         
         self.default_position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
 
-        self.position = [None, None, None, None, None, None] # [x, y, z, roll, pitch, yaw]
+        self.position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
         self.velocity = 1 # mm/s Default
 
         # Set up Sockets to connect to Server later
@@ -266,7 +262,6 @@ class Hexapod():
         
         self.velocity = velocity
         rcv = self.send_command(f'set_vel {velocity}')
-        # wait for the server to set the velocity # TODO multiple lines of text returned
         return rcv
 
     def __repr__(self):

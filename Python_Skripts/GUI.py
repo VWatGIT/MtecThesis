@@ -1643,7 +1643,7 @@ class UserInterface:
         self.step_size = self.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get()
         self.step_size = tuple(map(float, self.step_size.split(',')))
 
-        #
+
         # Get Beam Parameters
         alpha = float(self.alpha_entry.get())
         beta = float(self.beta_entry.get())
@@ -1655,9 +1655,7 @@ class UserInterface:
         
 
         # Get the Measurment points and path points
-        X, Y, Z = generate_grid(self.grid_size, self.step_size)
-        self.grid = (X, Y, Z)
-        self.path_points = generate_snake_path(X, Y, Z)
+        self.path_points, self.grid = generate_snake_path(self.grid_size, self.step_size)
         #self.log_event(f'Path Points: \n {self.path_points}')
 
         self.add_3D_data(data, self.grid, self.grid_size, self.step_size, self.path_points)

@@ -111,6 +111,8 @@ def get_beta(data, alpha):
 '''    
 
 
+
+
 def get_all_points_and_intensities(data):
     all_points = []
     all_intensities = []

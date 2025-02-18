@@ -3,8 +3,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time
 
-def generate_snake_path(X, Y, Z): 
-    # step size = [x,y,z] = [0.001, 1, 1]
+def generate_snake_path(grid_size, step_size): 
+    
+    X, Y, Z = generate_grid(grid_size, step_size)
+    grid = (X, Y, Z)
+
     path_points = []
     x_dim, y_dim, z_dim = X.shape
     
@@ -64,7 +67,7 @@ def generate_snake_path(X, Y, Z):
                                             Y[coords[0], coords[1], coords[2]], 
                                             Z[coords[0], coords[1], coords[2]]])
    
-    return np.array(path_points)
+    return np.array(path_points), grid
 
 def generate_grid(grid_size, step_size):
     # step_size = [x,y,z]
@@ -80,15 +83,15 @@ def generate_grid(grid_size, step_size):
     
     return X, Y, Z 
 
+
+
 if __name__ == "__main__":
     # Set up Measurement Grid
     grid_size = [1, 1, 1]  # [mm]
     step_size = [0.5,0.2,0.3] # [mm]
-    X, Y, Z = generate_grid(grid_size, step_size)
-    print(X.shape, Y.shape, Z.shape)
-
+ 
     # Generate the snake path
-    path_points_snake = generate_snake_path(X, Y, Z)
+    path_points_snake = generate_snake_path(grid_size, step_size)
     print(path_points_snake)
 
     # Extract the path coordinates
