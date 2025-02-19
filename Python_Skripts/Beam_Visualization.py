@@ -324,6 +324,7 @@ def analyze_slice_2D(slice, data):
     slice['heatmap_extent'] = heatmap_extent
 
 def calculate_beam_trajectory_LR(center_points):
+    center_points = np.array(center_points)
     # Fit a line to the center_points from the center of the first beam slice
     start_point = center_points[0]
     start_point = np.array([0, start_point[1], start_point[2]])

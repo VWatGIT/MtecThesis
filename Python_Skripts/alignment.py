@@ -1,15 +1,15 @@
 from Object3D import Sensor, Hexapod
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 from CreatePath import generate_snake_path
 from data_handling import load_data
-import matplotlib.pyplot as plt
+from rotate_points import get_rotation_matrix
+from mpl_toolkits.mplot3d import Axes3D
 
-# REWORK Functions:
 
-def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices = None):
-    #TODO fix x coordinate of center in testing
-    #TODO implement angle calculation
+def find_beam_centers(sensor, hexapod, spacing = 1/3, num_centers = 4, test_slices = None):
+     #TODO decide on spacing and number of centers
 
 
     def grid_search(initial_point, grid_size, step_size):
@@ -26,7 +26,7 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
         for i in range(len(path_points)):
 
             # As Path points are absolute, transform them to relative positions
-            next_point = np.array((path_points[i][0], path_points[i][1], path_points[i][2], 0, 0, 0))+np.array((initial_point[0], initial_point[1], initial_point[2], 0 , 0, 0)) 
+            next_point = np.array((path_points[i][0] + initial_point[0], path_points[i][1] + initial_point[1], path_points[i][2] + initial_point[2], 0, 0, 0))
             next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
             hexapod.move(next_relative_position, flag = "relative")
             last_point = next_point
@@ -37,33 +37,32 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
             if test_slice is not None:
                 # simulate sensor signal
                 # find nearest point in test_slice
-                hexapod.position = next_point
                 test_points = test_slice["points"][:, :3]
-                #test_points[:, 0] = 0
 
                 for i, point in enumerate(test_points):
                     if np.allclose(point[1:], next_point[1:3], atol=step_size[1]/2):
                         value = test_slice["sum_values"][i]
+                        #print(f"near point found with value {value}")
                     else:
                         value = 0
-
+                    
                     if value > max_value:
                         max_value = value
                         x = hexapod.position[0]
                         y = hexapod.position[1]
                         z = hexapod.position[2]
                         max_point = (x, y, z)
-                        print(f'new max value: {max_value:.2f} at {max_point}')
+                        #print(f'new max value: {max_value:.2f} at {max_point}')
 
-    
-            
+
+
             if value > max_value:
                 max_value = value
                 x = hexapod.position[0]
                 y = hexapod.position[1]
                 z = hexapod.position[2]
                 max_point = (x, y, z)
-                print(f'new max value: {max_value:.2f} at {max_point}')
+                #print(f'new max value: {max_value:.2f} at {max_point}')
 
             path_points_list.append((hexapod.position[1], hexapod.position[2]))  # Collect path points
 
@@ -73,6 +72,7 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
 
     def refine_search(initial_point, initial_step_size = 1, refinement_factor = 2, max_iterations = 3, test_slice = None):
         step_size = initial_step_size
+        initial_hexapod_position = initial_point
         center = initial_point
         all_path_points = [] # testing visualization
       
@@ -88,6 +88,9 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
             all_path_points.extend(path_points_list)
             step_size /= refinement_factor
 
+        hexapod.move(initial_hexapod_position, flag = "absolute") # return to initial position after finsished search
+
+
         return center, all_path_points
 
          
@@ -102,11 +105,12 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
     x_path_points, _ = generate_snake_path(grid_size, step_size)    
     print(f'Path Points: \n {x_path_points}')
 
+    
 
     for i in range(len(x_path_points)):
 
         if test_slices is not None:
-            slice_1_2 = (test_slices["1"], test_slices["11"])
+            slice_1_2 = (test_slices["1"], test_slices["4"], test_slices["7"], test_slices["11"])
             test_slice = slice_1_2[i]
 
             y = test_slice["points"][:, 1]
@@ -118,30 +122,127 @@ def find_beam_centers(sensor, hexapod, spacing = 1, num_centers = 2, test_slices
 
 
         print(f'!!!searching for center {i+1}/{num_centers}')
-        center, all_path_points = refine_search(hexapod.position, test_slice = test_slice)
-        centers.append(center)
-        
+
         last_point = hexapod.position
         next_point = (x_path_points[i][0], x_path_points[i][1], x_path_points[i][2], 0, 0, 0)
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
         hexapod.move(next_relative_position, flag = "relative")
 
-        if test_slices is not None: # used for testing
-            hexapod.position += next_relative_position
+        center, all_path_points = refine_search(hexapod.position, test_slice = test_slice)
+        centers.append(center)
+        
+
         
         # TODO Plotting maybe in GUI later?
         all_path_points = np.array(all_path_points)
         plt.plot(all_path_points[:, 0], all_path_points[:, 1], 'x-', color = 'black', markersize = 1)
         plt.scatter(center[1], center[2],marker = "x" ,color = 'red', s = 30)
-        plt.show()
-
+        
+    plt.show()
 
     return centers
 
+def calculate_angle_to_x_axis(trj, degrees = True):
+    # with respect to the x-axis 
+    # trj = (x, y, z) trajectory
+    trj = np.array(trj)
+    trj = trj / np.linalg.norm(trj)    
 
+    x = trj[0]
+    y = trj[1]
+    z = trj[2]
+
+    r = np.sqrt(y**2 + z**2)
+
+    phi = np.arctan2(np.abs(x), np.abs(r))
+
+    if degrees:
+        phi = np.degrees(phi)
+
+    return phi
+
+def calculate_angles(trajectory):
+    #Spherical coodinates
+    # trj = (x, y, z) trajectory
+    # returns (phi, theta) in degrees
+    # coordinates with respect to hexapod coordinate system
+    
+    
+    # Normalize the trajectory vector
+    trajectory = trajectory / np.linalg.norm(trajectory)
+
+    # Extract the components of the trajectory vector
+    x = trajectory[0]
+    y = trajectory[1]
+    z = trajectory[2]
+
+    
+    r = np.sqrt(x**2 + y**2 + z**2)
+
+    phi = np.sign(y) * np.arccos(z/np.sqrt(x**2 + y**2))
+    theta = np.arccos(x/r)
+    
+    angles = np.degrees(np.array([phi, theta]))
+    return angles
+
+def calculate_beam_trajectory_LR(center_points):
+    center_points = np.array(center_points)
+    # Fit a line to the center_points from the center of the first beam slice
+    start_point = center_points[0]
+    start_point = np.array([0, start_point[1], start_point[2]])
+
+    # Shift the points to be relative to the start point
+    shifted_points = center_points - start_point
+
+    # Perform linear regression on the shifted points
+    X = shifted_points[:, 0].reshape(-1, 1)  # Independent variable (x-axis)
+    Y = shifted_points[:, 1]  # Dependent variable (y-axis)
+    Z = shifted_points[:, 2]  # Dependent variable (z-axis)
+
+    # Fit linear regression models
+    reg_y = LinearRegression().fit(X, Y)
+    reg_z = LinearRegression().fit(X, Z)
+
+    # Get the coefficients (slopes) and intercepts
+    slope_y = reg_y.coef_[0]
+    #intercept_y = reg_y.intercept_
+    slope_z = reg_z.coef_[0]
+    #intercept_z = reg_z.intercept_
+
+    # Define the trajectory vector
+    trajectory_vector = np.array([1, slope_y, slope_z])
+
+    # Invert the trajectory vector 
+    trajectory_vector = -trajectory_vector
+
+    # Normalize the trajectory vector
+    trajectory_vector = trajectory_vector / np.linalg.norm(trajectory_vector)
+
+    return trajectory_vector
+
+def rotate_path(path_points, trj):
+    # rotate each point in the path so it is "normal" to the beam trajectory
+    path_points = np.array(path_points)
+    rotated_path_points = []
+
+    default_trj = np.array([-1, 0, 0])
+
+    #default_angles = np.array([0, 180])
+    #angles_to_rotate = default_angles - angles
+
+    for point in path_points:
+        rotation_matrix = get_rotation_matrix(default_trj, trj)
+        
+        rotated_point = np.dot(point, rotation_matrix.T)
+        rotated_path_points.append(rotated_point)
+        
+    return np.array(rotated_path_points)
+
+# REWORK Functions:
 
 def align_center(sensor, hexapod, depth = 0):
     # FUNCION ONLY USED FOR TESTING
+    # DONT USE IN THE FINAL VERSION
 
 
     # allign beam to center of sensor recursivly
@@ -227,17 +328,59 @@ def rough_alignment(sensor, hexapod, probe):
 
 
 if __name__ == "__main__":
+   
+   
+   
     
     sensor = Sensor()
     hexapod = Hexapod()
     
     path = r'C:\Users\Valentin\Documents\GIT_REPS\MtecThesis\Python_Skripts\Experiment_data\Default_2024-12-28_23-54-04.h5'
-    data = load_data(path)
     
+    #TODO uncomment later
+    
+    data = load_data(path)
+    """
     test_slices = data["Visualization"]["Slices"]["vertical"]
 
     centers = find_beam_centers(sensor, hexapod, test_slices = test_slices)
     print(centers)
+    """
+    # test centers
+    centers = [(0.0, 0.0, 0.0), (-0.3, 0.25, 0.0), (-0.6, 0.5, 0.0), (-1.0, 1.0, 0.0)]
+
+    trj = calculate_beam_trajectory_LR(centers)
+    print(trj)
+
+    angle = calculate_angle_to_x_axis(trj)
+    print(angle)
+
+    angles = calculate_angles(trj)
+    print(angles)
+
+    path = data["3D"]["path"]
+    grid = data["3D"]["grid"]
+
+    path, _ = generate_snake_path((1, 4, 4), (1, 1, 1))
+
+    default_trj = np.array([-1, 0, 0])
+    default_angles = calculate_angles(default_trj)
+    print(default_angles)
+
+    rotated_path = rotate_path(path, trj)
+    
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.plot(rotated_path[:, 0], rotated_path[:, 1], rotated_path[:, 2], '.-', color = 'blue', linewidth = 0.5)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Rotated Path')
+
+    plt.show()
 
 
     #print(hexapod.connect_sockets())

@@ -130,7 +130,7 @@ class Hexapod():
         }
         
         self.default_position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
-
+        
         self.position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
         self.velocity = 1 # mm/s Default
 
@@ -232,6 +232,16 @@ class Hexapod():
     def move(self, pos, flag = "relative"):
         
         if not self.connection_status:
+            
+            pos_current = self.position # use simulated position for testing
+
+            if flag == "relative": # relative movement
+                pos_new = [curr + p for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
+            elif flag == "absolute": # absolute movement
+                pos_new = pos   
+            
+            self.position = pos_new # update fake position attribute
+
             rcv = 'Hexpod not connected to server'
             return rcv
         

@@ -110,7 +110,7 @@ def get_beta(data, alpha):
 
 '''    
 
-
+# DONT use this approach, refinement center search promises better results
 
 
 def get_all_points_and_intensities(data):
@@ -246,7 +246,6 @@ def plot_alpha_beta(data, ax = None):
     ax.grid()
 
     
-
 def get_trajectory(alpha, beta):
     default_trajectory = np.array([1, 0, 0])
     rotation = R.from_euler('yz', [alpha, beta], degrees=True)
@@ -268,21 +267,5 @@ if __name__ == "__main__":
     plot_alpha_beta(data)
     plt.show()
 
-    '''
-    # OLD trajectory calculation
-    trj = data['Visualization']['Beam_Models']['Measured_Beam']['trajectory']
-    angles = data['Visualization']['Beam_Models']['Measured_Beam']['angles']
-    print(trj)
-    print(angles)
-    '''
 
-
-
-    '''
-    alpha = get_alpha(data)
-    beta = get_beta(data, alpha)
-    
-    print("alpha =",alpha)
-    print("beta =",beta)
-    '''
     

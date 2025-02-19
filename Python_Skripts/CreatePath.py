@@ -91,8 +91,9 @@ if __name__ == "__main__":
     step_size = [0.5,0.2,0.3] # [mm]
  
     # Generate the snake path
-    path_points_snake = generate_snake_path(grid_size, step_size)
+    path_points_snake, grid = generate_snake_path(grid_size, step_size)
     print(path_points_snake)
+    X, Y, Z = grid
 
     # Extract the path coordinates
     path_x_snake = path_points_snake[:, 0]
