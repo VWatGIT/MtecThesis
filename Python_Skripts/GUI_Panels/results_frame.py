@@ -3,23 +3,27 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+from GUI_Panels.Panel_Updates.update_slice_plot import update_slice_plot
+
 class ResultsFrame:
     def __init__(self, parent, root):
-        results_frame = tk.LabelFrame(parent, text="Results", name="results_frame")
+        
+        self.root = root
+        self.frame = tk.LabelFrame(parent, text="Results", name="results_frame")
 
         for i in range(2):
-            results_frame.grid_columnconfigure(i, weight=1)
+            self.frame.grid_columnconfigure(i, weight=1)
         for i in range(2):
-            results_frame.grid_rowconfigure(i, weight=1)
+            self.frame.grid_rowconfigure(i, weight=1)
         
 
-        self.create_slice_plot_frame(results_frame)
-        self.create_beam_plot_frame(results_frame)
+        self.create_slice_plot_frame(self.frame)
+        self.create_beam_plot_frame(self.frame)
 
-        beam_plot_frame = results_frame.nametowidget("beam_plot_frame")
+        beam_plot_frame = self.frame.nametowidget("beam_plot_frame")
         beam_plot_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
-        slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
+        slice_plot_frame = self.frame.nametowidget("slice_plot_frame")
         slice_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
 
     
@@ -90,9 +94,9 @@ class ResultsFrame:
         interpolation_checkbox.grid(row=3, column=0, columnspan=1, sticky="w", padx=5, pady=5)
         interpolation_checkbox.value = interpolation_var
 
-        vertical_slice_slider.config(command=self.update_slice_plot)
-        horizontal_slice_slider.config(command=self.update_slice_plot)
-        interpolation_checkbox.config(command=self.update_slice_plot) 
+        vertical_slice_slider.config(command=update_slice_plot)
+        horizontal_slice_slider.config(command=update_slice_plot)
+        interpolation_checkbox.config(command=update_slice_plot) 
 
     def create_beam_plot_frame(self, parent):
         

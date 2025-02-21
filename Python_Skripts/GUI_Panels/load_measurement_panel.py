@@ -2,16 +2,23 @@ import tkinter as tk
 from tkinter import filedialog
 
 from Function_Groups.data_handling import load_data
+from GUI_Panels.Panel_Updates.panel_visibility import show_home_panel
+from GUI_Panels.Panel_Updates.update_tab import update_tab
+from GUI_Panels.Panel_Updates.update_measurement_info_frame import update_measurement_info_frame 
 
 class LoadMeasurementPanel:
     def __init__(self, parent, root):
+        self.root = root
+
         self.frame = tk.Frame(parent)
         self.tab_group_object = root.tab_group_object
 
-        load_button = tk.Button(self.frame, text="LOAD", command=self.load_button_pushed, width=20, height=3)
+        self.root.load_measurement_panel = self.frame
+
+        load_button = tk.Button(self.frame, text="LOAD", command= lambda: self.load_button_pushed, width=20, height=3)
         load_button.pack(pady=30)
 
-        return_button = tk.Button(self.frame, text="Return", command=self.show_home_panel, width=20, height=3)
+        return_button = tk.Button(self.frame, text="Return", command=lambda: show_home_panel, width=20, height=3)
         return_button.pack(pady=30)
 
     def load_button_pushed(self):
@@ -20,15 +27,15 @@ class LoadMeasurementPanel:
         if file_path:
             data = load_data(file_path)
             
-            self.create_tab(data)
-            self.update_tab()
-            self.update_trajectory_plot()
-            self.update_measurement_info_frame()
+
+            self.root.tab_group.create_tab(data)
+            update_tab(self.root)
+            update_measurement_info_frame(self.root)
 
             self.measurement_points = data["3D"]["measurement_points"] # TODO also attach this to tab?
             self.current_measurement_id = 0
 
-            tab_name = self.tab_group.select()
+            tab_name = self.root.tab_group.select()
             tab = self.root.nametowidget(tab_name)
 
             subtab_group = tab.nametowidget("subtab_group")

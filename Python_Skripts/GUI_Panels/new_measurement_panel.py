@@ -4,7 +4,8 @@ import threading
 
 
 from Function_Groups.data_handling import save_data
-from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
+from GUI_Panels.Panel_Updates.panel_visibility import *
+from GUI_Panels.Measurement_Procedures.run_measurements import run_measurements
 
 class NewMeasurementPanel:
     def __init__(self, parent, root):
@@ -19,7 +20,7 @@ class NewMeasurementPanel:
 
         self.input_frame = self.input_frame_object.frame
         self.checkbox_panel = self.checkbox_panel_object.frame
-        self.connection_frame = ConnectionFrame(self.panel, self.root).frame
+       
 
         self.autosave_var = tk.IntVar()
         autosave_checkbox = tk.Checkbutton(self.panel, text="Autosave", name="autosave_checkbox", variable=self.autosave_var)
@@ -37,8 +38,7 @@ class NewMeasurementPanel:
         for i in range(2):
             self.panel.grid_columnconfigure(i, weight=1)
 
-        self.input_frame.grid(row=0, column=0, rowspan=2, columnspan=1, sticky="nsew", padx=10, pady=10) 
-        self.connection_frame.grid(row = 0, column = 1, rowspan = 2, padx=10, pady=10, sticky="nsew")
+        self.input_frame.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=10) 
         self.checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
         
         autosave_checkbox.grid(row=3, column=0, columnspan=2, pady=5, sticky="nsew")
@@ -56,10 +56,10 @@ class NewMeasurementPanel:
                 self.root.log.log_event("Please connect to Hexapod and/or Sensor")
                 return
 
-            self.create_tab()
-                        
+            self.root.tab_group_object.create_tab()
+            
             self.measurement_running = True
-            self.measurement_thread = threading.Thread(target= run_measurements)
+            self.measurement_thread = threading.Thread(target= run_measurements(root))
             self.measurement_thread.start()
             self.root.log.log_event("Started Measurements")
         else:
@@ -75,7 +75,7 @@ class NewMeasurementPanel:
         if directory:  
             probe_name = self.probe_name_entry.get()
             file_name = save_data(directory, data, probe_name)
-            self.log_event(f"Data saved to {file_name}")
+            self.root.log.log_event(f"Data saved to {file_name}")
     
     def stop_button_pushed(self):
         # TODO fix issues with hexapod not reacting to stop command
@@ -97,11 +97,11 @@ class CheckboxPanel:
         hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled")
         self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled")
 
-        open_camera_button = tk.Button(self.frame, text="Open Camera", command = show_camera_panel(root))
-        connect_stage_button = tk.Button(self.frame, text="Connect Stage", command=self.connect_stage)
+        open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
+        connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= lambda: self.connect_stage)
         
+        connection_frame = ConnectionFrame(self.frame, self.root).frame
 
-                
         for i in range(9):
             self.frame.grid_rowconfigure(i, weight=1)
         for i in range(2):
@@ -115,6 +115,7 @@ class CheckboxPanel:
         self.stage_connected.grid(row=5, column=0, pady=5, sticky="w")
 
         open_camera_button.grid(row=0, column=1, pady=5, sticky="w")
+        connection_frame.grid(row=1, column=1, rowspan=4, pady=5, sticky="nsew")
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
 
 

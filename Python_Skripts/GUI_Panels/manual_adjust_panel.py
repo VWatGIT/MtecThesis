@@ -2,15 +2,20 @@ import tkinter as tk
 from tkinter import ttk
 import numpy as np
 
+from Function_Groups.alignment import manual_alignment
+
 class ManualAdjustPanel:
-    def __init__(self, parent, manual_alignment):
+    def __init__(self, parent, root):
         """
         External Functions:
         - manual_alignment(manual_adjust_panel): confirms input and moves hexapod to new position
         """
+        self.root = root
 
         self.panel = tk.LabelFrame(parent,text="Adjust Hexapod Positon",name="panel")
         self.panel.pack(side="left", expand=True)
+
+        self.root.manual_adjust_panel = self.panel
 
         for i in range(10):
             self.panel.grid_rowconfigure(i, weight=1)
@@ -92,7 +97,7 @@ class ManualAdjustPanel:
         seperator2 = ttk.Separator(self.panel, orient="horizontal")
         seperator2.grid(row=7, column=0, columnspan=4, sticky="ew", pady=5)
 
-        set_to_0_button = tk.Button(self.panel, text="Set 0", command=self.set_to_0)
+        set_to_0_button = tk.Button(self.panel, text="Set 0", command= lambda: self.set_to_0)
         set_to_0_button.grid(row=8, column=3,columnspan=2,rowspan=2, pady=5, sticky="w")
 
         self.relative_checkbutton_var = tk.IntVar(name="relative_checkbutton_var")
@@ -102,7 +107,7 @@ class ManualAdjustPanel:
         self.relative_checkbutton.grid(row=8, column=0,columnspan=2,pady=5, sticky="ns")
         #self.relative_checkbutton.rowconfigure(8, weight=100)
 
-        manual_align_button = tk.Button(self.panel, text="Confirm", command=manual_alignment(self.panel))
+        manual_align_button = tk.Button(self.panel, text="Confirm", command= lambda: manual_alignment(self.root))
         manual_align_button.grid(row=9, column=0, columnspan= 2, pady=5, sticky="ns")
         #self.panel.rowconfigure(8, weight=100)
 

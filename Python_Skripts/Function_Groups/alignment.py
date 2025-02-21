@@ -1,5 +1,8 @@
-def manual_alignment(self, manual_adjust_panel, hexapod, log):
-        # manual alignment for testing
+def manual_alignment(root):
+    manual_adjust_panel = root.manual_adjust_panel
+    hexapod = root.hexapod
+    
+    # manual alignment for testing
     x = manual_adjust_panel.nametowidget("hexapod_x_entry").get()
     y = manual_adjust_panel.nametowidget("hexapod_y_entry").get()
     z = manual_adjust_panel.nametowidget("hexapod_z_entry").get()
@@ -11,7 +14,7 @@ def manual_alignment(self, manual_adjust_panel, hexapod, log):
         hexapod.move((x, y, z, U, V, W), flag = "relative")
     else:
         hexapod.move((x, y, z, U, V, W), flag = "absolute") 
-    log.log_event("Manual Alignment done")
+    root.log.log_event("Manual Alignment done")
 
 def rough_alignment(hexapod, sensor, log):
     # add additional arguments

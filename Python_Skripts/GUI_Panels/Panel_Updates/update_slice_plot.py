@@ -1,4 +1,4 @@
-from update_beam_plot import update_beam_plot
+from GUI_Panels.Panel_Updates.update_beam_plot import update_beam_plot
 
 def update_slice_plot(root, event=None):
     tab_name = root.tab_group.select()

@@ -1,7 +1,7 @@
 import time
 
 from GUI_Panels.Panel_Updates import * 
-from do_measurement import doMeasurement
+from GUI_Panels.Measurement_Procedures.do_measurement import doMeasurement
 
 from Function_Groups.path_creation import generate_snake_path
 from Function_Groups.data_handling import save_data
@@ -127,7 +127,6 @@ def run_measurements(root):
     measurement_slider.set(root.measurement_points)
     update_tab()
     update_progress_bar(progress_bar,root.measurement_points)
-    update_trajectory_plot()
     update_beam_plot()
     update_measurement_info_frame()
 

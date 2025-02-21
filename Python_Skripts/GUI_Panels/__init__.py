@@ -12,6 +12,7 @@ __all__ = ["main_panel",
            "load_measurement_panel",
             "sensor_path_frame",
            "panel_visibility"
+           
            ]
 
 
@@ -31,5 +32,6 @@ from .Panel_Updates.panel_visibility import *
 from .left_panel import LeftPanel
 from .home_panel import HomePanel
 from .menu import create_menu
+from .top_panel import create_top_panel
 
 

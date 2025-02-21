@@ -11,7 +11,6 @@ from scipy.interpolate import griddata
 
 from .data_handling import load_data, save_data
 
-
 # TODO refine and reorder all functions from testing scripts
 from .trajectory import *
 

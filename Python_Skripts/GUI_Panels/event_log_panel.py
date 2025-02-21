@@ -4,9 +4,12 @@ from tkinter import ttk
 from datetime import datetime
 
 class EventLogPanel:
-    def __init__(self, parent):
+    def __init__(self, parent, root):
         self.panel = tk.LabelFrame(parent, text="Event Log")
         self.panel.pack(side="right", fill="x", padx=10, pady=10)
+
+        self.root = root
+        self.root.event_log_panel = self.panel
 
         # Actual Log here
         self.event_log = tk.Text(self.panel, height = 5, width = 20, state='disabled')

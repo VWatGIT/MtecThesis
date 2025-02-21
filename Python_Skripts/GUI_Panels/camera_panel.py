@@ -6,14 +6,16 @@ import os
 from Function_Groups.camera import * 
 from Function_Groups.marker_detection import *
 
-from camera_calibration_frame import CameraCalibrationFrame
-from camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
+from GUI_Panels.camera_calibration_frame import CameraCalibrationFrame
+from GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
 
 class CameraPanel:
     def __init__(self, parent, root):
         self.camera = root.camera_object.camera
         self.log = root.log
         self.root = root
+
+        
         
         self.camera_calibrated = False
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None # Camera Calibration Values
@@ -26,7 +28,7 @@ class CameraPanel:
         self.canvas = self.camera_plot_frame.canvas
         # Attach to Root fore easy access
         self.root.camera_plot_frame = self.camera_plot_frame
-
+        self.root.camera_panel = self.panel
 
         for i in range(3):
             self.panel.grid_rowconfigure(i, weight=1)

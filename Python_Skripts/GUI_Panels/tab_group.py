@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 
-from results_frame import ResultsFrame
-from measurement_info_frame import MeasurementInfoFrame
-from sensor_path_frame import SensorPathFrame
+from GUI_Panels.results_frame import ResultsFrame
+from GUI_Panels.measurement_info_frame import MeasurementInfoFrame
+from GUI_Panels.sensor_path_frame import SensorPathFrame
 
 from Function_Groups.data_handling import new_data
 
@@ -51,11 +51,11 @@ class TabGroup:
         self.tab_group.select(new_tab)
 
         # Log the creation of a new tab
-        self.log_event(f"Created Tab {self.tab_count}") 
+        self.root.log.log_event(f"Created Tab {self.tab_count}") 
         
     def close_tab(self, tab):
         self.tab_group.forget(tab)
-        self.log_event(f"Closed Tab {self.tab_count}")
+        self.root.log.log_event(f"Closed Tab {self.tab_count}")
         self.tab_count -= 1
 
     def create_subtabs(self, parent):
@@ -64,8 +64,8 @@ class TabGroup:
 
         #Create Frames
         results_frame = ResultsFrame(self.subtab_group, self.root).frame
-        measurement_info_frame = MeasurementInfoFrame(self.subtab_group, self.roo).frame
-        sensor_path_frame = SensorPathFrame(self.subtab_group, self.roo).frame
+        measurement_info_frame = MeasurementInfoFrame(self.subtab_group, self.root).frame
+        sensor_path_frame = SensorPathFrame(self.subtab_group, self.root).frame
 
         # Pack Frames
         results_frame.pack(side="right", fill="both", expand=True)

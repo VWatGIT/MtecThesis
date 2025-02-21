@@ -6,6 +6,6 @@ from .update_progress_bar import *
 from .update_sensor_info_frame import *
 from .update_slice_plot import *
 from .update_tab import *
-from .update_trajectory_plot import *
+
            
 
