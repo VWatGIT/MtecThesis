@@ -67,9 +67,12 @@ class CameraCalibrationFrame:
     def reset_calibration(self):
         self.checkerboard_images = []
         self.update_calibration_images()
+
+        # TODO implement automatic calibration
         self.take_image_button.config(text="Take Image " + str(len(self.checkerboard_images) + 1))
-        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
-    
+        
+        self.root.camera_object.reset_calibration()
+       
     def take_calibration_image(self):
         #if len(self.checkerboard_images) < self.checkerboard_image_amount:         
         self.camera.Open()
@@ -82,7 +85,7 @@ class CameraCalibrationFrame:
         image = crop_image(image, top_left, bottom_right)
 
         self.checkerboard_images.append(image)
-        self.log_event("Took calibration image")
+        self.root.log.log_event("Took calibration image")
 
         #if len(self.checkerboard_images) > 0:
         #self.create_calibration_image_canvas(self.calibration_image_frame) #TODO uncomment if subplots dont work  
@@ -92,13 +95,6 @@ class CameraCalibrationFrame:
         # Update Buttons
         self.take_image_button.config(text="Take Image " + str(len(self.checkerboard_images) + 1)) #+ "/" + str(self.checkerboard_image_amount))
     
-        """
-        if len(self.checkerboard_images) == self.checkerboard_image_amount:
-            # Update Buttons
-            self.take_image_button.config(state="disabled", text="Done")
-            self.calibrate_button.config(state="normal")
-            self.log_event("Reached maximum amount of calibration images")
-        """
    
     def update_calibration_images(self): #TODO change layout of subplots
         num_images = len(self.checkerboard_images)
@@ -129,7 +125,7 @@ class CameraCalibrationFrame:
         canvas.figure = fig
         canvas.draw()
 
-        self.log_event("Updated Calibration Images")
+        self.root.log.log_event("Updated Calibration Images")
     
     def calibrate_camera(self):
         # termination criteria
@@ -163,7 +159,7 @@ class CameraCalibrationFrame:
                 self.update_calibration_images()
              
             else:
-                self.log_event(f"Checkerboard corners not found in image {index+1}")
+                self.root.log.log_event(f"Checkerboard corners not found in image {index+1}")
 
         cv2.destroyAllWindows()
 
@@ -171,11 +167,12 @@ class CameraCalibrationFrame:
         if len(objpoints) > 0 and len(imgpoints) > 0:
             # Calibrate the camera
             self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+            self.camera_object.calibrate_camera(self.ret, self.mtx, self.dist, self.rvecs, self.tvecs)
 
-            # Update the camera calibration checkbox
-            self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("camera_calibrated").select()
+            # Update the camera calibration checkbox # TODO implement automatic check in the checkbox
+            self.root.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("camera_calibrated").select()
             self.camera_calibrated = True
-            self.log_event("Calibrated Camera")
+            self.log.log_event("Calibrated Camera")
         else:
-            self.log_event("Calibration failed: No valid checkerboard corners found in any image")
+            self.log.log_event("Calibration failed: No valid checkerboard corners found in any image")
  

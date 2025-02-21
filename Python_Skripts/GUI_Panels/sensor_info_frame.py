@@ -28,7 +28,7 @@ class SensorInfoFrame:
 
         measurement_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
         sensor_readings_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
-        sensor_plot_frame.grid(row=1, column=0, columnspan=1, sticky="ns", padx=10, pady=10)     
+        sensor_plot_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)     
 
     def create_sensor_readings_frame(self, parent):    
 
@@ -40,19 +40,19 @@ class SensorInfoFrame:
 
         # Add labels to display X and Y positions within the sensor_readings_frame
         xpos_label = tk.Label(sensor_readings_frame, text="X Position: N/A", name="xpos_label")
-        xpos_label.grid(row=0, column=0, sticky="w", padx=10, pady=5)
+        xpos_label.grid(row=0, column=0, sticky="nw", padx=10, pady=5)
 
         ypos_label = tk.Label(sensor_readings_frame, text="Y Position: N/A", name="ypos_label")
-        ypos_label.grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        ypos_label.grid(row=1, column=0, sticky="nw", padx=10, pady=5)
 
         sum_label = tk.Label(sensor_readings_frame, text="Sum: N/A", name="sum_label")
-        sum_label.grid(row=2, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+        sum_label.grid(row=2, column=0, columnspan=2, sticky="nw", padx=10, pady=5)
 
         xdiff_label = tk.Label(sensor_readings_frame, text="X Diff: N/A", name="xdiff_label")
-        xdiff_label.grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        xdiff_label.grid(row=3, column=0, sticky="nw", padx=10, pady=5)
 
         ydiff_label = tk.Label(sensor_readings_frame, text="Y Diff: N/A", name="ydiff_label")
-        ydiff_label.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+        ydiff_label.grid(row=4, column=0, sticky="nw", padx=10, pady=5)
 
         return sensor_readings_frame
 
@@ -73,9 +73,9 @@ class SensorInfoFrame:
         ax.set_xlim(-10, 10)
         ax.set_ylim(-10, 10)
 
-        canvas = FigureCanvasTkAgg(fig, master=self.frame) 
+        canvas = FigureCanvasTkAgg(fig, master=sensor_plot_frame) 
         canvas.draw()
-        #canvas.get_tk_widget().pack(fill= "both", expand=True)  # Span the canvas across all columns TODO fix this
+        canvas.get_tk_widget().pack(fill= "both", expand=True)   
         self.frame.canvas = canvas # store canvas in sensor_plot_frame
 
         return sensor_plot_frame

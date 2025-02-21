@@ -26,7 +26,6 @@ def mouse_callback(event, x, y, flags, param):
         global mouse_x, mouse_y
         mouse_x, mouse_y = x, y
         print(f"Mouse coordinates: ({x}, {y})")
-       
         
 def show_image(image):
     cv2.imshow('image', image)
@@ -95,6 +94,10 @@ def crop_coordinate_transform(image, coordinates, top_left):
     y = y + crop_y
     
     return (x, y)
+
+def draw_probe_tip(image, position):
+    cv2.circle(image, position, 3, (255, 0, 0), -1)
+    return image
 
 # Example usage
 if __name__ == "__main__":

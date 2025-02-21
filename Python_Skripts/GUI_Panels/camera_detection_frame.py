@@ -8,6 +8,7 @@ from Function_Groups.marker_detection import detect_markers
 class ProbeDetectionFrame:
     def __init__(self, parent, root):
         
+        self.root = root
         self.camera = root.camera
         self.probe = root.probe
         self.canvas = root.camera_plot_frame.canvas
@@ -16,7 +17,7 @@ class ProbeDetectionFrame:
         self.probe_detected = False
         self.detected_probe_position = None
 
-        self.frame = tk.Frame(parent, name="probe_detection_frame")
+        self.frame = tk.LabelFrame(parent, text="Probe-Tip detection", name="probe_detection_frame")
 
         
         for i in range(5):
@@ -41,7 +42,7 @@ class ProbeDetectionFrame:
         self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5)
         self.threshold_slider = tk.Scale(self.frame, from_=0, to=255, orient="horizontal", name="threshold_slider")
         self.threshold_slider.grid(row=2, column=1, rowspan=2, pady=5)
-        self.threshold_slider.config(command=self.take_probe_image)
+        self.threshold_slider.config(command= self.take_probe_image)
 
 
         self.take_probe_image_button = tk.Button(self.frame, text="Take Image", command=self.take_probe_image) 
@@ -56,7 +57,6 @@ class ProbeDetectionFrame:
         self.probe_detetection_checkbox.grid(row=6, column=0, pady=5)
 
 
-   
 
     def take_probe_image(self):
         # updates the canvas with the detected image
@@ -78,14 +78,14 @@ class ProbeDetectionFrame:
         
         if detected_probe_position_cropped is not None:
             self.detected_probe_position = crop_coordinate_transform(image, detected_probe_position_cropped, top_left)
-            self.log_event(f"Probe-Tip detected at {self.detected_probe_position}")
+            self.root.log.log_event(f"Probe-Tip detected at {self.detected_probe_position}")
             self.save_probe_position_button.config(state="normal")
             self.probe_detetection_checkbox.config(state="normal")
         else:
             self.detected_probe_position = None
             self.save_probe_position_button.config(state="disabled")
             self.probe_detetection_checkbox.config(state="disabled")
-            self.log_event("Probe-Tip not detected")
+            self.root.log.log_event("Probe-Tip not detected")
 
 
         # Show the result
@@ -96,7 +96,7 @@ class ProbeDetectionFrame:
         canvas.draw()
         axes.axis('off')
 
-        self.log_event("Took Probe Image")
+        self.root.log.log_event("Took Probe Image")
 
     def save_probe_position(self):
         # TODO maybe merge this with take probe image
@@ -107,7 +107,7 @@ class ProbeDetectionFrame:
         
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("probe_detected").select()
         self.probe.translate_probe_tip(self.detected_probe_position, self.mtx, self.dist)
-        self.log_event("Saved Probe Position")
+        self.root.log.log_event("Saved Probe Position")
 
 
 class MarkerDetectionFrame:
@@ -117,7 +117,25 @@ class MarkerDetectionFrame:
         self.probe = root.probe
         self.canvas = root.camera_plot_frame.canvas
 
-        self.frame = tk.Frame(parent, name="marker_detection_frame")
+        self.frame = tk.LabelFrame(parent, text="Marker detection",name="marker_detection_frame")
+
+        for i in range(5):
+            self.frame.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            self.frame.grid_columnconfigure(i, weight=1)
+
+        # Labels
+        self.probe_marker_id_label = tk.Label(self.frame, text="Probe Marker ID:", name="probe_marker_id_label")
+        self.sensor_marker_id_label = tk.Label(self.frame, text="Sensor Marker ID:", name="sensor_marker_id_label")
+
+        # TODO create settings file to store all hardcoded values
+        self.probe_marker_id_entry = tk.Entry(self.frame, name="probe_marker_id_entry")
+        self.sensor_marker_id_entry = tk.Entry(self.frame, name="sensor_marker_id_entry")
+
+        self.probe_marker_id_entry.insert(0, str(self.probe.marker_id))
+        self.sensor_marker_id_entry.insert(0, str(self.sensor.marker_id))
+
+
         
     def scan_markers(self, image):
         # TODO where do i get mtx and dist from
@@ -129,10 +147,7 @@ class MarkerDetectionFrame:
         self.probe.marker_rvecs = rvecs[self.probe.marker_id]
         self.probe.marker_tvecs = tvecs[self.probe.marker_id]
 
-        self.update_marker_plot(image)
 
-    def update_marker_plot(self, image):
-        # TODO implement marker detection plot
-        pass
+
     
 

@@ -19,6 +19,8 @@ class PanedWindow:
 
         self.event_log = EventLogPanel(self.paned_window, root)
         self.event_log_panel = self.event_log.panel
+        self.event_log_panel.pack(side="right", fill="x", padx=10, pady=10)
+
 
         self.root.log = self.event_log # for logging call root.log.log_event("message")
 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from GUI_Panels.Panel_Updates.update_slice_plot import update_slice_plot
+from GUI_Panels.sensor_info_frame import SensorInfoFrame 
 
 class ResultsFrame:
     def __init__(self, parent, root):
@@ -16,17 +17,20 @@ class ResultsFrame:
         for i in range(2):
             self.frame.grid_rowconfigure(i, weight=1)
         
+        sensor_info_frame = SensorInfoFrame(self.frame, root).frame
+        slice_plot_frame = self.create_slice_plot_frame(self.frame)
+        beam_plot_frame = self.create_beam_plot_frame(self.frame)
+        
 
-        self.create_slice_plot_frame(self.frame)
-        self.create_beam_plot_frame(self.frame)
 
-        beam_plot_frame = self.frame.nametowidget("beam_plot_frame")
         beam_plot_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
-
-        slice_plot_frame = self.frame.nametowidget("slice_plot_frame")
         slice_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
+        sensor_info_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
 
-    
+        self.frame.grid_rowconfigure(1, weight=7)
+
+
+
     def create_slice_plot_frame(self, parent):
         slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
         for i in range(7):
@@ -98,6 +102,8 @@ class ResultsFrame:
         horizontal_slice_slider.config(command=lambda: update_slice_plot(self.root))
         interpolation_checkbox.config(command=lambda: update_slice_plot(self.root)) 
 
+        return slice_plot_frame
+
     def create_beam_plot_frame(self, parent):
         
         beam_plot_frame = tk.LabelFrame(parent, text="Beam Plot", name="beam_plot_frame")
@@ -115,4 +121,4 @@ class ResultsFrame:
         canvas.get_tk_widget().pack(fill= "both", expand=True)
         beam_plot_frame.canvas = canvas
 
-        pass
+        return beam_plot_frame

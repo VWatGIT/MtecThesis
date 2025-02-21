@@ -22,7 +22,7 @@ class LoadMeasurementPanel:
         return_button.pack(pady=30)
 
     def load_button_pushed(self):
-        self.log_event("Loading Data")
+        self.root.log.log_event("Loading Data")
         file_path = filedialog.askopenfilename(filetypes=[("hdf5 files", "*.h5")])
         if file_path:
             data = load_data(file_path)
@@ -53,7 +53,7 @@ class LoadMeasurementPanel:
             horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
 
             self.update_beam_plot()
-            self.log_event(f"Data loaded from {file_path}")
+            self.root.log.log_event(f"Data loaded from {file_path}")
 
 if __name__ == "__main__":
     root = tk.Tk()

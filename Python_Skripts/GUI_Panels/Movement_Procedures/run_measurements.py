@@ -142,9 +142,9 @@ def run_measurements(root):
 
 
 def process_data(self, data):
-    self.log_event("Processing data")
+    self.root.log.log_event("Processing data")
     process_slices(data)
-    self.log_event("Created Slices and Beam Model")
+    self.root.log.log_event("Created Slices and Beam Model")
 
 # UTILITIES
 def add_meta_data(self, data):

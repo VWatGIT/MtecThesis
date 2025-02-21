@@ -90,12 +90,20 @@ class CheckboxPanel:
         self.frame = tk.Frame(parent, name="checkbox_panel")
 
 
-        camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled")
-        camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled")
-        sensor_detected = tk.Checkbutton(self.frame, text="Sensor detected", name="markers_detected", state="disabled")
-        probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled")
-        hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled")
-        self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled")
+        self.camera_connected_var = tk.IntVar()
+        self.camera_calibrated_var = tk.IntVar()
+        self.sensor_detected_var = tk.IntVar()
+        self.probe_detected_var = tk.IntVar()
+        self.hexapod_connected_var = tk.IntVar()
+        self.stage_connected_var = tk.IntVar()
+
+        camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled", variable=self.camera_connected_var)
+        camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled", variable=self.camera_calibrated_var)
+        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.sensor_detected_var)
+        probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled", variable=self.probe_detected_var)
+        hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.hexapod_connected_var)
+        self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.stage_connected_var)
+
 
         open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
         connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= lambda: self.connect_stage)
@@ -109,7 +117,7 @@ class CheckboxPanel:
 
         camera_connected.grid(row=0, column=0, pady=5, sticky="w")
         camera_calibrated.grid(row=1, column=0, pady=5, sticky="w")
-        sensor_detected.grid(row=2, column=0, pady=5, sticky="w")
+        markers_detected.grid(row=2, column=0, pady=5, sticky="w")
         probe_detected.grid(row=3, column=0, pady=5, sticky="w")
         hexapod_connected.grid(row=4, column=0, pady=5, sticky="w")
         self.stage_connected.grid(row=5, column=0, pady=5, sticky="w")
@@ -118,13 +126,49 @@ class CheckboxPanel:
         connection_frame.grid(row=1, column=1, rowspan=4, pady=5, sticky="nsew")
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
 
+    
+    def update_checkboxes(self):
+        if self.root.camera is not None:
+            self.camera_connected_var.set(1)
+        else:
+            self.camera_connected_var.set(0)
+
+        if self.root.camera.calibrated is True:
+            self.camera_calibrated_var.set(1)
+        else:
+            self.camera_calibrated_var.set(0)
+
+        if self.root.markers_detected is True:
+            self.sensor_detected_var.set(1)
+        else:
+            self.sensor_detected_var.set(0)
+
+        if self.root.probe_detected is True:
+            self.probe_detected_var.set(1)
+        else:
+            self.probe_detected_var.set(0)
+
+        if self.root.hexapod.connection_state is True:
+            self.hexapod_connected_var.set(1)
+        else:
+            self.hexapod_connected_var.set(0)
+
+        if self.sensor.stage is not None:
+            self.stage_connected_var.set(1)
+        else:
+            self.stage_connected_var.set(0)
+
+        self.frame.after(1000, self.update_checkboxes)
+
+      
+
 
     def connect_stage(self):
         self.root.sensor.initialize_stage() 
 
         if self.root.sensor.stage is not None:
             self.stage_connected.select()
-            self.log_event("Stage connected") 
+            self.root.log.log_event("Stage connected") 
 
 class ConnectionFrame:
     def __init__(self, parent, root):
@@ -146,9 +190,9 @@ class ConnectionFrame:
         self.port_2_entry = tk.Entry(self.frame, name="port_2_entry")
         self.ip_entry = tk.Entry(self.frame, name="ip_entry")
 
-        self.port_1_entry.insert(0, "5464")
-        self.port_2_entry.insert(0, "5465")
-        self.ip_entry.insert(0, '134.28.45.17') # Default IP
+        self.port_1_entry.insert(0, str(self.root.hexapod.port_1))
+        self.port_2_entry.insert(0, str(self.root.hexapod.port_2))
+        self.ip_entry.insert(0, str(self.root.hexapod.IP))
 
         port_1_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         port_2_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
@@ -163,11 +207,11 @@ class ConnectionFrame:
     
     def connect_hexapod(self):
 
-        server_ip = self.frame.nametowidget("ip_entry").get()
-        port_1 = int(self.frame.nametowidget("port_1_entry").get())
-        port_2 = int(self.frame.nametowidget("port_2_entry").get())
+        self.root.hexapod.IP = self.frame.nametowidget("ip_entry").get()
+        self.root.hexapod.port_1 = int(self.frame.nametowidget("port_1_entry").get())
+        self.root.hexapod.port_2 = int(self.frame.nametowidget("port_2_entry").get())
 
-        rcv = self.hexapod.connect_sockets(server_ip, port_1, port_2)
+        rcv = self.hexapod.connect_sockets()
         self.root.log.log_event(rcv)
 
 class input_frame:
@@ -178,8 +222,8 @@ class input_frame:
 
         self.root.input_frame = self.frame
 
-        self.grid_size = (1, 6, 6) #mm
-        self.step_size = (1,1,1) #mm
+        self.grid_size = self.root.grid_size
+        self.step_size = self.root.step_size
         self.time_estimated = "N/A"
 
 

@@ -4,6 +4,8 @@ import numpy as np
 import socket
 import cv2
 import time
+from configparser import ConfigParser
+import os
 
 import pypylon.pylon as pylon
 
@@ -29,8 +31,22 @@ class Object3D:
 class Sensor(Object3D):
     def __init__(self, marker_id = 0, marker_size = 16):
         super().__init__(marker_id, marker_size)
-        self.Unique_rvecs = [0, 0, 0]  # 0 if sicker is applied correctly
-        self.Unique_tvecs = []  # TODO from marker corner to photo diode array
+
+        # Load Configuration
+        config = ConfigParser()
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
+        config.read(config_path)
+
+
+        self.marker_id = config.getint('Sensor', 'marker_id')
+        self.marker_size = config.getfloat('Sensor', 'marker_size')
+
+
+         # 0 rvecs if sicker is applied correctly
+        # TODO measure tvecs from marker corner to photo diode array
+
+        self.unique_rvecs = list(map(int, config.get('Sensor', 'unique_rvecs').split(',')))
+        self.unique_tvecs = list(map(int, config.get('Sensor', 'unique_tvecs').split(',')))
 
         self.marker_tvecs = [] 
         self.marker_rvecs = []
@@ -85,11 +101,23 @@ class Sensor(Object3D):
 class Probe(Object3D):
     def __init__(self, marker_id=1, marker_size=0):
         super().__init__(marker_id, marker_size)
-        self.Unique_tvecs = [0, 0, 2]  # TODO Translation Matrix from Marker to the Tip of the Probe only z is relevant change z
+        
+        # Load Configuration
+        config = ConfigParser()
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
+        config.read(config_path)
+
+        self.marker_id = config.getint('Sensor', 'marker_id')
+        self.marker_size = config.getfloat('Sensor', 'marker_size')
+
+        # only z cooridnate of tvecs relevant
+        self.unique_rvecs = list(map(int, config.get('Probe', 'unique_rvecs').split(',')))
+        self.unique_tvecs = list(map(int, config.get('Probe', 'unique_tvecs').split(',')))
 
         self.marker_tvecs = [None, None, None] 
         self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
 
+        self.probe_tip_position_in_camera_image = (0, 0)
         self.probe_tip_position = None
 
     def translate_probe_tip(self, probe_tip_position, mtx, dist):
@@ -117,6 +145,27 @@ class Probe(Object3D):
 
 class Hexapod():
     def __init__(self):
+        # Hexapod Travel Ranges
+        self.travel_ranges = {
+            # all in +- mm
+           
+            'X': 50,
+            'Y': 50,
+            'Z': 20,
+            'U': 15,
+            'V': 15,
+            'W': 30,
+        }
+
+
+        # Load Configuration
+        config = ConfigParser()
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
+        config.read(config_path)
+
+        self.IP = config.get('Hexapod', 'IP')
+        self.port_1 = config.getint('Hexapod', 'port_1')
+        self.port_2 = config.getint('Hexapod', 'port_2')
 
         # Command Dictionary
         self.commands = {
@@ -150,15 +199,15 @@ class Hexapod():
         rcv = self.move(self.default_position, flag = "absolute")
         return rcv
     
-    def connect_sockets(self, IP= '134.28.45.17', port_1 = 5464, port_2 = 5465): # TODO implement in GUI and change to actual default adresses
+    def connect_sockets(self): # TODO implement in GUI and change to actual default adresses
         # Connect to Hexapod Server
         # TODO : implement Ip and port input in gui
         if self.connection_status:
             rcv = 'Already connected to server'
             return rcv
         try:
-            self.tcpipObj_Hexapod_1.connect((IP, port_1))
-            self.tcpipObj_Hexapod_2.connect((IP, port_2))
+            self.tcpipObj_Hexapod_1.connect((self.IP, self.port_1))
+            self.tcpipObj_Hexapod_2.connect((self.IP, self.port_2))
 
             self.tcpipObj_Hexapod_1.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.tcpipObj_Hexapod_2.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)

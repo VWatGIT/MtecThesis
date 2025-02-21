@@ -12,14 +12,21 @@ class Camera():
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
         self.camera_calibrated = False
 
-        
+    def reset_calibration(self):
+        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
+        self.camera_calibrated = False        
 
-    
+    def set_calibration_values(self, ret, mtx, dist, rvecs, tvecs):
+        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = ret, mtx, dist, rvecs, tvecs
+        self.camera_calibrated = True
+
     def create_camera(self):
-        os.environ["PYLON_CAMEMU"] = "1"
+        os.environ["PYLON_CAMEMU"] = "6"
         camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
         return camera
 
+    def set_emulated_image(self, path):
+        os.environ["PYLON_CAMEMU_IMAGE"] = path
 
 
 

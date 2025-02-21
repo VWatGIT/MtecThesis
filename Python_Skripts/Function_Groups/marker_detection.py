@@ -8,20 +8,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 
-def detect_markers(image, mtx, dist):
-    """
-    Detect ArUco markers in the image and estimate their pose.
 
-    Parameters:
-    image (numpy.ndarray): The input image.
-    mtx (numpy.ndarray): Camera matrix.
-    dist (numpy.ndarray): Distortion coefficients.
-
-    Returns:
-    image (numpy.ndarray): The image with detected markers and axes drawn.
-    rvecs (list): Rotation vectors of the detected markers.
-    tvecs (list): Translation vectors of the detected markers.
-    """
+def detect_markers(image, marker_size, mtx, dist):
+ 
     # Load the predefined dictionary
     aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
     parameters = cv2.aruco.DetectorParameters()
@@ -31,7 +20,7 @@ def detect_markers(image, mtx, dist):
 
     if ids is not None:
         # Estimate pose of each marker
-        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, 0.016, mtx, dist)  # 0.016 is the marker length in meters
+        rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, marker_size, mtx, dist)  # marker_size is the marker length in meters
 
         # Draw detected markers and their axes
         cv2.aruco.drawDetectedMarkers(image, corners, ids)
