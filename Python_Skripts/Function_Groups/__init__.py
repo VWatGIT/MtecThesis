@@ -1,5 +1,4 @@
-__all__ = [ "alignment",
-            "beam_visualization",
+__all__ = [ "beam_visualization",
             "camera", 
             "data_handling", 
             "marker_detection", 
@@ -9,7 +8,6 @@ __all__ = [ "alignment",
             "gauss_beam", 
             "trajectory"]
 
-from .alignment import *
 from .beam_visualization import *
 from .camera import *
 from .data_handling import *

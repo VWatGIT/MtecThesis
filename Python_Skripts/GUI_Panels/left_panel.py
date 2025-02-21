@@ -8,7 +8,7 @@ class LeftPanel:
     def __init__(self, parent, root):
         self.root = root
 
-        self.frame = tk.Frame(parent, width=450) # change "width"(340 was old default) depending on needed menu size
+        self.frame = tk.Frame(parent, width=340) # change "width"(340 was old default) depending on needed menu size
         self.root.left_panel = self.frame
 
         home_panel = HomePanel(self.frame, root).frame

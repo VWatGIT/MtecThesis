@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import numpy as np
 
-from Function_Groups.alignment import manual_alignment
+from GUI_Panels.Measurement_Procedures.alignment import manual_alignment
 
 class ManualAdjustPanel:
     def __init__(self, parent, root):
@@ -97,7 +97,7 @@ class ManualAdjustPanel:
         seperator2 = ttk.Separator(self.panel, orient="horizontal")
         seperator2.grid(row=7, column=0, columnspan=4, sticky="ew", pady=5)
 
-        set_to_0_button = tk.Button(self.panel, text="Set 0", command= lambda: self.set_to_0)
+        set_to_0_button = tk.Button(self.panel, text="Set 0", command= self.set_to_0)
         set_to_0_button.grid(row=8, column=3,columnspan=2,rowspan=2, pady=5, sticky="w")
 
         self.relative_checkbutton_var = tk.IntVar(name="relative_checkbutton_var")

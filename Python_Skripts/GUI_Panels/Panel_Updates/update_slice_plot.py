@@ -2,7 +2,7 @@ from GUI_Panels.Panel_Updates.update_beam_plot import update_beam_plot
 
 def update_slice_plot(root, event=None):
     tab_name = root.tab_group.select()
-    tab = root.root.nametowidget(tab_name)
+    tab = root.nametowidget(tab_name)
 
     data = tab.data 
 
@@ -18,12 +18,21 @@ def update_slice_plot(root, event=None):
     interpolation_checkbox = slice_plot_frame.nametowidget("interpolation_checkbox")
 
     interpolation_var = interpolation_checkbox.value.get()
-    interpolation = interpolation_var
-
+    
     slice_index = vertical_slice_slider.get() 
 
+
+    # Update the horizontal slice plot
+    horizontal_plot_frame = slice_plot_frame.nametowidget("horizontal_plot_frame")
+    canvas = horizontal_plot_frame.canvas
+    ax = canvas.figure.axes[0]
+
+    horizontal_slice_slider = slice_plot_frame.nametowidget("horizontal_slice_slider")
+    horizontal_slice_index = horizontal_slice_slider.get()
+
+
     #only update if data is available
-    if data["Visualization"] != {}:
+    if data["Visualization"]["Slices"]["vertical"] != {} :
         
         # Update the vertical slice plot
         vertical_slice= data['Visualization']["Slices"]['vertical'][str(slice_index)] # Get the slice data
@@ -48,13 +57,11 @@ def update_slice_plot(root, event=None):
         
         canvas.draw()
 
-        # Update the horizontal slice plot
-        horizontal_plot_frame = slice_plot_frame.nametowidget("horizontal_plot_frame")
-        canvas = horizontal_plot_frame.canvas
-        ax = canvas.figure.axes[0]
+        # Update Beam Plot for Seethrough Planes
+        update_beam_plot()
 
-        horizontal_slice_slider = slice_plot_frame.nametowidget("horizontal_slice_slider")
-        horizontal_slice_index = horizontal_slice_slider.get()
+
+    elif data["Visualization"]["Slices"]["horizontal"] != {}:
 
         horizontal_slice = data['Visualization']["Slices"]['horizontal'][str(horizontal_slice_index)] # Get the slice data
         heatmap = horizontal_slice['heatmap']

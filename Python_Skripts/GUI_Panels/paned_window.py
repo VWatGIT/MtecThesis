@@ -11,7 +11,7 @@ class PanedWindow:
         self.root = root
         
         self.paned_window = ttk.PanedWindow(parent, orient="vertical")
-        self.paned_window.pack(expand=True, fill="both")
+        
 
         self.root.paned_window = self.paned_window
         

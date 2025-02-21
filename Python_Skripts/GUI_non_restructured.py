@@ -1736,7 +1736,7 @@ class UserInterface:
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
         self.log_event("Rough Alignment done")
     def fine_alignment(self):
-        fine_alignment(self.sensor, self.hexapod) # imported from another file
+        #fine_alignment(self.sensor, self.hexapod) # imported from another file
 
         self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").select()
         self.log_event("Fine Alignment done")

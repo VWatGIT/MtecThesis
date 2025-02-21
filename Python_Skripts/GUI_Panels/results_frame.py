@@ -94,9 +94,9 @@ class ResultsFrame:
         interpolation_checkbox.grid(row=3, column=0, columnspan=1, sticky="w", padx=5, pady=5)
         interpolation_checkbox.value = interpolation_var
 
-        vertical_slice_slider.config(command=update_slice_plot)
-        horizontal_slice_slider.config(command=update_slice_plot)
-        interpolation_checkbox.config(command=update_slice_plot) 
+        vertical_slice_slider.config(command=lambda: update_slice_plot(self.root))
+        horizontal_slice_slider.config(command=lambda: update_slice_plot(self.root))
+        interpolation_checkbox.config(command=lambda: update_slice_plot(self.root)) 
 
     def create_beam_plot_frame(self, parent):
         
