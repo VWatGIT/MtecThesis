@@ -3,9 +3,9 @@ from tkinter import ttk, filedialog, messagebox
 import threading
 
 
-from Function_Groups.data_handling import save_data
-from GUI_Panels.Panel_Updates.panel_visibility import *
-from GUI_Panels.Measurement_Procedures.run_measurements import run_measurements
+from Python_Skripts.Function_Groups.data_handling import save_data
+from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
+from Python_Skripts.GUI_Panels.Movement_Procedures.run_measurements import run_measurements
 
 class NewMeasurementPanel:
     def __init__(self, parent, root):
@@ -87,7 +87,7 @@ class CheckboxPanel:
     def __init__(self, parent, root):
         self.root = root
 
-        self.frame = tk.Frame(parent, name="checkbox_panel")
+        self.frame = tk.LabelFrame(parent, name="checkbox_panel")
 
 
         self.camera_connected_var = tk.IntVar()

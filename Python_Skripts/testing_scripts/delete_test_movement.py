@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time
 
-from Python_Skripts.Function_Groups.object3D import Sensor, Hexapod
-from Python_Skripts.Function_Groups.path_creation import generate_snake_path, generate_grid
+from Python_Skripts.Python_Skripts.Function_Groups.object3D import Sensor, Hexapod
+from Python_Skripts.Python_Skripts.Function_Groups.path_creation import generate_snake_path, generate_grid
 
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from GUI_Panels.Panel_Updates.update_slice_plot import update_slice_plot
-from GUI_Panels.sensor_info_frame import SensorInfoFrame 
+from Python_Skripts.GUI_Panels.Panel_Updates.update_slice_plot import update_slice_plot
+from Python_Skripts.GUI_Panels.sensor_info_frame import SensorInfoFrame 
 
 class ResultsFrame:
     def __init__(self, parent, root):

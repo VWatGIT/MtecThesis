@@ -14,29 +14,29 @@ from datetime import datetime
 
 
 
-from Function_Groups.camera import calibrate_camera, capture_image
-from Function_Groups.object3D import Sensor, Probe, Hexapod
-from Function_Groups.path_creation import generate_grid, generate_snake_path
-from Function_Groups.probe_tip_detection import detect_needle_tip
-from Function_Groups.probe_tip_detection import crop_image
-from Function_Groups.probe_tip_detection import crop_coordinate_transform
-from Function_Groups.marker_detection import detect_markers
-from Function_Groups.data_handling import save_data, load_data
-from Function_Groups.beam_visualization import create_heatmap
-from Function_Groups.beam_visualization import process_slices
-from Function_Groups.beam_visualization import create_slices
-from Python_Skripts.Function_Groups.gauss_beam import Gauss_Beam # Used for testing
-from Python_Skripts.Function_Groups.gauss_beam import create_Test_Beam # Used for testing
-from GUI_Panels import ManualAdjustPanel
+from Python_Skripts.Function_Groups.camera import calibrate_camera, capture_image
+from Python_Skripts.Function_Groups.object3D import Sensor, Probe, Hexapod
+from Python_Skripts.Function_Groups.path_creation import generate_grid, generate_snake_path
+from Python_Skripts.Function_Groups.probe_tip_detection import detect_needle_tip
+from Python_Skripts.Function_Groups.probe_tip_detection import crop_image
+from Python_Skripts.Function_Groups.probe_tip_detection import crop_coordinate_transform
+from Python_Skripts.Function_Groups.marker_detection import detect_markers
+from Python_Skripts.Function_Groups.data_handling import save_data, load_data
+from Python_Skripts.Function_Groups.beam_visualization import create_heatmap
+from Python_Skripts.Function_Groups.beam_visualization import process_slices
+from Python_Skripts.Function_Groups.beam_visualization import create_slices
+from Python_Skripts.Python_Skripts.Function_Groups.gauss_beam import Gauss_Beam # Used for testing
+from Python_Skripts.Python_Skripts.Function_Groups.gauss_beam import create_Test_Beam # Used for testing
+from Python_Skripts.GUI_Panels import ManualAdjustPanel
 
-from Testing_Scripts.Beam_Trajectory import calculate_alpha_beta
-from Testing_Scripts.Beam_Trajectory import plot_alpha_beta
-
-
+from Python_Skripts.Testing_Scripts.Beam_Trajectory import calculate_alpha_beta
+from Python_Skripts.Testing_Scripts.Beam_Trajectory import plot_alpha_beta
 
 
-#from GUI_Panels import *
-#from Function_Groups import *
+
+
+#from Python_Skripts.GUI_Panels import *
+#from Python_Skripts.Function_Groups import *
 class UserInterface:
     def __init__(self, root):
         self.root = root

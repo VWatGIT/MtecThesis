@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from GUI_Panels.Panel_Updates.panel_visibility import *
+from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
 
 def create_menu(root):
     menubar = tk.Menu(root)

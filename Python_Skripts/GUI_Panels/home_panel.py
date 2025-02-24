@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from GUI_Panels.Panel_Updates.panel_visibility import *
+from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
 
 class HomePanel:
     def __init__(self, parent, root):

@@ -5,7 +5,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from .path_creation import generate_snake_path
 from .data_handling import load_data
-from Testing_Scripts.rotate_points import get_rotation_matrix
+from Python_Skripts.Testing_Scripts.rotate_points import get_rotation_matrix
 from .object3D import Sensor, Hexapod
 
 

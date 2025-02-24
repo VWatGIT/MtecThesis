@@ -1,5 +1,5 @@
 import numpy as np
-from Python_Skripts.Function_Groups.data_handling import load_data
+from Python_Skripts.Python_Skripts.Function_Groups.data_handling import load_data
 from scipy.optimize import least_squares
 from scipy.optimize import minimize
 from scipy.spatial.transform import Rotation as R

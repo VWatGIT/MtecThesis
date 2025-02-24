@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from .camera import capture_image, crop_image
+from .camera import crop_image
 from pypylon import pylon
 
 # global variables, TODO implement in UI
@@ -67,7 +67,7 @@ def detect_needle_tip(image, threshold=60):
     # TODO implement calulation of probe rotation by using pattern MAYBE?
 
     if detected_position is None:
-        print("No needle tip detected")
+        #print("No needle tip detected")
         return binary_image, detected_position, 0
     
     rectangles = [] 
@@ -102,14 +102,6 @@ def draw_probe_tip(image, position):
 # Example usage
 if __name__ == "__main__":
 
-    """
-    # Capture an image
-    camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-    camera.Open()
-    image = capture_image(camera)
-    camera.Close()
-    save_new_image(image, "probe_image_3.png")
-    """
 
     pattern_size = 10 # [mm] black-white-black-white-... pattern size
 

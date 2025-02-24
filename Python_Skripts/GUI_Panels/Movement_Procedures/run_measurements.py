@@ -1,11 +1,11 @@
 import time
 
-from GUI_Panels.Panel_Updates import * 
-from GUI_Panels.Measurement_Procedures.do_measurement import doMeasurement
+from Python_Skripts.GUI_Panels.Panel_Updates import * 
+from Python_Skripts.GUI_Panels.Movement_Procedures.do_measurement import doMeasurement
 
-from Function_Groups.path_creation import generate_snake_path
-from Function_Groups.data_handling import save_data
-from Function_Groups.beam_visualization import process_slices
+from Python_Skripts.Function_Groups.path_creation import generate_snake_path
+from Python_Skripts.Function_Groups.data_handling import save_data
+from Python_Skripts.Function_Groups.beam_visualization import process_slices
 
 def run_measurements(root):
     tab_name = root.tab_group.select()

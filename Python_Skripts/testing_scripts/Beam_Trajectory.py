@@ -1,5 +1,5 @@
 import numpy as np
-from Function_Groups.data_handling import load_data
+from Python_Skripts.Function_Groups.data_handling import load_data
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.spatial.transform import Rotation as R

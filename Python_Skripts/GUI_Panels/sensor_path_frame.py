@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
-from GUI_Panels.sensor_info_frame import SensorInfoFrame
-from GUI_Panels.path_plot_frame import PathPlotFrame
+from Python_Skripts.GUI_Panels.sensor_info_frame import SensorInfoFrame
+from Python_Skripts.GUI_Panels.path_plot_frame import PathPlotFrame
 
 
 class SensorPathFrame:

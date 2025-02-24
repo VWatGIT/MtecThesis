@@ -2,7 +2,7 @@ import tkinter as tk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from GUI_Panels.Panel_Updates.update_tab import update_tab
+from Python_Skripts.GUI_Panels.Panel_Updates.update_tab import update_tab
 
 class SensorInfoFrame:
     def __init__(self, parent, root):

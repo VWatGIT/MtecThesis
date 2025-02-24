@@ -1,8 +1,8 @@
 import tkinter as tk
 
-from GUI_Panels.home_panel import HomePanel
-from GUI_Panels.new_measurement_panel import NewMeasurementPanel
-from GUI_Panels.load_measurement_panel import LoadMeasurementPanel
+from Python_Skripts.GUI_Panels.home_panel import HomePanel
+from Python_Skripts.GUI_Panels.new_measurement_panel import NewMeasurementPanel
+from Python_Skripts.GUI_Panels.load_measurement_panel import LoadMeasurementPanel
 
 class LeftPanel:
     def __init__(self, parent, root):

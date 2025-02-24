@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 
-from GUI_Panels.event_log_panel import EventLogPanel
-from GUI_Panels.tab_group import TabGroup
-from GUI_Panels.camera_panel import CameraPanel
-from GUI_Panels.help_panel import HelpPanel
+from Python_Skripts.GUI_Panels.event_log_panel import EventLogPanel
+from Python_Skripts.GUI_Panels.tab_group import TabGroup
+from Python_Skripts.GUI_Panels.camera_panel import CameraPanel
+from Python_Skripts.GUI_Panels.help_panel import HelpPanel
 
 class PanedWindow:
     def __init__(self, parent, root):

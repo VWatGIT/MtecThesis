@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import filedialog
 
-from Function_Groups.data_handling import load_data
-from GUI_Panels.Panel_Updates.panel_visibility import show_home_panel
-from GUI_Panels.Panel_Updates.update_tab import update_tab
-from GUI_Panels.Panel_Updates.update_measurement_info_frame import update_measurement_info_frame 
+from Python_Skripts.Function_Groups.data_handling import load_data
+from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import show_home_panel
+from Python_Skripts.GUI_Panels.Panel_Updates.update_tab import update_tab
+from Python_Skripts.GUI_Panels.Panel_Updates.update_measurement_info_frame import update_measurement_info_frame 
 
 class LoadMeasurementPanel:
     def __init__(self, parent, root):

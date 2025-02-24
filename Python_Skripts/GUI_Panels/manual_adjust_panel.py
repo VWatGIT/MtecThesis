@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import numpy as np
 
-from GUI_Panels.Measurement_Procedures.alignment import manual_alignment
+from Python_Skripts.GUI_Panels.Movement_Procedures.alignment import manual_alignment
 
 class ManualAdjustPanel:
     def __init__(self, parent, root):

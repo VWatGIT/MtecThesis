@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
 
-from GUI_Panels.results_frame import ResultsFrame
-from GUI_Panels.measurement_info_frame import MeasurementInfoFrame
-from GUI_Panels.sensor_path_frame import SensorPathFrame
+from Python_Skripts.GUI_Panels.results_frame import ResultsFrame
+from Python_Skripts.GUI_Panels.measurement_info_frame import MeasurementInfoFrame
+from Python_Skripts.GUI_Panels.sensor_path_frame import SensorPathFrame
 
-from Function_Groups.data_handling import new_data
+from Python_Skripts.Function_Groups.data_handling import new_data
 
 
 class TabGroup:

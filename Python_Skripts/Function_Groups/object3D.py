@@ -45,8 +45,8 @@ class Sensor(Object3D):
          # 0 rvecs if sicker is applied correctly
         # TODO measure tvecs from marker corner to photo diode array
 
-        self.unique_rvecs = list(map(int, config.get('Sensor', 'unique_rvecs').split(',')))
-        self.unique_tvecs = list(map(int, config.get('Sensor', 'unique_tvecs').split(',')))
+        self.unique_rvecs = list(map(float, config.get('Sensor', 'unique_rvecs').split(',')))
+        self.unique_tvecs = list(map(float, config.get('Sensor', 'unique_tvecs').split(',')))
 
         self.marker_tvecs = [] 
         self.marker_rvecs = []
@@ -60,8 +60,11 @@ class Sensor(Object3D):
 
         # initialize stage
         self.stage = None
-        #self.initialize_stage() # TODO uncomment later
-        
+        try:
+            self.initialize_stage() # TODO uncomment later
+        except Exception as e:
+            pass
+
     def initialize_stage(self): 
         try:
             self.stage = Thorlabs.KinesisQuadDetector("69251980") 
@@ -107,12 +110,12 @@ class Probe(Object3D):
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config.read(config_path)
 
-        self.marker_id = config.getint('Sensor', 'marker_id')
-        self.marker_size = config.getfloat('Sensor', 'marker_size')
+        self.marker_id = config.getint('Probe', 'marker_id')
+        self.marker_size = config.getfloat('Probe', 'marker_size')
 
         # only z cooridnate of tvecs relevant
-        self.unique_rvecs = list(map(int, config.get('Probe', 'unique_rvecs').split(',')))
-        self.unique_tvecs = list(map(int, config.get('Probe', 'unique_tvecs').split(',')))
+        self.unique_rvecs = list(map(float, config.get('Probe', 'unique_rvecs').split(',')))
+        self.unique_tvecs = list(map(float, config.get('Probe', 'unique_tvecs').split(',')))
 
         self.marker_tvecs = [None, None, None] 
         self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
@@ -120,12 +123,20 @@ class Probe(Object3D):
         self.probe_tip_position_in_camera_image = (0, 0)
         self.probe_tip_position = None
 
+        self.probe_detected = False
+
+    def setDetectedProbePosition(self, position, camera_object):
+        self.probe_tip_position_in_camera_image = position
+        self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
+         # refers to the probe tip position in camera coordinates
+        self.probe_detected = True
+
+
     def translate_probe_tip(self, probe_tip_position, mtx, dist):
         self.probe_tip_position = probe_tip_position
 
-        z = self.marker_tvecs[2]  # TODO: implement Marker translation matrix
-        z = 2  # TODO: remove this line
-
+        z = self.marker_tvecs[2]
+        
         # Step 1: Undistort the pixel coordinates
         undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)
 
@@ -137,7 +148,7 @@ class Probe(Object3D):
         # Step 3: Scale by the z-value
         camera_coords = normalized_image_coords * z # postition in camera coordinate system
 
-        self.position = camera_coords # refers to the probe tip position in camera coordinates
+        return camera_coords
 
 
     def __repr__(self):

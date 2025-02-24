@@ -1,4 +1,3 @@
-Function_Groups
-GUI_Panels
-Measurement_Procedures
-Testing_Scripts
+Python_Skripts.Function_Groups
+Python_Skripts.GUI_Panels
+Python_Skripts.Testing_Scripts

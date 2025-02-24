@@ -1,9 +1,7 @@
 import numpy as np
 from pypylon import pylon
 import cv2
-import glob
 import os
-    
 
 
 class Camera():
@@ -11,54 +9,62 @@ class Camera():
         self.camera = self.create_camera() 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
         self.camera_calibrated = False
+        self.calibration_images = []
+        self.update_frequency = 10 #[ms]
 
     def reset_calibration(self):
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
-        self.camera_calibrated = False        
+        self.camera_calibrated = False
+        self.calibration_images = []        
 
     def set_calibration_values(self, ret, mtx, dist, rvecs, tvecs):
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = ret, mtx, dist, rvecs, tvecs
         self.camera_calibrated = True
 
     def create_camera(self):
-        os.environ["PYLON_CAMEMU"] = "6"
+        os.environ["PYLON_CAMEMU"] = "4"
         camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
         return camera
 
     def set_emulated_image(self, path):
+        # doesnt work
         os.environ["PYLON_CAMEMU_IMAGE"] = path
 
 
 
-def capture_image(camera):
-    # Camera needs to be initialized before and opened
-    # Set the environment variable to enable the emulated camera
-    #os.environ["PYLON_CAMEMU"] = "1"
+    def capture_image(self):
+        # use default close to retain camera state outside of function
+        default_closed = False
 
-    # Open the camera
-    #camera.Open()
+        if not self.camera.IsOpen():
+            self.camera.Open()
+            default_closed = True
 
-    # Start capturing a single image
-    camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+        # Start capturing a single image
+        self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
-    # Retrieve the image (blocking call)
-    grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        # Retrieve the image (blocking call)
+        grabResult = self.camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
-    # Convert the image to a numpy array
-    image_array = grabResult.GetArray()
+        # Convert the image to a numpy array
+        image_array = grabResult.GetArray()
 
-    # Convert image array to the desired format (e.g., uint8 or uint16, based on your camera settings)
-    image_array = np.array(image_array, dtype=np.uint8)
+        # Convert image array to the desired format (e.g., uint8 or uint16, based on your camera settings)
+        image_array = np.array(image_array, dtype=np.uint8)
 
-    # Demosaic the raw Bayer image to a full-color image
-    image_array = cv2.cvtColor(image_array, cv2.COLOR_BAYER_BG2BGR)
-    image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # necessary?
+        # Demosaic the raw Bayer image to a full-color image
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_BAYER_BG2BGR)
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR) # necessary?
 
-    # Close the camera
-    camera.StopGrabbing()
-    #camera.Close()
+        # Stop grabbing
+        self.camera.StopGrabbing()
 
-    return image_array
+        #close the camera if it was closed before
+        if default_closed:
+            self.camera.Close()
+        
+
+        return image_array
 
 def crop_image(image, top_left, bottom_right):
 
@@ -67,14 +73,20 @@ def crop_image(image, top_left, bottom_right):
     image_array_image = image[y1:y2, x1:x2]
     return image_array_image
 
-def save_checkerboard_images(camera, num_images = 1, save_dir = r'C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Python_Skripts\Checkerboard_Images'):
+
+
+
+# old functions Remove later?
+
+def save_checkerboard_images(camera_object, num_images = 1, save_dir = r'C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Python_Skripts\Checkerboard_Images'):
+    camera = camera_object.camera
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     for i in range(num_images):
         camera.Open()
-        image_array = capture_image(camera)
+        image_array = camera_object.capture_image()
         image_array = crop_image(image_array, (600, 130), (875, 385))
         camera.Close()
         image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
