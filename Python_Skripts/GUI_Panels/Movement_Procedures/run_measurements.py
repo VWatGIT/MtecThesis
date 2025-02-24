@@ -22,34 +22,32 @@ def run_measurements(root):
 
 
     # Get Beam Parameters
-    alpha = float(root.alpha_entry.get())
-    beta = float(root.beta_entry.get())
+    alpha = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("alpha_entry").get())
+    beta = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("beta_entry").get())
     root.gauss_beam.set_Trj(alpha, beta)
 
-    root.gauss_beam.w_0 = float(root.w_0_entry.get())*1e-3
-    root.gauss_beam.wavelength = float(root.wavelength_entry.get())*1e-9
-    root.gauss_beam.I_0 = float(root.i_0_entry.get())
+    root.gauss_beam.w_0 = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("w_0_entry").get())*1e-3
+    root.gauss_beam.wavelength = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("wavelength_entry").get())*1e-9
+    root.gauss_beam.I_0 = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("i_0_entry").get())
     
 
     # Get the Measurment points and path points
     root.path_points, root.grid = generate_snake_path(root.grid_size, root.step_size)
     #root.log.log_event(f'Path Points: \n {root.path_points}')
 
-    root.add_3D_data(data, root.grid, root.grid_size, root.step_size, root.path_points)
+    add_3D_data(data, root.grid, root.grid_size, root.step_size, root.path_points)
     root.log.log_event("Added 3D Data")
 
     root.start_time = time.time()
     root.elapsed_time = 0
 
-    root.add_meta_data(data)
+    add_meta_data(root, data)
 
     root.measurement_points = data["3D"]["measurement_points"]
 
     # Update the UI
     subtab_group = tab.nametowidget("subtab_group")
-    sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
-    measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
-    measurement_slider.config(to=root.measurement_points)
+
 
     progress_bar = root.new_measurement_panel.nametowidget("progress_bar")
     progress_bar['maximum'] = root.measurement_points
@@ -72,8 +70,10 @@ def run_measurements(root):
 
         last_point = next_point # Update the last point
 
-        doMeasurement(data, root.sensor, root.hexapod, i)
+        doMeasurement(root, data, root.sensor, root.hexapod, i)
+        # TODO current_measurement_id is redundant, but present in some function change later
         root.current_measurement_id = i
+        root.measurement_id_var.set(i)
 
         if i > 0: # TODO make this work
             #root.event_log.delete("end-2l", "end-1l")
@@ -81,14 +81,13 @@ def run_measurements(root):
             root.log.log_event(f"Performed measurement {i+1} / {root.measurement_points}")
         else:
             root.log.log_event(f"Performed measurement {i+1} / {root.measurement_points}")
-        
 
         # update only every ~10% of measurements to save time by not updating the UI every step
         update_interval = root.measurement_points // 10
         if i%update_interval == 0:
-            measurement_slider.set(i)
-            root.update_tab()
-            root.update_progress_bar(progress_bar, i+1)
+
+            update_tab(root)
+            update_progress_bar(progress_bar, i+1)
             root.elapsed_time = int((time.time() - root.start_time)/60)
             data["info"]["elapsed_time"] = root.elapsed_time
             
@@ -96,9 +95,6 @@ def run_measurements(root):
         root.elapsed_time = int((time.time() - root.start_time)/60)
         data["info"]["elapsed_time"] = root.elapsed_time
 
-    
-
-    measurement_slider.config(state = "normal")
     root.new_measurement_panel.nametowidget("save_button").config(state="normal")
     root.log.log_event("Done with measurements")     
 
@@ -107,13 +103,13 @@ def run_measurements(root):
         root.log.log_event("Moved Hexapod to default position")
         
     root.log.log_event("Starting data processing")
-    root.process_data(data)
+    process_data(root, data)
     root.log.log_event(f"Finished data processing")
 
     # Final Update
     # Set Slider limits
     tab_name = root.tab_group.select()
-    tab = root.root.nametowidget(tab_name)
+    tab = root.nametowidget(tab_name)
     subtab_group = tab.nametowidget("subtab_group")
     subtab_group.select(subtab_group.nametowidget("results_frame"))
     
@@ -124,14 +120,14 @@ def run_measurements(root):
     horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
     horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
 
-    measurement_slider.set(root.measurement_points)
-    update_tab()
+    update_tab(root)
     update_progress_bar(progress_bar,root.measurement_points)
-    update_beam_plot()
-    update_measurement_info_frame()
+    update_beam_plot(root)
+    update_measurement_info_frame(root)
 
     # autosave data
     if root.autosave_var.get() == 1:
+        root.log.log_event("Autosaving data")
         # TODO make this a user input
         folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
         probe_name = str(root.probe_name_entry.get())
@@ -141,32 +137,33 @@ def run_measurements(root):
     root.measurement_running = False # end threading
 
 
-def process_data(self, data):
-    self.root.log.log_event("Processing data")
+def process_data(root, data):
+    root.log.log_event("Processing data")
     process_slices(data)
-    self.root.log.log_event("Created Slices and Beam Model")
+    root.log.log_event("Created Slices and Beam Model")
 
 # UTILITIES
-def add_meta_data(self, data):
+def add_meta_data(root, data):
     data["camera"] = {
         
-        "ret": self.ret,
-        "mtx": self.mtx,
-        "dist": self.dist,
-        "rvecs": self.rvecs,
-        "tvecs": self.tvecs
+        "ret": root.camera_object.ret,
+        "mtx": root.camera_object.mtx,
+        "dist": root.camera_object.dist,
+        "rvecs": root.camera_object.rvecs,
+        "tvecs": root.camera_object.tvecs
     }
 
-    tab_name = self.tab_group.select()
-    tab = self.tab_group.nametowidget(tab_name)
+    tab_name = root.tab_group.select()
+    tab = root.tab_group.nametowidget(tab_name)
 
     data["info"] = {
         "name" : tab_name,
-        "time_estimated": self.time_estimated,
-        "elapsed_time": self.elapsed_time,
-        "start_time": self.start_time
+        "time_estimated": root.time_estimated,
+        "elapsed_time": root.elapsed_time,
+        "start_time": root.start_time
     }
-def add_3D_data(self, data, grid, grid_size, step_size, path):
+
+def add_3D_data(data, grid, grid_size, step_size, path):
     data["3D"] = {
         "grid": grid, # (X, Y, Z)
         "X": grid[0],
@@ -177,5 +174,3 @@ def add_3D_data(self, data, grid, grid_size, step_size, path):
         "path": path, 
         "measurement_points": len(path)
     } 
-
- 

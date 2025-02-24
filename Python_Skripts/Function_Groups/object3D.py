@@ -60,18 +60,15 @@ class Sensor(Object3D):
 
         # initialize stage
         self.stage = None
-        try:
-            self.initialize_stage() # TODO uncomment later
-        except Exception as e:
-            pass
+        self.initialize_stage()
+       
 
     def initialize_stage(self): 
         try:
-            self.stage = Thorlabs.KinesisQuadDetector("69251980") 
-            pass        
+            self.stage = Thorlabs.KinesisQuadDetector("69251980")        
         except Exception as e:
-            print(f"Error: {e}")
             self.stage = None
+            pass
         
     def get_signal(self):
         if self.stage is None:

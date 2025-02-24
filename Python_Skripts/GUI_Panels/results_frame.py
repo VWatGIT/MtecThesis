@@ -54,14 +54,19 @@ class ResultsFrame:
         canvas.get_tk_widget().pack(fill= "both")
         vertical_plot_frame.canvas = canvas
         
+        self.root.vertical_slice_index_var = tk.IntVar()
+        self.root.horizontal_slice_index_var = tk.IntVar()
+
+        self.root.vertical_slice_index_var.set(1)
+        self.root.horizontal_slice_index_var.set(1)
+
         # Create Labels for the Sliders
         slice_slider_label = ttk.Label(slice_plot_frame, text=" Vertical Slice Index:", name="slice_slider_label")
         slice_slider_label.grid(row=0, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
 
         # Create a slider for the slice plot
-        vertical_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="vertical_slice_slider")
+        vertical_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="vertical_slice_slider", variable=self.root.vertical_slice_index_var)
         vertical_slice_slider.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        vertical_slice_slider.set(1) # set default value
         vertical_slice_slider.config(resolution=1) # set slider resolution
 
         # Create the horizontal plot frame
@@ -85,21 +90,20 @@ class ResultsFrame:
         horizontal_slice_slider_label = ttk.Label(slice_plot_frame, text="Horizontal Slice Index:", name="horizontal_slice_slider_label")
         horizontal_slice_slider_label.grid(row=5, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
 
-        horizontal_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="horizontal_slice_slider")
+        horizontal_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="horizontal_slice_slider", variable=self.root.horizontal_slice_index_var)
         horizontal_slice_slider.grid(row=6, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        horizontal_slice_slider.set(1) # set default value
         horizontal_slice_slider.config(resolution=1) # set slider resolution
 
         slice_plot_frame.grid_rowconfigure(4, weight=100) #weight for correct sizing of the slider
 
         # Create a checkbox for the slice plot
-        interpolation_var = tk.IntVar()
-        interpolation_checkbox = tk.Checkbutton(slice_plot_frame, text="Interpolation", name="interpolation_checkbox", variable=interpolation_var)
+        self.root.interpolation_var = tk.IntVar()
+        interpolation_checkbox = tk.Checkbutton(slice_plot_frame, text="Interpolation", name="interpolation_checkbox", variable=self.root.interpolation_var)
         interpolation_checkbox.grid(row=3, column=0, columnspan=1, sticky="w", padx=5, pady=5)
-        interpolation_checkbox.value = interpolation_var
+        
 
-        vertical_slice_slider.config(command=lambda: update_slice_plot(self.root))
-        horizontal_slice_slider.config(command=lambda: update_slice_plot(self.root))
+        vertical_slice_slider.config(command=lambda value: update_slice_plot(self.root))
+        horizontal_slice_slider.config(command=lambda value: update_slice_plot(self.root))
         interpolation_checkbox.config(command=lambda: update_slice_plot(self.root)) 
 
         return slice_plot_frame

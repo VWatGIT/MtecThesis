@@ -1,5 +1,6 @@
 import tkinter as tk
 import threading
+import time
     
 
 from Python_Skripts.Function_Groups.camera import * 
@@ -92,13 +93,16 @@ class CameraPanel:
         draw_probe_tip_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Probe Tip", variable= self.draw_probe_tip_var)
         draw_checkerboard_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Checkerboard", variable= self.draw_checkerboard_var)
 
+        connect_camera_button = tk.Button(camera_settings_frame, text="Connect Camera", command = self.camera_object.create_camera)
+
         for i in range(4):
             camera_settings_frame.grid_rowconfigure(i, weight=1)
 
-        toggle_camera_checkbutton.grid(row=0, column=0, sticky="w")
-        draw_markers_checkbutton.grid(row=1, column=0, sticky="w")
-        draw_probe_tip_checkbutton.grid(row=2, column=0, sticky="w")
-        draw_checkerboard_checkbutton.grid(row=3, column=0, sticky="w")
+        connect_camera_button.grid(row=0, column=0, sticky="w")
+        toggle_camera_checkbutton.grid(row=1, column=0, sticky="w")
+        draw_markers_checkbutton.grid(row=2, column=0, sticky="w")
+        draw_probe_tip_checkbutton.grid(row=3, column=0, sticky="w")
+        draw_checkerboard_checkbutton.grid(row=4, column=0, sticky="w")
 
         return camera_settings_frame
 

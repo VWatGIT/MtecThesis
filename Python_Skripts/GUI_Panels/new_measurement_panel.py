@@ -22,8 +22,8 @@ class NewMeasurementPanel:
         self.checkbox_panel = self.checkbox_panel_object.frame
        
 
-        self.autosave_var = tk.IntVar()
-        autosave_checkbox = tk.Checkbutton(self.panel, text="Autosave", name="autosave_checkbox", variable=self.autosave_var)
+        root.autosave_var = tk.IntVar()
+        autosave_checkbox = tk.Checkbutton(self.panel, text="Autosave", name="autosave_checkbox", variable=self.root.autosave_var)
         #autosave_checkbox.select()
 
         start_button = tk.Button(self.panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
@@ -58,10 +58,11 @@ class NewMeasurementPanel:
 
             self.root.tab_group_object.create_tab()
             
-            self.measurement_running = True
-            self.measurement_thread = threading.Thread(target= run_measurements(root))
-            self.measurement_thread.start()
             self.root.log.log_event("Started Measurements")
+            self.measurement_running = True
+            self.measurement_thread = threading.Thread(target= run_measurements(self.root))
+            self.measurement_thread.start()
+
         else:
             self.root.log.log_event("Measurements already running")
     
@@ -73,7 +74,8 @@ class NewMeasurementPanel:
         tab = self.root.nametowidget(tab_name)
         data = tab.data
         if directory:  
-            probe_name = self.probe_name_entry.get()
+            self.root.log.log_event(f"Saving Data")
+            probe_name = self.input_frame_object.probe_name_entry.get()
             file_name = save_data(directory, data, probe_name)
             self.root.log.log_event(f"Data saved to {file_name}")
     
@@ -128,7 +130,7 @@ class CheckboxPanel:
 
     
     def update_checkboxes(self):
-        if self.root.camera is not None:
+        if self.root.camera_object.camera_connected is True:
             self.camera_connected_var.set(1)
         else:
             self.camera_connected_var.set(0)
@@ -239,6 +241,8 @@ class input_frame:
         beta_label = tk.Label(self.frame, text="Simulate Yaw [deg]:")
 
         self.probe_name_entry = tk.Entry(self.frame, name="probe_name_entry")
+
+        root.probe_name_entry = self.probe_name_entry
         self.measurement_space_entry = tk.Entry(self.frame, name="measurement_space_entry")
         self.step_size_entry = tk.Entry(self.frame, name="step_size_entry")
         self.wavelength_entry = tk.Entry(self.frame, name="wavelength_entry")

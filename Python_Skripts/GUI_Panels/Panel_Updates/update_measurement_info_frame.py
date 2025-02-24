@@ -1,4 +1,4 @@
-def update_measurement_info_frame(root):
+def update_measurement_info_frame(root, event = None):
     
     # update labels here
     tab_name = root.tab_group.select()
@@ -28,6 +28,6 @@ def update_measurement_info_frame(root):
     pitch_label = laser_info_frame.nametowidget("pitch_label")
     yaw_label = laser_info_frame.nametowidget("yaw_label")
 
-
-    pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['alpha']:.2f}")
-    yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['beta']:.2f}")
+    # TODO update correctly
+    #pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['alpha']:.2f}")
+    #yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['beta']:.2f}")

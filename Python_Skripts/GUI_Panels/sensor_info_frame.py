@@ -17,11 +17,14 @@ class SensorInfoFrame:
 
         sensor_readings_frame = self.create_sensor_readings_frame(self.frame)
         sensor_plot_frame = self.create_sensor_plot_frame(self.frame)
-        
-        measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider")
+                                                                                            
+        measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=root.measurement_id_var)
         measurement_slider.set(1)
         measurement_slider.config(resolution=1, state="normal", command = lambda: update_tab(root))
-    
+
+     
+        self.measurement_slider = measurement_slider
+
         self.frame.grid_rowconfigure(1, weight=100)
         self.frame.grid_columnconfigure(1, weight=100)
 
@@ -76,9 +79,7 @@ class SensorInfoFrame:
         canvas = FigureCanvasTkAgg(fig, master=sensor_plot_frame) 
         canvas.draw()
         canvas.get_tk_widget().pack(fill= "both", expand=True)   
-        self.frame.canvas = canvas # store canvas in sensor_plot_frame
+        sensor_plot_frame.canvas = canvas # store canvas in sensor_plot_frame
 
         return sensor_plot_frame
 
-        
-   

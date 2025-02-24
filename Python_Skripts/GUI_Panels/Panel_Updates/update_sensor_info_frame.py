@@ -1,16 +1,16 @@
-def update_sensor_info_frame(root):
+def update_sensor_info_frame(root, event = None):
     tab_name = root.tab_group.select()
     tab = root.tab_group.nametowidget(tab_name)
     data = tab.data
 
     subtab_group = tab.nametowidget("subtab_group")
-    sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
-    sensor_info_frame = sensor_path_frame.nametowidget("sensor_info_frame")
+    results_frame = subtab_group.nametowidget("results_frame")
+    sensor_info_frame = results_frame.nametowidget("sensor_info_frame")
     sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
 
-    current_measurement_data = data["Measurements"][root.current_measurement_id]
+    current_measurement_data = data["Measurements"][str(root.measurement_id_var.get())]
 
-    sensor_info_frame.config(text="Measurement " + str(root.current_measurement_id) + "/" + str(root.measurement_points)) # Update the title
+    sensor_info_frame.config(text="Measurement " + str(root.measurement_id_var.get()) + "/" + str(root.measurement_points)) # Update the title
 
 
     # Update the sensor readings

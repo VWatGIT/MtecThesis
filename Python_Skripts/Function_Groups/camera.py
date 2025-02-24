@@ -8,6 +8,7 @@ class Camera():
     def __init__(self):
         self.camera = self.create_camera() 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
+        self.camera_connected = False
         self.camera_calibrated = False
         self.calibration_images = []
         self.update_frequency = 10 #[ms]
@@ -22,8 +23,12 @@ class Camera():
         self.camera_calibrated = True
 
     def create_camera(self):
-        os.environ["PYLON_CAMEMU"] = "4"
-        camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+        try:
+            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            self.camera_connected = True
+        except Exception as e:
+            os.environ["PYLON_CAMEMU"] = "4"
+            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
         return camera
 
     def set_emulated_image(self, path):

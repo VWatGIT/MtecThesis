@@ -16,7 +16,9 @@ def create_top_panel(root):
     left_panel = LeftPanel(top_panel, root).frame # 2nd
     menu = create_menu(root) # 3rd
     seperator = ttk.Separator(top_panel, orient="vertical") # 4th
+    seperator2 = ttk.Separator(top_panel, orient="horizontal") # 5th
     
+    seperator2.pack(side="top", fill="x")
     left_panel.pack(side="left", fill="both")
     seperator.pack(side="left", fill="y")
     paned_window.pack(side="right", expand=True, fill="both")

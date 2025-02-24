@@ -10,10 +10,7 @@ def update_tab(root, event=None):
 
     data = tab.data
 
-    subtab_group = tab.nametowidget("subtab_group")
-    sensor_path_frame = subtab_group.nametowidget("sensor_path_frame")
-    measurement_slider = sensor_path_frame.nametowidget("sensor_info_frame").nametowidget("measurement_slider")
-    root.current_measurement_id = str(measurement_slider.get())
+    root.measurement_id_var.get() #str(measurement_slider.get())
 
 
     update_sensor_info_frame(root)

@@ -20,7 +20,19 @@ class HomePanel:
         camera_button = tk.Button(self.frame, text="Camera", command= lambda: show_camera_panel(root), width=button_width, height=button_height)
         help_button = tk.Button(self.frame, text="Help", command= lambda: show_help_panel(root), width=button_width, height=button_height)
         
-        new_measurement_button.pack(side="top", padx=button_padx, pady=button_pady)        
+        #sep0 = ttk.Separator(self.frame, orient="horizontal")
+        sep1 = ttk.Separator(self.frame, orient="horizontal")
+        sep2 = ttk.Separator(self.frame, orient="horizontal")
+        sep3 = ttk.Separator(self.frame, orient="horizontal")
+        sep4 = ttk.Separator(self.frame, orient="horizontal")
+
+
+        #sep0.pack(side="top", fill="x")
+        new_measurement_button.pack(side="top", padx=button_padx, pady=button_pady)     
+        sep1.pack(side="top", fill="x")
         load_measurement_button.pack(side="top", padx=button_padx, pady=button_pady)
+        sep2.pack(side="top", fill="x")
         camera_button.pack(side="top", padx=button_padx, pady=button_pady)
+        sep3.pack(side="top", fill="x")
         help_button.pack(side="top", padx=button_padx, pady=button_pady)
+        sep4.pack(side="top", fill="x")
