@@ -139,3 +139,17 @@ class ManualAdjustPanel:
         self.hexapod_V_entry.insert(0, "0")
         self.hexapod_W_entry.delete(0, "end")
         self.hexapod_W_entry.insert(0, "0")
+
+
+if __name__ == "__main__":
+    from Python_Skripts.Function_Groups.object3D import Hexapod
+    from Python_Skripts.GUI import UserInterface
+
+
+    root = tk.Tk()
+
+    app = UserInterface(root, test_mode = True)
+    
+    manual_adjust_panel = ManualAdjustPanel(root, root).panel
+    manual_adjust_panel.pack(side = "top", fill = "none")
+    root.mainloop()

@@ -9,8 +9,7 @@ from Python_Skripts.Function_Groups.marker_detection import *
 from Python_Skripts.GUI_Panels.camera_calibration_frame import CameraCalibrationFrame
 from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
 
-from Python_Skripts.Function_Groups.probe_tip_detection import draw_probe_tip
-
+from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera
 
 
 class CameraPanel:
@@ -19,7 +18,7 @@ class CameraPanel:
         self.camera = root.camera_object.camera
         self.log = root.log
         self.root = root
-        self.updating = False
+        self.root.updating = False
 
 
         self.panel = tk.Frame(parent, name="camera_panel") # notebook to save time TODO rename
@@ -45,6 +44,9 @@ class CameraPanel:
         self.probe_detection_object = ProbeDetectionFrame(self.helper_panel, self.root)
         self.marker_detection_object = MarkerDetectionFrame(self.helper_panel, self.root)
 
+        # attach object to root
+        self.root.camera_calibration_object = self.camera_calibration_object
+
         self.camera_settings_frame = self.create_camera_settings_frame(self.helper_panel)
         self.camera_calibration_frame = self.camera_calibration_object.frame
         self.probe_detection_frame = self.probe_detection_object.frame
@@ -55,15 +57,12 @@ class CameraPanel:
         self.probe_detection_frame.pack(side="top", fill="both",expand=True)
         self.marker_detection_frame.pack(side="top", fill="both",expand=True)
 
+        # camera_helper | camera image
         self.helper_panel.grid(row=0, column=0, sticky="ns")
         self.camera_plot_frame.grid(row=0, column=1, sticky="nsew")
 
         self.panel.grid_columnconfigure(1, weight=100)
-        
-        
-        # have camera_helper | camera image | camera settings        
-        # TODO fill panel and hide calibration and detection frames until needed
-
+               
         return_button = tk.Button(self.panel, text="Return", command= lambda: self.panel.place_forget())
         return_button.place(relx=1, rely= 0, anchor="ne")
 
@@ -83,15 +82,15 @@ class CameraPanel:
     def create_camera_settings_frame(self, parent):
         camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         
-        self.toggle_camera_var = tk.IntVar()
-        self.draw_markers_var = tk.IntVar()
-        self.draw_probe_tip_var = tk.IntVar()
-        self.draw_checkerboard_var = tk.IntVar()
+        self.root.toggle_camera_var = tk.IntVar()
+        self.root.draw_markers_var = tk.IntVar()
+        self.root.draw_probe_tip_var = tk.IntVar()
+        self.root.draw_checkerboard_var = tk.IntVar()
 
-        toggle_camera_checkbutton = tk.Checkbutton(camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera, variable= self.toggle_camera_var)
-        draw_markers_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Markers",  variable= self.draw_markers_var)
-        draw_probe_tip_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Probe Tip", variable= self.draw_probe_tip_var)
-        draw_checkerboard_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Checkerboard", variable= self.draw_checkerboard_var)
+        toggle_camera_checkbutton = tk.Checkbutton(camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera, variable= self.root.toggle_camera_var)
+        draw_markers_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Markers",  variable= self.root.draw_markers_var)
+        draw_probe_tip_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Probe Tip", variable= self.root.draw_probe_tip_var)
+        draw_checkerboard_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Checkerboard", variable= self.root.draw_checkerboard_var)
 
         connect_camera_button = tk.Button(camera_settings_frame, text="Connect Camera", command = self.camera_object.create_camera)
 
@@ -109,66 +108,17 @@ class CameraPanel:
     def toggle_camera(self):
         if self.camera.IsOpen():
             self.camera.Close()
-            self.updating = False
+            self.root.updating = False
             self.camera_plot_frame.canvas.figure.axes[0].clear()
             self.camera_plot_frame.canvas.draw()
             self.log.log_event("Toggled Camera: OFF")
         else:
             self.camera.Open()
-            self.updating = True
-            self.camera_thread = threading.Thread(target= self.update_camera)
+            self.root.updating = True
+            self.camera_thread = threading.Thread(target= lambda: update_camera(self.root))
             self.camera_thread.start()
             self.log.log_event("Toggled Camera: ON")
         
-
-    def update_camera(self):      
-        if self.camera.IsOpen() and self.updating:
-            self.toggle_camera_var.set(1) # if camera is opened by other means than toggle button
-            image = self.camera_object.capture_image()
-
-            if self.root.camera_object.camera_calibrated:
-                
-                if self.draw_markers_var == 1:
-
-                    mtx = self.root.camera_object.mtx
-                    dist = self.root.camera_object.dist
-                    sensor_marker_size = self.root.sensor.marker_size
-                    probe_marker_size = self.root.probe.marker_size 
-
-                    marker_size = sensor_marker_size # for now assume same size TODO implement different sizes
-                    
-                    # marker drawn in detect markers
-                    image, marker_rvecs, marker_tvecs = detect_markers(image, marker_size, mtx, dist)
-
-                    if marker_rvecs != [] and marker_tvecs != []:
-                        self.sensor.marker_rvecs = marker_rvecs[self.sensor.marker_id]
-                        self.sensor.marker_tvecs = marker_tvecs[self.sensor.marker_id]
-                        self.probe.marker_rvecs = marker_rvecs[self.probe.marker_id]
-                        self.probe.marker_tvecs = marker_tvecs[self.probe.marker_id]
-                
-                if self.draw_probe_tip_var == 1:
-                    image = draw_probe_tip(image, self.root.probe.probe_tip_position_in_camera_image)
-
-            if self.draw_checkerboard_var == 1:
-                image = self.camera_calibration_object.draw_calibration(image)
-
-
-            # Update Camera Image
-            ax = self.canvas.figure.axes[0]
-            
-            ax.clear()
-            ax.imshow(image)
-            self.canvas.draw()
-
-            # update again
-            update_frequency = self.root.camera_object.update_frequency
-            time.sleep(update_frequency/1000)
-            #self.root.log.log_event("Updated Camera Image")
-            self.update_camera()
-        else:
-            self.toggle_camera_var.set(0) 
-        # Draw the calibration image with the checkerboard
-       
 
 if __name__ == "__main__":
    

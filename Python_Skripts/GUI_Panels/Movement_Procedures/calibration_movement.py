@@ -12,12 +12,25 @@ def take_calibration_images(root):
 
     calibration_points = create_calibration_points(root)
     for i, point in enumerate(calibration_points):
-        hexapod.move(point, flag="absolute")
+        rcv = hexapod.move(point, flag="absolute")
+        root.log.log_event(rcv)
 
-        image = camera_object.capture_image()
+        image = None
+
+        # TODO improve this this is only a temporary fix                                                                              
+        while image is None:
+            try:
+                image = camera_object.capture_image() # TODO this shouldnt interfere with the update_camera function
+            except Exception as e:
+                print("failed to capture image")
+                image = None
+                pass
+
 
         calibration_images.append(image)
         root.log.log_event(f"Took calibration image {i+1} of {len(calibration_points)}")
+
+    hexapod.move_to_default_position()
 
     return calibration_images
 
@@ -25,17 +38,18 @@ def create_calibration_points(root):
     # 27 points total
     hexapod = root.hexapod
     num_points = root.num_calibration_images.get()
+    #root.log.log_event(f"Creating {num_points} Calibration Positions")
 
-    tol = 2 
     spacing = 3
 
-    U_max = hexapod.travel_ranges["U"] - tol
-    V_max = hexapod.travel_ranges["V"] - tol
-    W_max = hexapod.travel_ranges["W"] - tol
+    # these are not the actual travel ranges, they are already smaller than maximum to allow for rotation about multiple axis simultaneusly
+    U_max = hexapod.travel_ranges["U"] 
+    V_max = hexapod.travel_ranges["V"] 
+    W_max = hexapod.travel_ranges["W"] 
 
 
     # create enough calibration points
-    angles = []
+    angles = [(0,0,0)]
     for U in [U_max, -U_max, 0]:
         for V in [V_max, -V_max, 0]:
             for W in [W_max, -W_max, 0]:
@@ -69,9 +83,9 @@ def create_calibration_points(root):
 
 if __name__ == "__main__":
     from Python_Skripts.Function_Groups.object3D import Hexapod
+    from Python_Skripts.GUI import UserInterface
     root = tk.Tk()
-    root.hexapod = Hexapod()
-    root.num_calibration_images = 1000
+    app = UserInterface(root, test_mode=True)
 
     calibration_points = create_calibration_points(root)
     print(calibration_points)

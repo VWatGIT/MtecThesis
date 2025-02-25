@@ -123,11 +123,18 @@ class Probe(Object3D):
 
         self.probe_detected = False
 
-    def setDetectedProbePosition(self, position, camera_object):
+
+
+    def set_detected_probe_position(self, position, camera_object):
         self.probe_tip_position_in_camera_image = position
-        self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
-         # refers to the probe tip position in camera coordinates
-        self.probe_detected = True
+
+        if camera_object.camera_calibrated is True:
+                
+            self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
+            # refers to the probe tip position in camera coordinates
+            self.probe_detected = True
+        else:
+            self.probe_detected = True
 
 
     def translate_probe_tip(self, probe_tip_position, mtx, dist):
@@ -156,8 +163,8 @@ class Hexapod():
     def __init__(self):
         # Hexapod Travel Ranges
         self.travel_ranges = {
+            # theoretical ranges for single axes
             # all in +- mm
-           
             'X': 50,
             'Y': 50,
             'Z': 20,
@@ -172,9 +179,16 @@ class Hexapod():
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config.read(config_path)
 
-        self.IP = config.get('Hexapod', 'IP')
-        self.port_1 = config.getint('Hexapod', 'port_1')
-        self.port_2 = config.getint('Hexapod', 'port_2')
+  
+        self.IP = str(config.get('Hexapod', 'IP')) 
+        self.port_1 = config.getint('Hexapod', 'port_1') # Server
+        self.port_2 = config.getint('Hexapod', 'port_2') # Stopper
+
+        for key in self.travel_ranges.copy().keys():
+            self.travel_ranges[key] = config.getint('Hexapod', key)
+        
+
+
 
         # Command Dictionary
         self.commands = {
@@ -198,19 +212,21 @@ class Hexapod():
         self.tcpipObj_Hexapod_1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Commands
         self.tcpipObj_Hexapod_2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Emergency Stop
 
-        self.connection_status = False #self.connect_sockets() # TODO show in UI event_log uncomment later
+        self.connection_status = False
+        self.connect_sockets()
+        if self.connection_status is True:
+            self.move_to_default_position()
     
     def move_to_default_position(self):
         if not self.connection_status:
-            self.server_response = 'Hexpod not connected to server'
-            return False
+            rcv = 'Hexpod not connected to server'
+            return rcv
 
         rcv = self.move(self.default_position, flag = "absolute")
         return rcv
     
-    def connect_sockets(self): # TODO implement in GUI and change to actual default adresses
+    def connect_sockets(self):
         # Connect to Hexapod Server
-        # TODO : implement Ip and port input in gui
         if self.connection_status:
             rcv = 'Already connected to server'
             return rcv
@@ -223,15 +239,16 @@ class Hexapod():
             self.connection_status = True
 
             rcv = 'Connected to server'
-            #rcv = self.send_command('get_pos') # send one command to get rid of "hello" response
             return rcv
         
-        except socket.gaierror:
+        except socket.gaierror as e:
             self.connection_status = False
-            return False
-        except socket.error:
+            rcv = f'Connection Failed: {e}'
+            return rcv
+        except socket.error as e:
             self.connection_status = False
-            return False
+            rcv = f'Connection Failed: {e}'
+            return rcv
 
     def clear_socket_buffer(self, sock):
         sock.setblocking(0)  # Set non-blocking mode
@@ -321,8 +338,8 @@ class Hexapod():
         # Send command to set new position
         command = f'set_pos {" ".join(map(str, pos_new))}'
         rcv = self.send_command(command) 
-        
         self.position = pos_new # update position attribute
+        rcv += f": {self.position}" # add actual position to returned message
         return rcv
 
     def set_velocity(self, velocity):
@@ -335,37 +352,22 @@ class Hexapod():
         return rcv
 
     def __repr__(self):
-        return f"Hexapod(position={self.position})"
+        return f"Hexapod(\nposition={self.position}\nTravelRanges={self.travel_ranges} \nIP={self.IP} \nPort1={self.port_1} \nPort2={self.port_2}\n)"
     
 
 if __name__ == "__main__":
     sensor = Sensor()
-
     hexapod = Hexapod()
+    print(hexapod)
+
     print(hexapod.connect_sockets())
+
+    """
     print(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative"))
     print(hexapod.send_command("get_pos"))
     print(hexapod.move_to_default_position())
     print(hexapod.send_command("get_pos"))
     
-        
 
     print(hexapod.send_command("disconnect"))
-    
-"""
-    signal = sensor.get_test_signal()
-    #print(signal.xpos, signal.ypos)
-
-    # Example pixel coordinates
-    probe_tip_position = (320, 240)
-
-    # Example camera calibration matrices (replace with your actual calibration data)
-    mtx = np.array([[1000, 0, 320],
-                    [0, 1000, 240],
-                    [0, 0, 1]], dtype=np.float32)
-    dist = np.array([0.1, -0.25, 0, 0, 0], dtype=np.float32)
-
-    probe = Probe()
-    probe.translate_probe_tip(probe_tip_position, mtx, dist)
-    print(f"Camera coordinates: {probe.position}")
-"""
+    """

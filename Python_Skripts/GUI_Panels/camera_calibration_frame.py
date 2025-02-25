@@ -1,8 +1,8 @@
 import tkinter as tk
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import threading
+
 from Python_Skripts.Function_Groups.camera import crop_image
 from Python_Skripts.GUI_Panels.Movement_Procedures.calibration_movement import take_calibration_images
 
@@ -20,6 +20,8 @@ class CameraCalibrationFrame:
         self.log = root.log
         self.canvas = root.camera_plot_frame.canvas
 
+        # start thread with calibration button
+        self.calibration_thread = threading.Thread(target=self.calibrate_camera)
 
         self.frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
 
@@ -51,7 +53,7 @@ class CameraCalibrationFrame:
         self.use_default_calibration_button = tk.Button(self.frame, text="Use Default\nCalibration", command=self.use_default_calibration)
         self.use_default_calibration_button.grid(row=3, column=0, pady=5, sticky="e")
         
-        self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.calibrate_camera, state="active") 
+        self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.calibration_thread.start, state="active") 
         self.calibrate_button.grid(row=3, column=1, pady=5, sticky="w")
 
         self.reset_button = tk.Button(self.frame, text="Reset", command=self.reset_calibration)

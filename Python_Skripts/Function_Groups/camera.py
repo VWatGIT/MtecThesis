@@ -15,10 +15,11 @@ class Camera():
         
         self.default_mtx = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
         self.default_dist = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.use_default_calibration(startup = True)
+
 
     def reset_calibration(self):
-        self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
-        self.camera_calibrated = False
+        self.use_default_calibration(startup = True)
         self.calibration_images = []        
 
     def set_calibration_values(self, ret, mtx, dist, rvecs, tvecs):
@@ -39,10 +40,13 @@ class Camera():
         os.environ["PYLON_CAMEMU_IMAGE"] = path
 
     
-    def use_default_calibration(self):
+    def use_default_calibration(self, startup = False):
         self.mtx = self.default_mtx.copy()
         self.dist = self.default_dist.copy()
-        self.camera_calibrated = True
+        if startup is True:
+            self.camera_calibrated = False
+        else:
+            self.camera_calibrated = True
 
     def capture_image(self):
         # use default close to retain camera state outside of function

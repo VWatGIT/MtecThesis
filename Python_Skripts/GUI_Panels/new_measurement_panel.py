@@ -213,7 +213,7 @@ class ConnectionFrame:
         self.root.hexapod.port_1 = int(self.frame.nametowidget("port_1_entry").get())
         self.root.hexapod.port_2 = int(self.frame.nametowidget("port_2_entry").get())
 
-        rcv = self.hexapod.connect_sockets()
+        rcv = self.root.hexapod.connect_sockets()
         self.root.log.log_event(rcv)
 
 class input_frame:

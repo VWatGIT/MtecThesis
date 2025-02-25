@@ -53,6 +53,8 @@ class ProbeDetectionFrame:
 
 
     def take_probe_image(self, event=None):
+        self.root.updating = False # TODO rename and put to camera class
+
         # updates the canvas with the detected image
         top_left = tuple(map(int, self.crop_top_left_entry.get().split(',')))
         bottom_right = tuple(map(int, self.crop_bottom_right_entry.get().split(',')))
@@ -69,7 +71,7 @@ class ProbeDetectionFrame:
             # calculate position in original image
             detected_position = crop_coordinate_transform(image, detected_probe_position_cropped, top_left)
             
-            self.root.probe.set_probe_tip_position(detected_position)
+            self.root.probe.set_detected_probe_position(detected_position, self.root.camera_object)
 
             self.root.log.log_event(f"Probe-Tip detected at {self.root.probe.probe_tip_position_in_camera_image}")
             self.save_probe_position_button.config(state="normal")  
@@ -90,12 +92,11 @@ class ProbeDetectionFrame:
         self.root.log.log_event("Took Probe Image")
 
     def save_probe_position(self):
-        self.probe_detected = True
-        self.probe_detetection_checkbox.select()
-
-        self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("probe_detected").select()
+        self.updating = True
+      
         self.probe.translate_probe_tip(self.detected_probe_position, self.mtx, self.dist)
         self.root.log.log_event("Saved Probe Position")
+
 
 class MarkerDetectionFrame:
     def __init__(self, parent, root):
