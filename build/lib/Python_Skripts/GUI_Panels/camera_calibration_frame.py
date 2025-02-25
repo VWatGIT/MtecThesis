@@ -23,12 +23,14 @@ class CameraCalibrationFrame:
 
         self.frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
 
-        for i in range(5):
+        for i in range(6):
             self.frame.grid_rowconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(4):
             self.frame.grid_columnconfigure(i, weight=1)
 
-       
+        self.frame.columnconfigure(2, weight=100)
+
+        
         checkerboard_size_label = tk.Label(self.frame, text="Checkerboard Size [mm]: ", name="checkerboard_size_label")
         checkerboard_size_label.grid(row=0, column=0, pady=5, sticky="w")
         self.checkerboard_size_entry = tk.Entry(self.frame, name="checkerboard_size_entry")
@@ -46,21 +48,13 @@ class CameraCalibrationFrame:
         self.num_calibratrion_images_label.grid(row=2, column=0, pady=5, sticky="w")
 
         self.num_calibratrion_images_slider = tk.Scale(self.frame, from_=1, to=root.max_num_calibration_images, orient="horizontal", name="num_calibratrion_images_slider", variable=self.checkerboard_image_amount)
-        self.num_calibratrion_images_slider.grid(row=2, column=1,columnspan=1, pady=5, sticky="ew")
+        self.num_calibratrion_images_slider.grid(row=3, column=0,columnspan=1, pady=5, sticky="ew")
 
-        self.use_default_calibration_button = tk.Button(self.frame, text="Use Default\nCalibration", command=self.use_default_calibration)
-        self.use_default_calibration_button.grid(row=3, column=0, pady=5, sticky="e")
-        
         self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.calibrate_camera, state="active") 
-        self.calibrate_button.grid(row=3, column=1, pady=5, sticky="w")
+        self.calibrate_button.grid(row=2, column=1, pady=5, sticky="w")
 
         self.reset_button = tk.Button(self.frame, text="Reset", command=self.reset_calibration)
-        self.reset_button.grid(row=4, column=1, columnspan=1, pady=5, sticky="w")
-
-    def use_default_calibration(self):
-        self.camera_object.use_default_calibration()
-        self.log.log_event("Set Default Camera Calibration")
-
+        self.reset_button.grid(row=3, column=1, columnspan=1, pady=5, sticky="w")
 
     def reset_calibration(self):
         self.camera_object.reset_calibration()

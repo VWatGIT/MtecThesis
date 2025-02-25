@@ -80,7 +80,10 @@ class UserInterface:
         self.root.num_calibration_images.set(int(config.get('Camera', 'num_calibration_images')))
         self.root.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
         self.root.checkerboard_dims = tuple(map(int, config.get('Camera', 'checkerboard_dims').split(',')))
-
+        self.root.camera_object.default_mtx = list(map(float, config.get('Camera', 'default_mtx').split(',')))
+        self.root.camera_object.default_dist = list(map(float, config.get('Camera', 'default_dist').split(',')))
+    
+        
 if __name__ == "__main__":
     root = tk.Tk()
     app = UserInterface(root)
