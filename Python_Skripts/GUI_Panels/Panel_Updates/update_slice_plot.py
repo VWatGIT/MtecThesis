@@ -50,8 +50,7 @@ def update_slice_plot(root, event=None):
         # Update Beam Plot for Seethrough Planes
         update_beam_plot(root)
 
-
-    elif data["Visualization"]["Slices"]["horizontal"] != {}:
+    if data["Visualization"]["Slices"]["horizontal"] != {}:
 
         horizontal_index = str(root.horizontal_slice_index_var.get())
         horizontal_slice = data['Visualization']["Slices"]['horizontal'][horizontal_index] # Get the slice data
@@ -70,9 +69,11 @@ def update_slice_plot(root, event=None):
 
         horizontal_canvas.draw()
 
+
+    if data["Visualization"]["Slices"]["horizontal"] == {} and data["Visualization"]["Slices"]["vertical"] == {}:
+        root.log.log_event("No Slice Data available")
+    else:
         # Update Beam Plot for Seethrough Planes
         update_beam_plot(root)
-    else:
-        root.log.log_event("No Slice Data available")
 
     

@@ -20,7 +20,7 @@ class SensorInfoFrame:
                                                                                             
         measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=root.measurement_id_var)
         measurement_slider.set(1)
-        measurement_slider.config(resolution=1, state="normal", command = lambda: update_tab(root))
+        measurement_slider.config(resolution=1, state="normal", command = lambda value: update_tab(root))
 
      
         self.measurement_slider = measurement_slider

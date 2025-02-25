@@ -3,13 +3,13 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from mpl_toolkits.mplot3d import Axes3D
 
-from .path_creation import generate_snake_path
-from .data_handling import load_data
+from Python_Skripts.Function_Groups.path_creation import generate_snake_path
+from Python_Skripts.Function_Groups.data_handling import load_data
 from Python_Skripts.Testing_Scripts.rotate_points import get_rotation_matrix
-from .object3D import Sensor, Hexapod
+from Python_Skripts.Function_Groups.object3D import Sensor, Hexapod
 
 
-def find_beam_centers(sensor, hexapod, spacing = 1/3, num_centers = 4, test_slices = None):
+def find_beam_centers(sensor, hexapod, spacing = 0.2, num_centers = 4, test_slices = None):
      #TODO decide on spacing and number of centers
 
 
@@ -111,7 +111,7 @@ def find_beam_centers(sensor, hexapod, spacing = 1/3, num_centers = 4, test_slic
     for i in range(len(x_path_points)):
 
         if test_slices is not None:
-            slice_1_2 = (test_slices["1"], test_slices["4"], test_slices["7"], test_slices["11"])
+            slice_1_2 = (test_slices["1"], test_slices["2"], test_slices["3"], test_slices["4"])
             test_slice = slice_1_2[i]
 
             y = test_slice["points"][:, 1]
@@ -266,19 +266,20 @@ if __name__ == "__main__":
     sensor = Sensor()
     hexapod = Hexapod()
     
-    path = r'C:\Users\Valentin\Documents\GIT_REPS\MtecThesis\Experiment_data\Default_2024-12-28_23-54-04.h5'
+    path = r"C:\Users\Valentin\Documents\GIT_REPS\MtecThesis\Python_Skripts\Experiment_data\Default_2025-02-25_02-27-25.h5"
+    #path = r'C:\Users\Valentin\Documents\GIT_REPS\MtecThesis\Experiment_data\Default_2024-12-28_23-54-04.h5'
     
     #TODO uncomment later
     
     data = load_data(path)
-    """
+    
     test_slices = data["Visualization"]["Slices"]["vertical"]
 
     centers = find_beam_centers(sensor, hexapod, test_slices = test_slices)
     print(centers)
-    """
+    
     # test centers
-    centers = [(0.0, 0.0, 0.0), (-0.3, 0.25, 0.0), (-0.6, 0.5, 0.0), (-1.0, 1.0, 0.0)]
+    #centers = [(0.0, 0.0, 0.0), (-0.3, 0.25, 0.0), (-0.6, 0.5, 0.0), (-1.0, 1.0, 0.0)]
 
     trj = calculate_beam_trajectory_LR(centers)
     print(trj)

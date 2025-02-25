@@ -44,6 +44,7 @@ def run_measurements(root):
     add_meta_data(root, data)
 
     root.measurement_points = data["3D"]["measurement_points"]
+    #TODO set measurement slider maximum to measurement_points
 
     # Update the UI
     subtab_group = tab.nametowidget("subtab_group")

@@ -1,4 +1,3 @@
-# Objects.py
 #from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
@@ -9,8 +8,9 @@ import os
 
 import pypylon.pylon as pylon
 
-#TODO delete signal class only used for testing purposes
+
 class Signal:
+    # signal class only used for testing purposes
     def __init__(self, xpos, ypos, xdiff, ydiff, sum):
         self.xpos = xpos
         self.ypos = ypos
@@ -65,7 +65,8 @@ class Sensor(Object3D):
 
     def initialize_stage(self): 
         try:
-            self.stage = Thorlabs.KinesisQuadDetector("69251980")        
+            #self.stage = Thorlabs.KinesisQuadDetector("69251980") TODO uncomment
+            why = 1     # TODO delete later 
         except Exception as e:
             self.stage = None
             pass

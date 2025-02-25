@@ -25,8 +25,8 @@ from Python_Skripts.Function_Groups.data_handling import save_data, load_data
 from Python_Skripts.Function_Groups.beam_visualization import create_heatmap
 from Python_Skripts.Function_Groups.beam_visualization import process_slices
 from Python_Skripts.Function_Groups.beam_visualization import create_slices
-from Python_Skripts.Python_Skripts.Function_Groups.gauss_beam import Gauss_Beam # Used for testing
-from Python_Skripts.Python_Skripts.Function_Groups.gauss_beam import create_Test_Beam # Used for testing
+from Python_Skripts.Function_Groups.gauss_beam import Gauss_Beam # Used for testing
+from Python_Skripts.Function_Groups.gauss_beam import create_Test_Beam # Used for testing
 from Python_Skripts.GUI_Panels import ManualAdjustPanel
 
 from Python_Skripts.Testing_Scripts.Beam_Trajectory import calculate_alpha_beta
