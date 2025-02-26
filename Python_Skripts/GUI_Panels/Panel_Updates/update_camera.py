@@ -1,10 +1,12 @@
 import time
 from Python_Skripts.Function_Groups.marker_detection import detect_markers
 from Python_Skripts.Function_Groups.probe_tip_detection import draw_probe_tip
+import cv2
+import numpy as np
 
 
 def update_camera(root):      
-        if root.camera.IsOpen() and root.updating:
+        if root.camera.IsOpen() and root.camera_object.updating:
             root.toggle_camera_var.set(1) # if camera is opened by other means than toggle button
             image = root.camera_object.capture_image()
 
@@ -33,7 +35,7 @@ def update_camera(root):
                 image = draw_probe_tip(image, root.probe.probe_tip_position_in_camera_image)
 
             if root.draw_checkerboard_var.get() == 1:
-                image = root.camera_calibration_object.draw_calibration(image)
+                image = draw_calibration(root, image)
 
 
             # Update Camera Image
@@ -49,9 +51,40 @@ def update_camera(root):
             try:
                 root.after(update_frequency, update_camera(root))
             except Exception as e:
-                root.updating = False
+                root.camera_object.updating = False
                 pass
         else:
             root.toggle_camera_var.set(0) 
         # Draw the calibration image with the checkerboard
-       
+    
+
+def draw_calibration(root, image):
+    
+    # termination criteria
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    
+    # Prepare object points (0,0,0), (1,0,0), (2,0,0), ..., (6,5,0)
+    objp = np.zeros((root.camera_object.checkerboard_dimensions[0] * root.camera_object.checkerboard_dimensions[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:root.camera_object.checkerboard_dimensions[0], 0:root.camera_object.checkerboard_dimensions[1]].T.reshape(-1, 2)
+    
+    # Arrays to store object points and image points from all the images.
+    objpoints = [] # 3d point in real world space
+    imgpoints = [] # 2d points in image plane.
+    
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Find the chess board corners
+    ret, corners = cv2.findChessboardCorners(gray, root.camera_object.checkerboard_dimensions, None)
+
+    # If found, add object points, image points (after refining them)
+    if ret == True:
+        objpoints.append(objp)
+
+        corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+        imgpoints.append(corners2)
+
+        # Draw and display the corners
+        cv2.drawChessboardCorners(image, root.camera_object.checkerboard_dimensions, corners2, ret)
+
+    return image

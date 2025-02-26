@@ -53,7 +53,7 @@ class ProbeDetectionFrame:
 
 
     def take_probe_image(self, event=None):
-        self.root.updating = False # TODO rename and put to camera class
+        self.root.camera_object.updating = False # TODO rename and put to camera class
 
         # updates the canvas with the detected image
         top_left = tuple(map(int, self.crop_top_left_entry.get().split(',')))

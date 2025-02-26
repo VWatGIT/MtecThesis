@@ -1,166 +1,13 @@
 #from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
-import cv2
 import time
 from configparser import ConfigParser
 import os
-
-import pypylon.pylon as pylon
-
-
-class Signal:
-    # signal class only used for testing purposes
-    def __init__(self, xpos, ypos, xdiff, ydiff, sum):
-        self.xpos = xpos
-        self.ypos = ypos
-        self.xdiff = xdiff
-        self.ydiff = ydiff
-        self.sum = sum
-
-class Object3D:
-    def __init__(self, marker_id = None, marker_size = None):
-        self.marker_id = marker_id
-        self.marker_size = marker_size
-        self.position = (None, None, None)
-        self.rotation = (None, None, None)
-
-    def __repr__(self):
-        return f"Object3D(position={self.position}, rotation={self.rotation})"
-
-class Sensor(Object3D):
-    def __init__(self, marker_id = 0, marker_size = 16):
-        super().__init__(marker_id, marker_size)
-
-        # Load Configuration
-        config = ConfigParser()
-        config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
-        config.read(config_path)
-
-
-        self.marker_id = config.getint('Sensor', 'marker_id')
-        self.marker_size = config.getfloat('Sensor', 'marker_size')
-
-
-         # 0 rvecs if sicker is applied correctly
-        # TODO measure tvecs from marker corner to photo diode array
-
-        self.unique_rvecs = list(map(float, config.get('Sensor', 'unique_rvecs').split(',')))
-        self.unique_tvecs = list(map(float, config.get('Sensor', 'unique_tvecs').split(',')))
-
-        self.marker_tvecs = [] 
-        self.marker_rvecs = []
-
-        # Sensor Readings
-        self.xpos = None
-        self.ypos = None
-        self.xdiff = None
-        self.ydiff = None
-        self.sum = None
-
-        # initialize stage
-        self.stage = None
-        self.initialize_stage()
-       
-
-    def initialize_stage(self): 
-        try:
-            #self.stage = Thorlabs.KinesisQuadDetector("69251980") TODO uncomment
-            why = 1     # TODO delete later 
-        except Exception as e:
-            self.stage = None
-            pass
-        
-    def get_signal(self):
-        if self.stage is None:
-            return self.get_test_signal()
-        else:
-            self.stage.open() # TODO: improve performance
-            signal = self.stage.get_readings()
-            self.xpos = signal.xpos
-            self.ypos = signal.ypos
-            self.xdiff = signal.xdiff
-            self.ydiff = signal.ydiff
-            self.sum = signal.sum
-            self.stage.close()
-            return signal 
-
-    def get_test_signal(self): # used for working at home
-        self.xpos = (np.random.rand()-0.5)*10
-        self.ypos = (np.random.rand()-0.5)*10
-        self.xdiff = (np.random.rand()-0.5)*10
-        self.ydiff = (np.random.rand()-0.5)*10
-        self.sum = np.random.rand()*100
-        test_signal = Signal(self.xpos, self.ypos, self.xdiff, self.ydiff, self.sum)  # return same data type as get_signal
-        
-        return test_signal
-
-
-    def __repr__(self):
-        return f"Sensor(position={self.position}, rotation={self.rotation})"
-
-class Probe(Object3D):
-    def __init__(self, marker_id=1, marker_size=0):
-        super().__init__(marker_id, marker_size)
-        
-        # Load Configuration
-        config = ConfigParser()
-        config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
-        config.read(config_path)
-
-        self.marker_id = config.getint('Probe', 'marker_id')
-        self.marker_size = config.getfloat('Probe', 'marker_size')
-
-        # only z cooridnate of tvecs relevant
-        self.unique_rvecs = list(map(float, config.get('Probe', 'unique_rvecs').split(',')))
-        self.unique_tvecs = list(map(float, config.get('Probe', 'unique_tvecs').split(',')))
-
-        self.marker_tvecs = [None, None, None] 
-        self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
-
-        self.probe_tip_position_in_camera_image = (0, 0)
-        self.probe_tip_position = None
-
-        self.probe_detected = False
-
-
-
-    def set_detected_probe_position(self, position, camera_object):
-        self.probe_tip_position_in_camera_image = position
-
-        if camera_object.camera_calibrated is True:
-                
-            self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
-            # refers to the probe tip position in camera coordinates
-            self.probe_detected = True
-        else:
-            self.probe_detected = True
-
-
-    def translate_probe_tip(self, probe_tip_position, mtx, dist):
-        self.probe_tip_position = probe_tip_position
-
-        z = self.marker_tvecs[2]
-        
-        # Step 1: Undistort the pixel coordinates
-        undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)
-
-        # Step 2: Convert to normalized image coordinates
-        undistorted_pixel_with_1 = np.append(undistorted_pixel[0][0], 1)  # Append 1 to the undistorted pixel coordinates
-        inv_mtx = np.linalg.inv(mtx)  # Calculate the inverse of the camera matrix
-        normalized_image_coords = inv_mtx.dot(undistorted_pixel_with_1)  # Multiply the inverse camera matrix with the undistorted pixel coordinates
-
-        # Step 3: Scale by the z-value
-        camera_coords = normalized_image_coords * z # postition in camera coordinate system
-
-        return camera_coords
-
-
-    def __repr__(self):
-        return f"Probe(position={self.position}, rotation={self.rotation})"
+import threading
 
 class Hexapod():
-    def __init__(self):
+    def __init__(self, root = None):
         # Hexapod Travel Ranges
         self.travel_ranges = {
             # theoretical ranges for single axes
@@ -173,16 +20,19 @@ class Hexapod():
             'W': 30,
         }
 
+        self.root = root
 
         # Load Configuration
         config = ConfigParser()
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config.read(config_path)
 
-  
+
         self.IP = str(config.get('Hexapod', 'IP')) 
         self.port_1 = config.getint('Hexapod', 'port_1') # Server
         self.port_2 = config.getint('Hexapod', 'port_2') # Stopper
+
+        self.socket_timeout = config.getfloat('Hexapod', 'socket_timeout')
 
         for key in self.travel_ranges.copy().keys():
             self.travel_ranges[key] = config.getint('Hexapod', key)
@@ -212,8 +62,15 @@ class Hexapod():
         self.tcpipObj_Hexapod_1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Commands
         self.tcpipObj_Hexapod_2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Socket for Emergency Stop
 
+        # Set socket timeouts
+        self.tcpipObj_Hexapod_1.settimeout(self.socket_timeout)  # Set timeout to 5 seconds
+        self.tcpipObj_Hexapod_2.settimeout(self.socket_timeout)  # Set timeout to 5 seconds
+
+
+        self.connecting = False
         self.connection_status = False
         self.connect_sockets()
+
         if self.connection_status is True:
             self.move_to_default_position()
     
@@ -225,11 +82,32 @@ class Hexapod():
         rcv = self.move(self.default_position, flag = "absolute")
         return rcv
     
-    def connect_sockets(self):
+    def connect_sockets(self, callback = None):
         # Connect to Hexapod Server
+        
+        """
+        Expects callback function as input argument
+        callback(rcv) is called after connection attempt
+        """
+
+        if callback is None:
+            callback = lambda x: print("Automatic "+x[0])
+
+
+        if self.connecting:
+            rcv = 'Already connecting to server'
+            return rcv
+        
         if self.connection_status:
             rcv = 'Already connected to server'
             return rcv
+        
+        connection_thread = threading.Thread(target=self._connect, args=(callback,))
+        connection_thread.start()
+  
+    def _connect(self, callback):
+        self.connecting = True
+        # Connect to Hexapod Server
         try:
             self.tcpipObj_Hexapod_1.connect((self.IP, self.port_1))
             self.tcpipObj_Hexapod_2.connect((self.IP, self.port_2))
@@ -237,18 +115,27 @@ class Hexapod():
             self.tcpipObj_Hexapod_1.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.tcpipObj_Hexapod_2.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.connection_status = True
-
-            rcv = 'Connected to server'
+            self.connecting = False
+            rcv = f'Hexapod Connection Successful: \nIP: {self.IP} \nPort1: {self.port_1} \nPort2: {self.port_2}'
+            self._schedule_callback(callback, rcv)
             return rcv
         
-        except socket.gaierror as e:
-            self.connection_status = False
-            rcv = f'Connection Failed: {e}'
+        except Exception as e:
+            self.connection_status = True # TODO: change back to False
+            self.connecting = False
+            rcv = f'Hexapod Connection Failed: {e}'
+            self._schedule_callback(callback, rcv)
             return rcv
-        except socket.error as e:
-            self.connection_status = False
-            rcv = f'Connection Failed: {e}'
-            return rcv
+
+    def _schedule_callback(self, callback, message):
+        
+        if self.root is not None: 
+            # Schedule the callback to be called from the main thread and not from the connection thread
+            # the is probably a way easier way to do this with a hexapod status variable
+            self.root.log.log_event(message)
+            self.root.after(10, callback, message)
+        else:
+            callback(message)
 
     def clear_socket_buffer(self, sock):
         sock.setblocking(0)  # Set non-blocking mode
@@ -356,11 +243,10 @@ class Hexapod():
     
 
 if __name__ == "__main__":
-    sensor = Sensor()
     hexapod = Hexapod()
     print(hexapod)
 
-    print(hexapod.connect_sockets())
+    #print(hexapod.connect_sockets())
 
     """
     print(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative"))

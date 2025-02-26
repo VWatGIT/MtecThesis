@@ -10,7 +10,7 @@ from Python_Skripts.Testing_Scripts.CaptureIMG import capture_image
 from Python_Skripts.Function_Groups.camera import calibrate_camera
 from Python_Skripts.Function_Groups.marker_detection import detect_markers
 
-import Python_Skripts.Function_Groups.object3D as Object3D
+import Python_Skripts.Function_Groups.hexapod as Object3D
 
 def crop_image(image, top_left, bottom_right):
 

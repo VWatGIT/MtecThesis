@@ -2,7 +2,10 @@ import tkinter as tk
 from configparser import ConfigParser
 import os
 
-from Python_Skripts.Function_Groups.object3D import Probe, Sensor, Hexapod
+from Python_Skripts.Function_Groups.hexapod import Hexapod
+from Python_Skripts.Function_Groups.probe import Probe
+from Python_Skripts.Function_Groups.sensor import Sensor
+
 from Python_Skripts.Function_Groups.gauss_beam import GaussBeam
 from Python_Skripts.Function_Groups.camera import Camera
 

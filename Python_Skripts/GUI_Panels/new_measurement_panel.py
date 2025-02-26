@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
+import time
 
 
 from Python_Skripts.Function_Groups.data_handling import save_data
@@ -59,8 +60,9 @@ class NewMeasurementPanel:
             self.root.tab_group_object.create_tab()
             
             self.root.log.log_event("Started Measurements")
-            self.measurement_running = True
+            self.root.measurement_running = True
             self.measurement_thread = threading.Thread(target= run_measurements(self.root))
+            self.root.thread_list.append(self.measurement_thread)
             self.measurement_thread.start()
 
         else:
@@ -83,7 +85,7 @@ class NewMeasurementPanel:
         # TODO fix issues with hexapod not reacting to stop command
         self.root.measurement_running = False
         self.root.hexapod.send_command("stop") # Stop the Hexapod
-        self.root.log.log_event("Stopped Measurements")
+        self.root.log.log_event("Terminating Measurements")
 
 class CheckboxPanel:
     def __init__(self, parent, root):
@@ -91,25 +93,27 @@ class CheckboxPanel:
 
         self.frame = tk.LabelFrame(parent, name="checkbox_panel")
 
-
         self.camera_connected_var = tk.IntVar()
         self.camera_calibrated_var = tk.IntVar()
-        self.sensor_detected_var = tk.IntVar()
+        self.markers_detected_var = tk.IntVar()
         self.probe_detected_var = tk.IntVar()
         self.hexapod_connected_var = tk.IntVar()
         self.stage_connected_var = tk.IntVar()
 
         camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled", variable=self.camera_connected_var)
         camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled", variable=self.camera_calibrated_var)
-        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.sensor_detected_var)
+        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.markers_detected_var)
         probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled", variable=self.probe_detected_var)
         hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.hexapod_connected_var)
         self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.stage_connected_var)
 
 
         open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
-        connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= lambda: self.connect_stage)
+        connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= self.connect_stage)
+        connect_hexapod_button = tk.Button(self.frame, text="Connect Hexapod", command= self.connect_hexapod)
         
+
+
         connection_frame = ConnectionFrame(self.frame, self.root).frame
 
         for i in range(9):
@@ -124,97 +128,61 @@ class CheckboxPanel:
         hexapod_connected.grid(row=4, column=0, pady=5, sticky="w")
         self.stage_connected.grid(row=5, column=0, pady=5, sticky="w")
 
-        open_camera_button.grid(row=0, column=1, pady=5, sticky="w")
-        connection_frame.grid(row=1, column=1, rowspan=4, pady=5, sticky="nsew")
+        open_camera_button.grid(row=1, column=1, pady=5, sticky="w")
+        connect_hexapod_button.grid(row=4, column=1, pady=5, sticky="w")
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
 
     
+        # Threading to update checkboxes
+        self.lock = threading.Lock()
+        self.checkbox_update_thread = threading.Thread(target=self.update_checkboxes)
+        self.root.thread_list.append(self.checkbox_update_thread)
+        self.checkbox_update_thread.start()
+
     def update_checkboxes(self):
-        if self.root.camera_object.camera_connected is True:
-            self.camera_connected_var.set(1)
-        else:
-            self.camera_connected_var.set(0)
+        while not self.root.stop_threads:
+            with self.lock:
+                if self.root.camera_object.camera_connected is True:
+                    self.camera_connected_var.set(1)
+                else:
+                    self.camera_connected_var.set(0)
 
-        if self.root.camera.calibrated is True:
-            self.camera_calibrated_var.set(1)
-        else:
-            self.camera_calibrated_var.set(0)
+                if self.root.camera_object.camera_calibrated is True:
+                    self.camera_calibrated_var.set(1)
+                else:
+                    self.camera_calibrated_var.set(0)
 
-        if self.root.markers_detected is True:
-            self.sensor_detected_var.set(1)
-        else:
-            self.sensor_detected_var.set(0)
+                if self.root.probe.marker_detected is True and self.root.sensor.marker_detected is True:
+                    self.markers_detected_var.set(1)
+                else:
+                    self.markers_detected_var.set(0)
 
-        if self.root.probe_detected is True:
-            self.probe_detected_var.set(1)
-        else:
-            self.probe_detected_var.set(0)
+                if self.root.probe.probe_detected is True:
+                    self.probe_detected_var.set(1)
+                else:
+                    self.probe_detected_var.set(0)
 
-        if self.root.hexapod.connection_state is True:
-            self.hexapod_connected_var.set(1)
-        else:
-            self.hexapod_connected_var.set(0)
+                if self.root.hexapod.connection_status is True:
+                    self.hexapod_connected_var.set(1)
+                else:
+                    self.hexapod_connected_var.set(0)
 
-        if self.sensor.stage is not None:
-            self.stage_connected_var.set(1)
-        else:
-            self.stage_connected_var.set(0)
+                if self.root.sensor.stage is not None:
+                    self.stage_connected_var.set(1)
+                else:
+                    self.stage_connected_var.set(0)
 
-        self.frame.after(1000, self.update_checkboxes)
+            time.sleep(1)
 
-      
-
+    # Unnecessarily complicated, but i didnt want to pass root to the objects, did it eiter way in the end
+    def connect_hexapod(self):
+        self.root.log.log_event("Connecting to Hexapod. . .")
+        self.root.hexapod.connect_sockets(callback = self.root.log.log_event)
 
     def connect_stage(self):
-        self.root.sensor.initialize_stage() 
+        self.root.log.log_event("Connecting to Stage. . .")
+        self.root.sensor.initialize_stage(callback = self.root.log.log_event) 
 
-        if self.root.sensor.stage is not None:
-            self.stage_connected.select()
-            self.root.log.log_event("Stage connected") 
-
-class ConnectionFrame:
-    def __init__(self, parent, root):
-        self.root = root
-        
-        self.frame = tk.LabelFrame(parent, name="connection_frame")
-        self.frame.grid(row=1, column=1, rowspan=4, sticky="nsew")
-
-        for i in range(3):
-            self.frame.grid_rowconfigure(i, weight=1)
-        for i in range(2):
-            self.frame.grid_columnconfigure(i, weight=1)
-
-        port_1_label = tk.Label(self.frame, text="Port 1:")
-        port_2_label = tk.Label(self.frame, text="Port 2:")
-        ip_label = tk.Label(self.frame, text="IP:")
-
-        self.port_1_entry = tk.Entry(self.frame, name="port_1_entry")
-        self.port_2_entry = tk.Entry(self.frame, name="port_2_entry")
-        self.ip_entry = tk.Entry(self.frame, name="ip_entry")
-
-        self.port_1_entry.insert(0, str(self.root.hexapod.port_1))
-        self.port_2_entry.insert(0, str(self.root.hexapod.port_2))
-        self.ip_entry.insert(0, str(self.root.hexapod.IP))
-
-        port_1_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        port_2_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        ip_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
-
-        self.port_1_entry.grid(row=0, column=1, padx=5, pady=5)
-        self.port_2_entry.grid(row=1, column=1, padx=5, pady=5)
-        self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
-
-        connect_hexapod_button = tk.Button(self.frame, text="Connect Hexapod", command=self.connect_hexapod)
-        connect_hexapod_button.grid(row=3, column=0, columnspan=2, padx=15, pady=5, sticky="nsew")
-    
-    def connect_hexapod(self):
-
-        self.root.hexapod.IP = self.frame.nametowidget("ip_entry").get()
-        self.root.hexapod.port_1 = int(self.frame.nametowidget("port_1_entry").get())
-        self.root.hexapod.port_2 = int(self.frame.nametowidget("port_2_entry").get())
-
-        rcv = self.root.hexapod.connect_sockets()
-        self.root.log.log_event(rcv)
 
 class input_frame:
 
@@ -323,6 +291,40 @@ class input_frame:
         self.time_estimated_label.config(text="est. time: "+self.time_estimated)
 
         self.root.log.log_event(f"Estimated time:  {self.time_estimated}")
+
+
+
+class ConnectionFrame: # OLD, NOT USED
+    def __init__(self, parent, root):
+        self.root = root
+        
+        self.frame = tk.LabelFrame(parent, name="connection_frame")
+        
+
+        for i in range(3):
+            self.frame.grid_rowconfigure(i, weight=1)
+        for i in range(2):
+            self.frame.grid_columnconfigure(i, weight=1)
+
+        port_1_label = tk.Label(self.frame, text="Port 1:")
+        port_2_label = tk.Label(self.frame, text="Port 2:")
+        ip_label = tk.Label(self.frame, text="IP:")
+
+        self.port_1_entry = tk.Entry(self.frame, name="port_1_entry")
+        self.port_2_entry = tk.Entry(self.frame, name="port_2_entry")
+        self.ip_entry = tk.Entry(self.frame, name="ip_entry")
+
+        self.port_1_entry.insert(0, str(self.root.hexapod.port_1))
+        self.port_2_entry.insert(0, str(self.root.hexapod.port_2))
+        self.ip_entry.insert(0, str(self.root.hexapod.IP))
+
+        port_1_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        port_2_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        ip_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
+
+        self.port_1_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.port_2_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
 
 
 if __name__ == "__main__":

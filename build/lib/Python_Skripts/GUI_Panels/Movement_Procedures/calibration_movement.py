@@ -68,7 +68,7 @@ def create_calibration_points(root):
 
 
 if __name__ == "__main__":
-    from Python_Skripts.Function_Groups.object3D import Hexapod
+    from Python_Skripts.Function_Groups.hexapod import Hexapod
     root = tk.Tk()
     root.hexapod = Hexapod()
     root.num_calibration_images = 1000

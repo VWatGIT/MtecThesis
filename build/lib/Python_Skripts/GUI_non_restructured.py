@@ -15,7 +15,7 @@ from datetime import datetime
 
 
 from Python_Skripts.Function_Groups.camera import calibrate_camera, capture_image
-from Python_Skripts.Function_Groups.object3D import Sensor, Probe, Hexapod
+from Python_Skripts.Function_Groups.hexapod import Sensor, Probe, Hexapod
 from Python_Skripts.Function_Groups.path_creation import generate_grid, generate_snake_path
 from Python_Skripts.Function_Groups.probe_tip_detection import detect_needle_tip
 from Python_Skripts.Function_Groups.probe_tip_detection import crop_image

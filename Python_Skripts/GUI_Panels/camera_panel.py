@@ -18,7 +18,6 @@ class CameraPanel:
         self.camera = root.camera_object.camera
         self.log = root.log
         self.root = root
-        self.root.updating = False
 
 
         self.panel = tk.Frame(parent, name="camera_panel") # notebook to save time TODO rename
@@ -108,13 +107,13 @@ class CameraPanel:
     def toggle_camera(self):
         if self.camera.IsOpen():
             self.camera.Close()
-            self.root.updating = False
+            self.root.camera_object.updating = False
             self.camera_plot_frame.canvas.figure.axes[0].clear()
             self.camera_plot_frame.canvas.draw()
             self.log.log_event("Toggled Camera: OFF")
         else:
             self.camera.Open()
-            self.root.updating = True
+            self.root.camera_object.updating = True
             self.camera_thread = threading.Thread(target= lambda: update_camera(self.root))
             self.camera_thread.start()
             self.log.log_event("Toggled Camera: ON")
@@ -122,7 +121,7 @@ class CameraPanel:
 
 if __name__ == "__main__":
    
-    from Python_Skripts.Function_Groups.object3D import *
+    from Python_Skripts.Function_Groups.hexapod import *
     from Python_Skripts.GUI import UserInterface
 
     root = tk.Tk()

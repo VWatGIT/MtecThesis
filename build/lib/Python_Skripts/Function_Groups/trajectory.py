@@ -5,8 +5,9 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from Python_Skripts.Function_Groups.path_creation import generate_snake_path
 from Python_Skripts.Function_Groups.data_handling import load_data
-from Python_Skripts.testing_scripts.rotate_points import get_rotation_matrix
-from Python_Skripts.Function_Groups.object3D import Sensor, Hexapod
+from Python_Skripts.Testing_Scripts.rotate_points import get_rotation_matrix
+from Python_Skripts.Function_Groups.hexapod import Hexapod
+from Python_Skripts.Function_Groups.sensor import Sensor
 
 
 def find_beam_centers(sensor, hexapod, spacing = 0.2, num_centers = 4, test_slices = None):

@@ -24,6 +24,6 @@ def create_top_panel(root):
     paned_window.pack(side="right", expand=True, fill="both")
 
 
-    show_home_panel(root)
+    show_new_measurement_panel(root)
     show_camera_panel(root)
     return top_panel

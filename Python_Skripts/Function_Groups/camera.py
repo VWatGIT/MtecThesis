@@ -2,7 +2,7 @@ import numpy as np
 from pypylon import pylon
 import cv2
 import os
-
+import tkinter as tk
 
 class Camera():
     def __init__(self):
@@ -10,11 +10,20 @@ class Camera():
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
         self.camera_connected = False
         self.camera_calibrated = False
-        self.calibration_images = []
-        self.update_frequency = 10 #[ms]
         
-        self.default_mtx = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-        self.default_dist = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        self.updating = False
+        self.update_frequency = 10 #[ms] # set in config
+
+        self.max_number_calibration_images = 10 # set in config
+        self.num_calibration_images = tk.IntVar(value=0) # set in config to 
+        self.calibration_images = []
+        self.checkerboard_dimensions = (7, 4) # set in config
+        self.checkerboard_size = 5  # set in config
+
+        self.default_mtx = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]) #set in config
+        self.default_dist = np.array([0.0, 0.0, 0.0, 0.0, 0.0]) # set in config
+       
+       
         self.use_default_calibration(startup = True)
 
 
@@ -47,6 +56,48 @@ class Camera():
             self.camera_calibrated = False
         else:
             self.camera_calibrated = True
+    
+    def calibrate_camera(self):
+        # termination criteria
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        
+        # Prepare object points (0,0,0), (1,0,0), (2,0,0), ..., (6,5,0)
+        objp = np.zeros((self.checkerboard_dimensions[0] * self.checkerboard_dimensions[1], 3), np.float32)
+        objp[:, :2] = np.mgrid[0:self.checkerboard_dimensions[0], 0:self.checkerboard_dimensions[1]].T.reshape(-1, 2)
+        
+        # Arrays to store object points and image points from all the images.
+        objpoints = [] # 3d point in real world space
+        imgpoints = [] # 2d points in image plane.
+        
+        
+        num_failed_images = 0 
+        for index, image in enumerate(self.calibration_images):
+
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+            # Find the chess board corners
+            ret, corners = cv2.findChessboardCorners(gray, self.checkerboard_dimensions, None)
+        
+            # If found, add object points, image points (after refining them)
+            if ret == True:
+                objpoints.append(objp)
+        
+                corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
+                imgpoints.append(corners2)
+            else:
+               num_failed_images += 1
+
+        cv2.destroyAllWindows()
+
+        # Check if objpoints and imgpoints are not empty
+        if len(objpoints) > 0 and len(imgpoints) > 0:
+            # Calibration Successful
+            self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+            self.set_calibration_values(self.ret, self.mtx, self.dist, self.rvecs, self.tvecs)
+        else:
+            # Calibration failed
+            self.reset_calibration()
+            
 
     def capture_image(self):
         # use default close to retain camera state outside of function
@@ -116,46 +167,7 @@ def save_checkerboard_images(camera_object, num_images = 1, save_dir = r'C:\User
 
     return 0
 
-def calibrate_camera(checkerboard_images, checkerboard_dimensions):
-    # termination criteria
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    
-    # Prepare object points (0,0,0), (1,0,0), (2,0,0), ..., (6,5,0)
-    objp = np.zeros((checkerboard_dimensions[0] * checkerboard_dimensions[1], 3), np.float32)
-    objp[:, :2] = np.mgrid[0:checkerboard_dimensions[0], 0:checkerboard_dimensions[1]].T.reshape(-1, 2)
-    
-    # Arrays to store object points and image points from all the images.
-    objpoints = [] # 3d point in real world space
-    imgpoints = [] # 2d points in image plane.
-    
-    
-    for fname in checkerboard_images:
-        img = cv2.imread(fname)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-        # Find the chess board corners
-        ret, corners = cv2.findChessboardCorners(gray, checkerboard_dimensions, None)
-    
-        # If found, add object points, image points (after refining them)
-        if ret == True:
-            objpoints.append(objp)
-    
-            corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
-            imgpoints.append(corners2)
-    
-            # Draw and display the corners
-            cv2.drawChessboardCorners(img, checkerboard_dimensions, corners2, ret)
-            cv2.imshow('img', img)
-            cv2.waitKey(200)
-        else:
-            print(f"Checkerboard corners not found in image {fname}")
 
-    cv2.destroyAllWindows()
-
-    # Calibrate the camera
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-
-    return ret, mtx, dist, rvecs, tvecs
 
 
 

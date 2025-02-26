@@ -82,7 +82,7 @@ def create_calibration_points(root):
 
 
 if __name__ == "__main__":
-    from Python_Skripts.Function_Groups.object3D import Hexapod
+    from Python_Skripts.Function_Groups.hexapod import Hexapod
     from Python_Skripts.GUI import UserInterface
     root = tk.Tk()
     app = UserInterface(root, test_mode=True)

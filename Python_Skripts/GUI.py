@@ -1,9 +1,13 @@
 import tkinter as tk
 from configparser import ConfigParser
 import os
+import sys
 import numpy as np
 
-from Python_Skripts.Function_Groups.object3D import Probe, Sensor, Hexapod
+from Python_Skripts.Function_Groups.hexapod import Hexapod
+from Python_Skripts.Function_Groups.probe import Probe
+from Python_Skripts.Function_Groups.sensor import Sensor
+
 from Python_Skripts.Function_Groups.gauss_beam import GaussBeam
 from Python_Skripts.Function_Groups.camera import Camera
 
@@ -13,43 +17,48 @@ from Python_Skripts.GUI_Panels.event_log_panel import EventLogPanel
 
 
 
+
 class UserInterface:
     def __init__(self, root, test_mode=False):
         self.root = root
 
+        root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        root.stop_threads = False
+        root.thread_list = []
+
         # attach all global stuff to root
-        self.root.camera_object = Camera() # camera = self.root.camera_object.camera
-        self.root.camera = self.root.camera_object.camera
-        self.root.sensor = Sensor()
-        self.root.probe = Probe()
-        self.root.hexapod = Hexapod()
-        self.root.gauss_beam = GaussBeam() # Simulation Beam
-        self.root.log = None
-        self.root.camera_plot_frame = None
-        self.root.updating = False
+        root.camera_object = Camera() # camera = root.camera_object.camera
+        root.camera = root.camera_object.camera
+        root.sensor = Sensor(root=root)
+        root.probe = Probe(root=root)
+        root.hexapod = Hexapod(root=root)
+        root.gauss_beam = GaussBeam() # Simulation Beam
+        root.log = None
+        root.camera_plot_frame = None
+        root.camera_object.updating = False
 
-        measurement_running = False
-        self.root.measurement_running = measurement_running
-        self.root.measurement_points = None
-        self.root.current_measurement_id = 0
-        self.root.path_points = None
+        
+        root.measurement_running = False
+        root.measurement_points = None
+        root.current_measurement_id = 0
+        root.path_points = None
 
-        self.root.measurement_id_var = tk.IntVar()
-        self.root.measurement_id_var.set(0)
+        root.measurement_id_var = tk.IntVar()
+        root.measurement_id_var.set(0)
 
         # TODO implement time estimation
-        self.root.time_estimated = 0
-        self.root.elapsed_time = 0
-        self.root.start_time = 0
+        root.time_estimated = 0
+        root.elapsed_time = 0
+        root.start_time = 0
         
         self.load_config()
 
 
         # Create the TOP level GUI Elements with root as parent
         if not test_mode:
-            self.root.title("Probe Beam Measurement")
-            self.root.geometry("1920x1080")
-            self.root.wm_state("zoomed")
+            root.title("Probe Beam Measurement")
+            root.geometry("1920x1080")
+            root.wm_state("zoomed")
             self.top_panel = create_top_panel(root)
         else:
             # no panel craeated, only fully initialized root
@@ -60,7 +69,16 @@ class UserInterface:
             pass
 
 
-
+    def on_closing(self):
+        self.stop_threads = True
+        self.measurement_running = False
+        
+        """
+        for thread in self.root.thread_list:
+            thread.join()
+        """
+        #self.root.destroy()
+        sys.exit()
 
     def load_config(self):
         config = ConfigParser()
@@ -72,17 +90,17 @@ class UserInterface:
         self.root.grid_size = list(map(float, config.get('Measurement', 'grid_size').split(',')))
         self.root.step_size = list(map(float, config.get('Measurement', 'step_size').split(',')))
 
-        self.root.num_calibration_images = tk.IntVar()
-        self.root.camera_object.update_frequency = int(config.get('Camera', 'update_frequency'))
-        self.root.max_num_calibration_images = int(config.get('Camera', 'max_num_calibration_images'))
-        self.root.num_calibration_images.set(int(config.get('Camera', 'num_calibration_images')))
-        self.root.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
-        self.root.checkerboard_dims = tuple(map(int, config.get('Camera', 'checkerboard_dims').split(',')))
-
+        self.root.camera_object.num_calibration_images = tk.IntVar(value=int(config.get('Camera', 'num_calibration_images')))
+        self.root.camera_object.max_num_calibration_images = int(config.get('Camera', 'max_num_calibration_images'))
         self.root.camera_object.default_mtx = np.array(list(map(float, config.get('Camera', 'default_mtx').split(',')))).reshape(3,3)
         self.root.camera_object.default_dist = np.array(list(map(float, config.get('Camera', 'default_dist').split(','))))
+        self.root.camera_object.update_frequency = int(config.get('Camera', 'update_frequency'))
+        self.root.camera_object.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
+        self.root.camera_object.checkerboard_dimensions = tuple(map(int, config.get('Camera', 'checkerboard_dimensions').split(',')))
 
-        return None
+
+        # TODO maybe also load config for Hexapod/Probe/Sensor here
+
 
         
 if __name__ == "__main__":

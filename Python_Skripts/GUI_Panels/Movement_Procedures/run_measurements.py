@@ -58,6 +58,9 @@ def run_measurements(root):
     
 
     for i in range(root.measurement_points):
+        if root.measurement_running is False:
+            root.log.log_event("Measurement stopped")
+            break
         #root.log.log_event(f"Measurement {i+1} of {root.measurement_points}")
 
         # As Path points are absolute, transform them to relative positions
