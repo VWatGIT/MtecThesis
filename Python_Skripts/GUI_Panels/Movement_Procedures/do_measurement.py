@@ -1,4 +1,6 @@
 def doMeasurement(root, data, sensor, hexapod, i):
+    tab = root.tab_group.nametowidget(root.tab_group.select())
+   
     # Get the current (theoretical) measurement point
     measurement_point = tab.path_points[i]
 

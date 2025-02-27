@@ -18,9 +18,10 @@ class TabGroup:
         self.tab_group.pack(side="right", fill="both", expand=True)
         self.root.tab_group = self.tab_group
 
+        """ TODO implement this correctly also make updates independent of tab change
         # Bind the <<NotebookTabChanged>> event
         self.root.tab_group.bind("<<NotebookTabChanged>>", self.on_tab_change)
-
+        """
 
         # TODO dont create default tab, this is only for testing
         self.create_tab() # Create the Default Tab
@@ -29,7 +30,7 @@ class TabGroup:
         # currently data is stored in the data of the selected tab
         # this is suboptimal but works for now
 
-        if self.root.measurement_running:
+        if self.root.measurement_running is True:
             self.root.log.log_event("Measurement Running, Tab Change not allowed")
             self.tab_group.select(self.root.tab_group.index("current"))
           
@@ -41,7 +42,7 @@ class TabGroup:
         # TODO get Tab name from user
         new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
-        new_tab.measurement_id_var = tk.IntVar(value=0)
+        new_tab.measurement_id_var = tk.IntVar(value=1) # Measurement ID TODO what default value?
         new_tab.path_points = None
         new_tab.measurement_points = 1
         # TODO trace path to these values in other functions

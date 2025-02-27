@@ -8,10 +8,13 @@ def update_sensor_info_frame(root, event = None):
     sensor_info_frame = results_frame.nametowidget("sensor_info_frame")
     sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
 
-    current_measurement_data = data["Measurements"][str(tab.measurement_id_var.get())]
+    current_measurement_data = data["Measurements"][str(tab.measurement_id_var.get()+1)]
 
-    sensor_info_frame.config(text="Measurement " + str(tab.measurement_id_var.get()) + "/" + str(tab.measurement_points)) # Update the title
+    sensor_info_frame.config(text="Measurement " + str(tab.measurement_id_var.get()+1) + "/" + str(tab.measurement_points)) # Update the title
 
+    measurement_slider = sensor_info_frame.nametowidget("measurement_slider")
+    if tab.measurement_points != measurement_slider.config()["to"][4]:
+       measurement_slider.config(to=tab.measurement_points) # Update the slider range
 
     # Update the sensor readings
     xpos_label = sensor_readings_frame.nametowidget("xpos_label")
@@ -35,7 +38,6 @@ def update_sensor_info_frame(root, event = None):
 
     # Initialize the plot if it hasn't been initialized yet
     if not hasattr(tab, 'current_point'):
-        
         tab.current_point, = ax.plot([], [], 'o', color='red')
     else:
         # Plot the current point in red

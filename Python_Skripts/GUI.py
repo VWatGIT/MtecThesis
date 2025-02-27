@@ -36,7 +36,6 @@ class UserInterface:
         root.log = None
         root.camera_plot_frame = None
         root.camera_object.updating = False
-
         
         root.measurement_running = False
 

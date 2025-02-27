@@ -6,6 +6,8 @@ from Python_Skripts.GUI_Panels.Panel_Updates.update_tab import update_tab
 
 class SensorInfoFrame:
     def __init__(self, parent, root):
+        tab = root.tab_group.nametowidget(root.tab_group.select())
+        
         # Create the main sensor_info_frame LabelFrame
         self.frame = tk.LabelFrame(parent, text="Measurement N/A" , name="sensor_info_frame")#, width=500, height=500)
     
@@ -21,8 +23,7 @@ class SensorInfoFrame:
         measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=tab.measurement_id_var)
         measurement_slider.set(1)
         measurement_slider.config(resolution=1, state="normal", command = lambda value: update_tab(root))
-
-     
+        
         self.measurement_slider = measurement_slider
 
         self.frame.grid_rowconfigure(1, weight=100)

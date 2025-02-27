@@ -75,8 +75,6 @@ def run_measurements(root):
         last_point = next_point # Update the last point
 
         doMeasurement(root, data, root.sensor, root.hexapod, i)
-        tab = root.tab_group.nametowidget(root.tab_group.select())
-        
         tab.measurement_id_var.set(i)
 
         if i > 0: # TODO make this work
@@ -138,7 +136,7 @@ def run_measurements(root):
         file_path = save_data(folder_path, data, probe_name)
         root.log.log_event("Data saved automatically to:" + file_path)
 
-    root.measurement_running = False # end threading
+    root.measurement_running = False # Measurement is done
 
 
 def process_data(root, data):

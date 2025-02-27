@@ -8,6 +8,8 @@ def update_path_plot(root, event = None):
     canvas = path_plot_frame.canvas
     ax = canvas.figure.axes[0]
 
+    
+    
     # Extract the path coordinates from the data
     path = data['3D']['path']
     path_x = path[:int(tab.measurement_id_var.get()), 0] # Extract path up to the current measurement

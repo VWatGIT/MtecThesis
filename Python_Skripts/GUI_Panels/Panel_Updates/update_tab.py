@@ -11,7 +11,9 @@ def update_tab(root, event=None):
     data = tab.data
 
     update_sensor_info_frame(root)
-    update_path_plot(root)
+    
+    if root.measurement_running is True:
+        update_path_plot(root)
 
     if data['Visualization']["Slices"] != {}:
         update_slice_plot(root)

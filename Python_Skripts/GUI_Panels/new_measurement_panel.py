@@ -58,12 +58,11 @@ class NewMeasurementPanel:
                 return
 
             self.root.tab_group_object.create_tab()
-            
-            self.root.log.log_event("Started Measurements")
             self.root.measurement_running = True
+            self.root.log.log_event("Started Measurements")
             self.measurement_thread = threading.Thread(target= run_measurements(self.root))
             self.root.thread_list.append(self.measurement_thread)
-            self.measurement_thread.start()
+            root.after(10, self.measurement_thread.start()) # delay to change tab first
 
         else:
             self.root.log.log_event("Measurements already running")
