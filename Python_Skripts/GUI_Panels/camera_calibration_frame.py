@@ -1,5 +1,7 @@
 import tkinter as tk
 import threading
+from configparser import ConfigParser
+import os
 
 from Python_Skripts.GUI_Panels.Movement_Procedures.calibration_movement import take_calibration_images
 
@@ -47,14 +49,50 @@ class CameraCalibrationFrame:
         self.num_calibratrion_images_slider = tk.Scale(self.frame, from_=1, to=root.camera_object.max_num_calibration_images, orient="horizontal", name="num_calibratrion_images_slider", variable=self.checkerboard_image_amount)
         self.num_calibratrion_images_slider.grid(row=2, column=1,columnspan=1, pady=5, sticky="ew")
 
-        self.use_default_calibration_button = tk.Button(self.frame, text="Use Default\nCalibration", command=self.use_default_calibration)
-        self.use_default_calibration_button.grid(row=3, column=0, pady=5, sticky="e")
-        
         self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.calibration_thread.start, state="active") 
         self.calibrate_button.grid(row=3, column=1, pady=5, sticky="w")
 
         self.reset_button = tk.Button(self.frame, text="Reset", command=self.reset_calibration)
-        self.reset_button.grid(row=4, column=1, columnspan=1, pady=5, sticky="w")
+        self.reset_button.grid(row=3, column=0, pady=5, padx=30, sticky="e")
+
+        self.use_default_calibration_button = tk.Button(self.frame, text="Use Default", command=self.use_default_calibration)
+        self.use_default_calibration_button.grid(row=4, column=0, pady=5, padx=30, sticky="e")
+
+        self.save_as_default_calibration_button = tk.Button(self.frame, text="Save as Default", command=self.save_as_default_calibration)
+        self.save_as_default_calibration_button.grid(row=4, column=1, pady=5, sticky="w")
+
+    
+    def save_as_default_calibration(self):
+        new_default_mtx = self.camera_object.mtx.copy()
+        new_default_dist = self.camera_object.dist.copy()
+
+        # Load the existing config file
+        config = ConfigParser(comment_prefixes='#', allow_no_value=True)
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'config.ini'))
+        config.read(config_path)
+
+        # Update the default calibration values
+        config.set('Camera', 'default_mtx', ','.join(map(str, new_default_mtx.flatten())))
+        config.set('Camera', 'default_dist', ','.join(map(str, new_default_dist.flatten())))
+
+        # Read the original file lines
+        with open(config_path, 'r') as file:
+            lines = file.readlines()
+
+        # Write the updated config back to the file, preserving comments 
+        # configparser overwrites comments sadly by default
+        # I dont have to do this often so its fine
+        with open(config_path, 'w') as file:
+            for line in lines:
+                if line.strip().startswith('default_mtx'):
+                    file.write(f"default_mtx = {', '.join(map(str, new_default_mtx.flatten()))}\n")
+                elif line.strip().startswith('default_dist'):
+                    file.write(f"default_dist = {', '.join(map(str, new_default_dist.flatten()))}\n")
+                else:
+                    file.write(line)
+
+
+        self.log.log_event("Saved Camera Calibration as Default in config.ini")
 
     def use_default_calibration(self):
         self.camera_object.use_default_calibration()

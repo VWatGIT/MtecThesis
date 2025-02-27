@@ -29,9 +29,9 @@ class UserInterface:
         # attach all global stuff to root
         root.camera_object = Camera() # camera = root.camera_object.camera
         root.camera = root.camera_object.camera
-        root.sensor = Sensor(root=root)
-        root.probe = Probe(root=root)
-        root.hexapod = Hexapod(root=root)
+        root.sensor = Sensor()
+        root.probe = Probe()
+        root.hexapod = Hexapod()
         root.gauss_beam = GaussBeam() # Simulation Beam
         root.log = None
         root.camera_plot_frame = None
@@ -39,18 +39,8 @@ class UserInterface:
 
         
         root.measurement_running = False
-        root.measurement_points = None
-        root.current_measurement_id = 0
-        root.path_points = None
 
-        root.measurement_id_var = tk.IntVar()
-        root.measurement_id_var.set(0)
 
-        # TODO implement time estimation
-        root.time_estimated = 0
-        root.elapsed_time = 0
-        root.start_time = 0
-        
         self.load_config()
 
 
@@ -97,7 +87,6 @@ class UserInterface:
         self.root.camera_object.update_frequency = int(config.get('Camera', 'update_frequency'))
         self.root.camera_object.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
         self.root.camera_object.checkerboard_dimensions = tuple(map(int, config.get('Camera', 'checkerboard_dimensions').split(',')))
-
 
         # TODO maybe also load config for Hexapod/Probe/Sensor here
 

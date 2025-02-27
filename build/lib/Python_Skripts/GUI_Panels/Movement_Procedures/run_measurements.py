@@ -32,18 +32,18 @@ def run_measurements(root):
     
 
     # Get the Measurment points and path points
-    root.path_points, root.grid = generate_snake_path(root.grid_size, root.step_size)
-    #root.log.log_event(f'Path Points: \n {root.path_points}')
+    tab.path_points, root.grid = generate_snake_path(root.grid_size, root.step_size)
+    #root.log.log_event(f'Path Points: \n {tab.path_points}')
 
-    add_3D_data(data, root.grid, root.grid_size, root.step_size, root.path_points)
+    add_3D_data(data, root.grid, root.grid_size, root.step_size, tab.path_points)
     root.log.log_event("Added 3D Data")
 
-    root.start_time = time.time()
-    root.elapsed_time = 0
+    tab.start_time = time.time()
+    tab.elapsed_time = 0
 
     add_meta_data(root, data)
 
-    root.measurement_points = data["3D"]["measurement_points"]
+    tab.measurement_points = data["3D"]["measurement_points"]
     #TODO set measurement slider maximum to measurement_points
 
     # Update the UI
@@ -51,17 +51,17 @@ def run_measurements(root):
 
 
     progress_bar = root.new_measurement_panel.nametowidget("progress_bar")
-    progress_bar['maximum'] = root.measurement_points
+    progress_bar['maximum'] = tab.measurement_points
     
     # Start the measurement
     last_point = (0, 0, 0, 0, 0, 0) # Start at the origin
     
 
-    for i in range(root.measurement_points):
-        #root.log.log_event(f"Measurement {i+1} of {root.measurement_points}")
+    for i in range(tab.measurement_points):
+        #root.log.log_event(f"Measurement {i+1} of {tab.measurement_points}")
 
         # As Path points are absolute, transform them to relative positions
-        next_point = (root.path_points[i][0], root.path_points[i][1], root.path_points[i][2], 0, 0, 0) 
+        next_point = (tab.path_points[i][0], tab.path_points[i][1], tab.path_points[i][2], 0, 0, 0) 
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
         
         #root.log.log_event(f"Next Relative Position: {next_relative_position}")
@@ -72,29 +72,28 @@ def run_measurements(root):
         last_point = next_point # Update the last point
 
         doMeasurement(root, data, root.sensor, root.hexapod, i)
-        # TODO current_measurement_id is redundant, but present in some function change later
-        root.current_measurement_id = i
-        root.measurement_id_var.set(i)
+ 
+        tab.measurement_id_var.set(i)
 
         if i > 0: # TODO make this work
             #root.event_log.delete("end-2l", "end-1l")
-            #root.event_log.insert("end-1l", f"Performed measurement {i+1} / {root.measurement_points}\n")
-            root.log.log_event(f"Performed measurement {i+1} / {root.measurement_points}")
+            #root.event_log.insert("end-1l", f"Performed measurement {i+1} / {tab.measurement_points}\n")
+            root.log.log_event(f"Performed measurement {i+1} / {tab.measurement_points}")
         else:
-            root.log.log_event(f"Performed measurement {i+1} / {root.measurement_points}")
+            root.log.log_event(f"Performed measurement {i+1} / {tab.measurement_points}")
 
         # update only every ~10% of measurements to save time by not updating the UI every step
-        update_interval = root.measurement_points // 10
+        update_interval = tab.measurement_points // 10
         if i%update_interval == 0:
 
             update_tab(root)
             update_progress_bar(progress_bar, i+1)
-            root.elapsed_time = int((time.time() - root.start_time)/60)
-            data["info"]["elapsed_time"] = root.elapsed_time
+            tab.elapsed_time = int((time.time() - tab.start_time)/60)
+            data["info"]["elapsed_time"] = tab.elapsed_time
             
 
-        root.elapsed_time = int((time.time() - root.start_time)/60)
-        data["info"]["elapsed_time"] = root.elapsed_time
+        tab.elapsed_time = int((time.time() - tab.start_time)/60)
+        data["info"]["elapsed_time"] = tab.elapsed_time
 
     root.new_measurement_panel.nametowidget("save_button").config(state="normal")
     root.log.log_event("Done with measurements")     
@@ -122,7 +121,7 @@ def run_measurements(root):
     horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
 
     update_tab(root)
-    update_progress_bar(progress_bar,root.measurement_points)
+    update_progress_bar(progress_bar,tab.measurement_points)
     update_beam_plot(root)
     update_measurement_info_frame(root)
 
@@ -159,9 +158,9 @@ def add_meta_data(root, data):
 
     data["info"] = {
         "name" : tab_name,
-        "time_estimated": root.time_estimated,
-        "elapsed_time": root.elapsed_time,
-        "start_time": root.start_time
+        "time_estimated": tab.time_estimated,
+        "elapsed_time": tab.elapsed_time,
+        "start_time": tab.start_time
     }
 
 def add_3D_data(data, grid, grid_size, step_size, path):

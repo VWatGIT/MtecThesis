@@ -5,8 +5,7 @@ import numpy as np
 import cv2
 
 class Probe():
-    def __init__(self, root = None):
-        self.root = root
+    def __init__(self):
 
         # Load Configuration
         config = ConfigParser()

@@ -30,11 +30,10 @@ class LoadMeasurementPanel:
             
 
             self.root.tab_group_object.create_tab(data = data)
-    
+            tab = self.root.tab_group_object.nametowidget(self.root.tab_group_object.tab_group.select())
 
-            self.root.measurement_points = data["3D"]["measurement_points"]
-            self.root.current_measurement_id = 0
-            self.root.measurement_id_var.set(0)
+            self.tab.measurement_points = data["3D"]["measurement_points"]
+            self.tab.measurement_id_var.set(0)
             self.root.measurement_running = False
 
             tab_name = self.root.tab_group.select()

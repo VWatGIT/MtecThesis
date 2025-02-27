@@ -30,17 +30,13 @@ class LoadMeasurementPanel:
             
 
             self.root.tab_group_object.create_tab(data = data)
-    
+            self.tab = self.root.tabgroup_object.nametowidget(self.root.tab_group_object.tab_group.select())
 
-            self.root.measurement_points = data["3D"]["measurement_points"]
-            self.root.current_measurement_id = 0
-            self.root.measurement_id_var.set(0)
+            self.tab.measurement_points = data["3D"]["measurement_points"]
+            self.tab.measurement_id_var.set(0)
             self.root.measurement_running = False
 
-            tab_name = self.root.tab_group.select()
-            tab = self.root.nametowidget(tab_name)
-
-            subtab_group = tab.nametowidget("subtab_group")
+            subtab_group = self.tab.nametowidget("subtab_group")
 
             vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
             vertical_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['vertical']), state="normal")

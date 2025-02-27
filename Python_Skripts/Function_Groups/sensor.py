@@ -13,8 +13,7 @@ class Signal: # Dummy
         self.sum = sum
 
 class Sensor():
-    def __init__(self, root = None):
-        self.root = root
+    def __init__(self):
         # Load Configuration
         config = ConfigParser()
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')

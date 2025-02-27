@@ -34,17 +34,17 @@ class UserInterface:
 
         measurement_running = False
         self.root.measurement_running = measurement_running
-        self.root.measurement_points = None
+        self.tab.measurement_points = None
         self.root.current_measurement_id = 0
-        self.root.path_points = None
+        self.tab.path_points = None
 
         self.root.measurement_id_var = tk.IntVar()
         self.root.measurement_id_var.set(0)
 
         # TODO implement time estimation
-        self.root.time_estimated = 0
-        self.root.elapsed_time = 0
-        self.root.start_time = 0
+        self.tab.time_estimated = 0
+        self.tab.elapsed_time = 0
+        self.tab.start_time = 0
         
         self.load_config()
 

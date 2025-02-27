@@ -8,7 +8,8 @@ class SensorInfoFrame:
     def __init__(self, parent, root):
         # Create the main sensor_info_frame LabelFrame
         self.frame = tk.LabelFrame(parent, text="Measurement N/A" , name="sensor_info_frame")#, width=500, height=500)
-    
+
+        tab = root.tabgroup.nametowidget(root.tabgroup.select())
         # Configure the grid layout within the self.frame LabelFrame
         for i in range(2):
             self.frame.grid_columnconfigure(i, weight=1)
@@ -18,7 +19,7 @@ class SensorInfoFrame:
         sensor_readings_frame = self.create_sensor_readings_frame(self.frame)
         sensor_plot_frame = self.create_sensor_plot_frame(self.frame)
                                                                                             
-        measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=root.measurement_id_var)
+        measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=tab.measurement_id_var)
         measurement_slider.set(1)
         measurement_slider.config(resolution=1, state="normal", command = lambda value: update_tab(root))
 

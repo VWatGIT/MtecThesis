@@ -94,9 +94,11 @@ class Camera():
             # Calibration Successful
             self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
             self.set_calibration_values(self.ret, self.mtx, self.dist, self.rvecs, self.tvecs)
+            return True, num_failed_images
         else:
             # Calibration failed
             self.reset_calibration()
+            return False, num_failed_images
             
 
     def capture_image(self):

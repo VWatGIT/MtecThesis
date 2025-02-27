@@ -8,9 +8,9 @@ def update_sensor_info_frame(root, event = None):
     sensor_info_frame = results_frame.nametowidget("sensor_info_frame")
     sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
 
-    current_measurement_data = data["Measurements"][str(root.measurement_id_var.get())]
+    current_measurement_data = data["Measurements"][str(tab.measurement_id_var.get())]
 
-    sensor_info_frame.config(text="Measurement " + str(root.measurement_id_var.get()) + "/" + str(root.measurement_points)) # Update the title
+    sensor_info_frame.config(text="Measurement " + str(tab.measurement_id_var.get()) + "/" + str(tab.measurement_points)) # Update the title
 
 
     # Update the sensor readings

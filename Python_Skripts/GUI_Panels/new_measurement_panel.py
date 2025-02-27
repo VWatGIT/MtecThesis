@@ -107,7 +107,7 @@ class CheckboxPanel:
         hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.hexapod_connected_var)
         self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.stage_connected_var)
 
-
+        connect_camera_button = tk.Button(self.frame, text="Connect Camera", command = self.root.camera_object.create_camera)
         open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
         connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= self.connect_stage)
         connect_hexapod_button = tk.Button(self.frame, text="Connect Hexapod", command= self.connect_hexapod)
@@ -128,6 +128,7 @@ class CheckboxPanel:
         hexapod_connected.grid(row=4, column=0, pady=5, sticky="w")
         self.stage_connected.grid(row=5, column=0, pady=5, sticky="w")
 
+        connect_camera_button.grid(row=0, column=1, pady=5, sticky="w")
         open_camera_button.grid(row=1, column=1, pady=5, sticky="w")
         connect_hexapod_button.grid(row=4, column=1, pady=5, sticky="w")
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
@@ -172,16 +173,22 @@ class CheckboxPanel:
                 else:
                     self.stage_connected_var.set(0)
 
-            time.sleep(1)
+            time.sleep(2)
+
+    def _schedule_callback(self, message):
+        self.root.after(10, self.root.log.log_event, message) 
 
     # Unnecessarily complicated, but i didnt want to pass root to the objects, did it eiter way in the end
     def connect_hexapod(self):
+
         self.root.log.log_event("Connecting to Hexapod. . .")
-        self.root.hexapod.connect_sockets(callback = self.root.log.log_event)
+        self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)) 
+        #self.root.hexapod.connect_sockets(callback = lambda message: self.root.after(10, self.root.log.log_event, message))
 
     def connect_stage(self):
         self.root.log.log_event("Connecting to Stage. . .")
-        self.root.sensor.initialize_stage(callback = self.root.log.log_event) 
+        self.root.sensor.initialize_stage(callback = lambda message: self._schedule_callback(message))
+        #self.root.sensor.initialize_stage(callback = lambda message: self.root.after(10, self.root.log.log_event, message)) 
 
 
 class input_frame:
@@ -328,16 +335,10 @@ class ConnectionFrame: # OLD, NOT USED
 
 
 if __name__ == "__main__":
+    from Python_Skripts.GUI import UserInterface
     root = tk.Tk()
-    # setup root
-    
-    root.hexapod = None
-    root.sensor = None
-    root.camera = None
-    root.log = None
-    root.measurement_running = False
-
-
+    ui = UserInterface(root, test_mode=True)
     frame = NewMeasurementPanel(root, root).panel
-    frame.pack()
+
+    frame.pack(side = "top")
     root.mainloop()

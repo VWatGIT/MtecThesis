@@ -16,24 +16,40 @@ class TabGroup:
 
         self.tab_group = ttk.Notebook(parent, name="tab_group")
         self.tab_group.pack(side="right", fill="both", expand=True)
-
         self.root.tab_group = self.tab_group
 
+        # Bind the <<NotebookTabChanged>> event
+        self.root.tab_group.bind("<<NotebookTabChanged>>", self.on_tab_change)
+
+
+        # TODO dont create default tab, this is only for testing
         self.create_tab() # Create the Default Tab
-   
+    
+    def on_tab_change(self, event):
+        # currently data is stored in the data of the selected tab
+        # this is suboptimal but works for now
+
+        if self.root.measurement_running:
+            self.root.log.log_event("Measurement Running, Tab Change not allowed")
+            self.tab_group.select(self.root.tab_group.index("current"))
+          
+
     def create_tab(self, name = "default", data = None):
         self.tab_count += 1
+        
         
         # TODO get Tab name from user
         new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
-        
-
-        # TODO trace path to these values in other functions
+        new_tab.measurement_id_var = tk.IntVar(value=0)
+        new_tab.path_points = None
         new_tab.measurement_points = 1
+        # TODO trace path to these values in other functions
+        
+        
         new_tab.time_estimated = 0
         new_tab.elapsed_time = 0 
-        new_tab.current_measurement_id = 0
+       
 
         
 

@@ -10,9 +10,6 @@ def update_tab(root, event=None):
 
     data = tab.data
 
-    root.measurement_id_var.get() #str(measurement_slider.get())
-
-
     update_sensor_info_frame(root)
     update_path_plot(root)
 

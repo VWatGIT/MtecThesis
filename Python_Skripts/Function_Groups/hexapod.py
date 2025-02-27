@@ -7,7 +7,7 @@ import os
 import threading
 
 class Hexapod():
-    def __init__(self, root = None):
+    def __init__(self):
         # Hexapod Travel Ranges
         self.travel_ranges = {
             # theoretical ranges for single axes
@@ -19,8 +19,6 @@ class Hexapod():
             'V': 15,
             'W': 30,
         }
-
-        self.root = root
 
         # Load Configuration
         config = ConfigParser()
@@ -84,22 +82,23 @@ class Hexapod():
     
     def connect_sockets(self, callback = None):
         # Connect to Hexapod Server
-        
         """
         Expects callback function as input argument
         callback(rcv) is called after connection attempt
         """
 
         if callback is None:
-            callback = lambda x: print("Automatic "+x[0])
-
+            print('No callback function provided')
+            callback = lambda x: print("Automatic "+x[0:])
 
         if self.connecting:
             rcv = 'Already connecting to server'
+            callback(rcv)
             return rcv
         
         if self.connection_status:
             rcv = 'Already connected to server'
+            callback(rcv)
             return rcv
         
         connection_thread = threading.Thread(target=self._connect, args=(callback,))
@@ -117,25 +116,17 @@ class Hexapod():
             self.connection_status = True
             self.connecting = False
             rcv = f'Hexapod Connection Successful: \nIP: {self.IP} \nPort1: {self.port_1} \nPort2: {self.port_2}'
-            self._schedule_callback(callback, rcv)
+            callback(rcv)
+         
             return rcv
         
         except Exception as e:
-            self.connection_status = True # TODO: change back to False
+            self.connection_status = False
             self.connecting = False
             rcv = f'Hexapod Connection Failed: {e}'
-            self._schedule_callback(callback, rcv)
+            callback(rcv)
             return rcv
 
-    def _schedule_callback(self, callback, message):
-        
-        if self.root is not None: 
-            # Schedule the callback to be called from the main thread and not from the connection thread
-            # the is probably a way easier way to do this with a hexapod status variable
-            self.root.log.log_event(message)
-            self.root.after(10, callback, message)
-        else:
-            callback(message)
 
     def clear_socket_buffer(self, sock):
         sock.setblocking(0)  # Set non-blocking mode
