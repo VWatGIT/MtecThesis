@@ -72,8 +72,8 @@ def find_beam_centers(sensor, hexapod, spacing = 0.2, num_centers = 4, test_slic
         print(f'finished iteration, new center: {center}')
         return center, path_points_list
 
-    def refine_search(initial_point, initial_step_size = 1, refinement_factor = 2, max_iterations = 3, test_slice = None):
-        step_size = initial_step_size
+    def refine_search(initial_point, initial_search_area = 1, refinement_factor = 2, max_iterations = 3, test_slice = None):
+        step_size = initial_search_area
         initial_hexapod_position = initial_point
         center = initial_point
         all_path_points = [] # testing visualization

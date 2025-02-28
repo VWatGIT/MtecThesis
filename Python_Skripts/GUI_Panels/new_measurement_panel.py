@@ -5,13 +5,13 @@ import time
 
 
 from Python_Skripts.Function_Groups.data_handling import save_data
-from Python_Skripts.GUI_Panels.Movement_Procedures.run_measurements import run_measurements
-from Python_Skripts.GUI_Panels.Movement_Procedures.find_beam_centers import find_beam_centers
 from Python_Skripts.GUI_Panels.Panel_Updates.update_checkboxes import check_checkboxes
+from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import show_tabgroup
 from Python_Skripts.GUI_Panels.input_frame import Input_Frame
 from Python_Skripts.GUI_Panels.simulation_frame import Simulation_Frame
 from Python_Skripts.GUI_Panels.checkbox_panel import CheckboxPanel
 
+from Python_Skripts.GUI_Panels.Movement_Procedures.combined_procedures import combined_procedures
 
 class NewMeasurementPanel:
     def __init__(self, parent, root):
@@ -68,33 +68,17 @@ class NewMeasurementPanel:
                     return
             else:
                 self.root.log.log_event("Simulating Measurements")
-                
 
-            self.root.tab_group_object.create_tab()    
+
+            self.root.tab_group_object.create_tab()
+            show_tabgroup(self.root)
             self.root.measurement_running = True
 
-            # Move to starting position
-            # TODO move to starting position
-
-            self.root.log.log_event("Starting Trajectory Determination")
-            centers = find_beam_centers(self.root)
-
-            # Now calculate the trajectory
-            self.root.log.log_event("Calculating Trajectory")
-
-            # TODO calculate trajectory
-
-            self.root.log.log_event("Trajectory Determination Finished")
-
-            # Now align the probe with sensor in an angle
-            # TODO align probe with sensor again
-
-            # Now start the measurements
-            self.root.log.log_event("Started Measurements")
-            self.measurement_thread = threading.Thread(target= run_measurements(self.root))
-            self.root.thread_list.append(self.measurement_thread)
-            root.after(10, self.measurement_thread.start()) # delay to change tab first
-
+            # Thread for all the hexapod movement procedures
+            all_procedures_thread = threading.Thread(target=combined_procedures, args=(self.root,))
+            self.root.thread_list.append(all_procedures_thread)
+            all_procedures_thread.start()
+            
         else:
             self.root.log.log_event("Measurements already running")
     
@@ -112,7 +96,7 @@ class NewMeasurementPanel:
             self.root.log.log_event(f"Data saved to {file_name}")
     
     def stop_button_pushed(self):
-        # TODO fix issues with hexapod not reacting to stop command
+        # Stop the Hexapod Server, needs to be restarted
         self.root.measurement_running = False
         self.root.hexapod.send_command("stop") # Stop the Hexapod
         self.root.log.log_event("Terminating Measurements")

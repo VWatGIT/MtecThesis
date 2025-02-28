@@ -37,7 +37,6 @@ class UserInterface:
         root.measurement_running = False
         root.simulate_var = tk.IntVar(value = 0)
 
-
         self.load_config()
 
 
@@ -83,7 +82,7 @@ class UserInterface:
         self.root.step_size = list(map(float, config.get('Measurement', 'step_size').split(',')))
         self.root.center_spacing = float(config.get('Measurement', 'center_spacing'))
         self.root.num_centers = int(config.get('Measurement', 'num_centers'))
-        self.root.initial_step_size = float(config.get('Measurement', 'initial_step_size'))
+        self.root.initial_search_area = float(config.get('Measurement', 'initial_search_area'))
         self.root.refinement_factor = float(config.get('Measurement', 'refinement_factor'))
         self.root.max_num_iterations = int(config.get('Measurement', 'max_num_iterations'))
 

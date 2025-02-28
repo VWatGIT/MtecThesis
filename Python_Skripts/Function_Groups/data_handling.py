@@ -79,6 +79,18 @@ def load_data(hdf5_file_path):
 
         return data
 
+def autosave(root):
+    data = root.tab_group.nametowidget(root.tab_group.select()).data
+
+    # autosave data
+    if root.autosave_var.get() == 1:
+        root.log.log_event("Autosaving data")
+        # TODO make this a user input
+        folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'
+        probe_name = str(root.probe_name_entry.get())
+        file_path = save_data(folder_path, data, probe_name)
+        root.log.log_event("Data saved automatically to:" + file_path)
+
 def convert_data(data):
     try:
         if isinstance(data, dict):

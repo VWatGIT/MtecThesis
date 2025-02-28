@@ -28,15 +28,15 @@ class Input_Frame:
 
         self.num_centers_label = tk.Label(self.frame, text="Centers to find:")
         self.center_spacing_label = tk.Label(self.frame, text="Center Spacing [mm]")
-        self.initial_step_size_label = tk.Label(self.frame, text="Initial Step Size [mm]")
+        self.initial_search_area_label = tk.Label(self.frame, text="Search Area (sidelength) [mm]")
         self.refinement_factor_label = tk.Label(self.frame, text="Refinement Factor")
         self.max_iterations_label = tk.Label(self.frame, text="Max Iterations")
 
         self.num_centers_entry = tk.Entry(self.frame, name="num_centers_entry")
         self.center_spacing_entry = tk.Entry(self.frame, name="center_spacing_entry")
-        self.initial_step_size_entry = tk.Entry(self.frame, name="initial_step_size_entry")
+        self.initial_search_area_entry = tk.Entry(self.frame, name="initial_search_area_entry")
         self.refinement_factor_entry = tk.Entry(self.frame, name="refinement_factor_entry")
-        self.max_iterations_entry = tk.Entry(self.frame, name="max_iterations_entry")
+        self.max_num_iterations_entry = tk.Entry(self.frame, name="max_num_iterations_entry")
 
         self.seperator2 = ttk.Separator(self.frame, orient="horizontal")
 
@@ -49,9 +49,9 @@ class Input_Frame:
 
         self.num_centers_entry.insert(0, str(self.root.num_centers))
         self.center_spacing_entry.insert(0, str(self.root.center_spacing))
-        self.initial_step_size_entry.insert(0, str(self.root.initial_step_size))
+        self.initial_search_area_entry.insert(0, str(self.root.initial_search_area))
         self.refinement_factor_entry.insert(0, str(self.root.refinement_factor))
-        self.max_iterations_entry.insert(0, str(self.root.max_num_iterations))
+        self.max_num_iterations_entry.insert(0, str(self.root.max_num_iterations))
 
 
         for i in range(12):
@@ -68,7 +68,7 @@ class Input_Frame:
 
         self.num_centers_label.grid(row=4, column=0, pady=5, sticky="e")
         self.center_spacing_label.grid(row=5, column=0, pady=5, sticky="e")
-        self.initial_step_size_label.grid(row=6, column=0, pady=5, sticky="e")
+        self.initial_search_area_label.grid(row=6, column=0, pady=5, sticky="e")
         self.refinement_factor_label.grid(row=7, column=0, pady=5, sticky="e")
         self.max_iterations_label.grid(row=8, column=0, pady=5, sticky="e")
 
@@ -78,9 +78,9 @@ class Input_Frame:
   
         self.num_centers_entry.grid(row=4, column=1, pady=5, sticky="w")
         self.center_spacing_entry.grid(row=5, column=1, pady=5, sticky="w")
-        self.initial_step_size_entry.grid(row=6, column=1, pady=5, sticky="w")
+        self.initial_search_area_entry.grid(row=6, column=1, pady=5, sticky="w")
         self.refinement_factor_entry.grid(row=7, column=1, pady=5, sticky="w")
-        self.max_iterations_entry.grid(row=8, column=1, pady=5, sticky="w")
+        self.max_num_iterations_entry.grid(row=8, column=1, pady=5, sticky="w")
         
         self.seperator2.grid(row=9, column=0, columnspan=2, pady=5, sticky="ew")
         

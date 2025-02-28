@@ -43,6 +43,8 @@ class TabGroup:
         new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
         new_tab.measurement_id_var = tk.IntVar(value=1) # Measurement ID TODO what default value?
+        new_tab.current_point_index = 0
+        
         new_tab.path_points = None
         new_tab.measurement_points = 1
         # TODO trace path to these values in other functions

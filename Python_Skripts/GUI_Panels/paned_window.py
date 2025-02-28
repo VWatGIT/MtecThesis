@@ -38,5 +38,5 @@ class PanedWindow:
         self.help_panel = self.help_panel_object.panel
 
         # Set Sashposition of the paned window
-        self.paned_window.after(200, lambda: self.paned_window.sashpos(0, 840)) # after for short delay (bugfix)
+        self.paned_window.after(300, lambda: self.paned_window.sashpos(0, 840)) # after for short delay (bugfix)
         

@@ -51,8 +51,8 @@ def calculate_angles(trajectory):
 def calculate_beam_trajectory_LR(center_points):
     center_points = np.array(center_points)
     # Fit a line to the center_points from the center of the first beam slice
-    start_point = center_points[0]
-    start_point = np.array([0, start_point[1], start_point[2]])
+    start_point = np.array(center_points[0])
+    #start_point = np.array([0, start_point[1], start_point[2]])
 
     # Shift the points to be relative to the start point
     shifted_points = center_points - start_point
