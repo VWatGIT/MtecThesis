@@ -43,13 +43,13 @@ class ProbeDetectionFrame:
         self.crop_bottom_right_label.grid(row=1, column=0, pady=5, sticky="w")
         self.crop_bottom_right_entry.grid(row=1, column=1, pady=5, sticky="w")
 
-        self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5, sticky="w")
-        self.threshold_slider.grid(row=2, column=1, rowspan=2, pady=5, sticky="w")
+        self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5, sticky="ew")
+        self.threshold_slider.grid(row=2, column=0,columnspan=2, rowspan=2, pady=5, sticky="ew")
 
-        self.take_probe_image_button.grid(row=4, column=0, columnspan=2, rowspan=2, pady=5, sticky="w")
+        self.take_probe_image_button.grid(row=4, column=0, columnspan=1, rowspan=2, pady=5, sticky="w")
 
-        self.frame.grid_rowconfigure(3, weight=3)  # weight row for gap
-        self.save_probe_position_button.grid(row=6, column=1, pady=5, sticky="w")
+        #self.frame.grid_rowconfigure(3, weight=3)  # weight row for gap
+        self.save_probe_position_button.grid(row=4, column=1, pady=5, sticky="w")
 
 
     def take_probe_image(self, event=None):

@@ -34,8 +34,8 @@ class UserInterface:
         root.log = None
         root.camera_plot_frame = None
         root.camera_object.updating = False
-        
         root.measurement_running = False
+        root.simulate_var = tk.IntVar(value = 0)
 
 
         self.load_config()
@@ -81,6 +81,12 @@ class UserInterface:
         # Heapod/Probe/Sensor Configs set in Object3D
         self.root.grid_size = list(map(float, config.get('Measurement', 'grid_size').split(',')))
         self.root.step_size = list(map(float, config.get('Measurement', 'step_size').split(',')))
+        self.root.center_spacing = float(config.get('Measurement', 'center_spacing'))
+        self.root.num_centers = int(config.get('Measurement', 'num_centers'))
+        self.root.initial_step_size = float(config.get('Measurement', 'initial_step_size'))
+        self.root.refinement_factor = float(config.get('Measurement', 'refinement_factor'))
+        self.root.max_num_iterations = int(config.get('Measurement', 'max_num_iterations'))
+
 
         self.root.camera_object.num_calibration_images = tk.IntVar(value=int(config.get('Camera', 'num_calibration_images')))
         self.root.camera_object.max_num_calibration_images = int(config.get('Camera', 'max_num_calibration_images'))

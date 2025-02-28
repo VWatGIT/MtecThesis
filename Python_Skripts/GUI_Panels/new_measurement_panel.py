@@ -5,9 +5,13 @@ import time
 
 
 from Python_Skripts.Function_Groups.data_handling import save_data
-from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
 from Python_Skripts.GUI_Panels.Movement_Procedures.run_measurements import run_measurements
-from Python_Skripts.GUI_Panels.Panel_Updates.update_checkboxes import update_checkboxes, check_checkboxes
+from Python_Skripts.GUI_Panels.Movement_Procedures.find_beam_centers import find_beam_centers
+from Python_Skripts.GUI_Panels.Panel_Updates.update_checkboxes import check_checkboxes
+from Python_Skripts.GUI_Panels.input_frame import Input_Frame
+from Python_Skripts.GUI_Panels.simulation_frame import Simulation_Frame
+from Python_Skripts.GUI_Panels.checkbox_panel import CheckboxPanel
+
 
 class NewMeasurementPanel:
     def __init__(self, parent, root):
@@ -16,11 +20,14 @@ class NewMeasurementPanel:
         self.panel = tk.Frame(parent, name="new_measurement_panel")
         self.root.new_measurement_panel = self.panel
 
-        self.input_frame_object = input_frame(self.panel, self.root)
+        self.input_frame_object = Input_Frame(self.panel, self.root)
+        self.simulation_frame_object = Simulation_Frame(self.panel, self.root)
         self.checkbox_panel_object = CheckboxPanel(self.panel, self.root)
+       
         root.checkbox_panel_object = self.checkbox_panel_object
 
         self.input_frame = self.input_frame_object.frame
+        self.simulation_frame = self.simulation_frame_object.frame
         self.checkbox_panel = self.checkbox_panel_object.frame
        
 
@@ -40,7 +47,8 @@ class NewMeasurementPanel:
         for i in range(2):
             self.panel.grid_columnconfigure(i, weight=1)
 
-        self.input_frame.grid(row=0, column=0, rowspan=2, columnspan=2, sticky="nsew", padx=10, pady=10) 
+        self.input_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10) 
+        self.simulation_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
         self.checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
         
         autosave_checkbox.grid(row=3, column=0, columnspan=2, pady=5, sticky="nsew")
@@ -56,14 +64,32 @@ class NewMeasurementPanel:
             
             if self.root.simulate_var.get() != 1:
                 # check checkboxes if everything is ready
-                if not check_checkboxes(self.root):
-                    return 
+                if check_checkboxes(self.root) == False:
+                    return
             else:
                 self.root.log.log_event("Simulating Measurements")
                 
 
-            self.root.tab_group_object.create_tab()
+            self.root.tab_group_object.create_tab()    
             self.root.measurement_running = True
+
+            # Move to starting position
+            # TODO move to starting position
+
+            self.root.log.log_event("Starting Trajectory Determination")
+            centers = find_beam_centers(self.root)
+
+            # Now calculate the trajectory
+            self.root.log.log_event("Calculating Trajectory")
+
+            # TODO calculate trajectory
+
+            self.root.log.log_event("Trajectory Determination Finished")
+
+            # Now align the probe with sensor in an angle
+            # TODO align probe with sensor again
+
+            # Now start the measurements
             self.root.log.log_event("Started Measurements")
             self.measurement_thread = threading.Thread(target= run_measurements(self.root))
             self.root.thread_list.append(self.measurement_thread)
@@ -91,221 +117,7 @@ class NewMeasurementPanel:
         self.root.hexapod.send_command("stop") # Stop the Hexapod
         self.root.log.log_event("Terminating Measurements")
 
-class CheckboxPanel:
-    def __init__(self, parent, root):
-        self.root = root
 
-        self.frame = tk.LabelFrame(parent, name="checkbox_panel")
-
-        self.checkbox_vars = {
-            "camera_connected": tk.IntVar(),
-            "camera_calibrated": tk.IntVar(),
-            "markers_detected": tk.IntVar(),
-            "probe_detected": tk.IntVar(),
-            "hexapod_connected": tk.IntVar(),
-            "stage_connected": tk.IntVar()
-        }
-
-        root.checkbox_vars = self.checkbox_vars
-
-        camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled", variable=self.checkbox_vars["camera_connected"])
-        camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled", variable=self.checkbox_vars["camera_calibrated"])
-        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.checkbox_vars["markers_detected"])
-        probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled", variable=self.checkbox_vars["probe_detected"])
-        hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.checkbox_vars["hexapod_connected"])
-        self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.checkbox_vars["stage_connected"])
-
-        connect_camera_button = tk.Button(self.frame, text="Connect Camera", command = self.root.camera_object.create_camera)
-        open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
-        connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= self.connect_stage)
-        connect_hexapod_button = tk.Button(self.frame, text="Connect Hexapod", command= self.connect_hexapod)
-        
-
-
-        connection_frame = ConnectionFrame(self.frame, self.root).frame
-
-        for i in range(9):
-            self.frame.grid_rowconfigure(i, weight=1)
-        for i in range(2):
-            self.frame.grid_columnconfigure(i, weight=1)
-
-        camera_connected.grid(row=0, column=0, pady=5, sticky="w")
-        camera_calibrated.grid(row=1, column=0, pady=5, sticky="w")
-        markers_detected.grid(row=2, column=0, pady=5, sticky="w")
-        probe_detected.grid(row=3, column=0, pady=5, sticky="w")
-        hexapod_connected.grid(row=4, column=0, pady=5, sticky="w")
-        self.stage_connected.grid(row=5, column=0, pady=5, sticky="w")
-
-        connect_camera_button.grid(row=0, column=1, pady=5, sticky="w")
-        open_camera_button.grid(row=1, column=1, pady=5, sticky="w")
-        connect_hexapod_button.grid(row=4, column=1, pady=5, sticky="w")
-        connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
-
-        #update_checkboxes(root)
-
-        # Threading to update checkboxes
-        self.checkbox_update_thread = threading.Thread(target= lambda: update_checkboxes(root))
-        self.root.thread_list.append(self.checkbox_update_thread)
-        self.checkbox_update_thread.start()
-        
-
-
-    def _schedule_callback(self, message):
-        self.root.after(10, self.root.log.log_event, message) 
-
-    # Unnecessarily complicated, but i didnt want to pass root to the objects, did it eiter way in the end
-    def connect_hexapod(self):
-        self.root.log.log_event("Connecting to Hexapod. . .")
-        self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)) 
-        #self.root.hexapod.connect_sockets(callback = lambda message: self.root.after(10, self.root.log.log_event, message))
-
-    def connect_stage(self):
-        self.root.log.log_event("Connecting to Stage. . .")
-        self.root.sensor.initialize_stage(callback = lambda message: self._schedule_callback(message))
-        #self.root.sensor.initialize_stage(callback = lambda message: self.root.after(10, self.root.log.log_event, message)) 
-
-
-class input_frame:
-
-    def __init__(self, parent, root):
-        self.root = root
-        self.frame = tk.LabelFrame(parent,text ="New Measurement",name="input_frame")
-
-        self.root.input_frame = self.frame
-
-        self.grid_size = self.root.grid_size
-        self.step_size = self.root.step_size
-        self.time_estimated = "N/A"
-
-
-
-        probe_name_label = tk.Label(self.frame, text="Probe Name:")
-        measurement_space_label = tk.Label(self.frame, text="3D Size: [mm]")
-        step_size_label = tk.Label(self.frame, text="Step Size: [mm]")
-        self.time_estimated_label = tk.Label(self.frame, text="Estimated Time: N/A ", name="time_estimated_label")
-        wavelength_label = tk.Label(self.frame, text="Wavelength [nm]:")
-        w_0_label = tk.Label(self.frame, text="Beam Waist [mm]:")
-        i_0_label = tk.Label(self.frame, text="I_0 [W/m^2]:")
-        alpha_label = tk.Label(self.frame, text="Simulate Pitch [deg]:")
-        beta_label = tk.Label(self.frame, text="Simulate Yaw [deg]:")
-
-        self.probe_name_entry = tk.Entry(self.frame, name="probe_name_entry")
-
-        root.probe_name_entry = self.probe_name_entry
-        self.measurement_space_entry = tk.Entry(self.frame, name="measurement_space_entry")
-        self.step_size_entry = tk.Entry(self.frame, name="step_size_entry")
-        self.wavelength_entry = tk.Entry(self.frame, name="wavelength_entry")
-        self.w_0_entry = tk.Entry(self.frame, name="w_0_entry")
-        self.i_0_entry = tk.Entry(self.frame, name="i_0_entry")
-        self.alpha_entry = tk.Entry(self.frame, name="alpha_entry")
-        self.beta_entry = tk.Entry(self.frame, name="beta_entry")
-
-        time_estimation_button = tk.Button(self.frame, text="Estimate Time", command=self.estimate_time)
-
-        self.seperator = ttk.Separator(self.frame, orient="horizontal")
-        self.simulate_var = tk.IntVar()
-        self.root.simulate_var = self.simulate_var # add to root for access in other functions
-        self.simulate_checkbox = tk.Checkbutton(self.frame, text="Simulate", name="simulate_checkbox", variable=self.simulate_var)
-
-        self.probe_name_entry.insert(0, "Default")
-        self.measurement_space_entry.insert(0, f"{self.grid_size[0]}, {self.grid_size[1]}, {self.grid_size[2]}")
-        self.step_size_entry.insert(0, f"{self.step_size[0]}, {self.step_size[1]}, {self.step_size[2]}")
-        self.wavelength_entry.insert(0, "1300")
-        self.w_0_entry.insert(0, "1")
-        self.i_0_entry.insert(0, "60000")
-        self.alpha_entry.insert(0, "0")
-        self.beta_entry.insert(0, "0")
-
-        for i in range(11):
-            self.frame.grid_rowconfigure(i, weight=1)
-        for i in range(2):
-            self.frame.grid_columnconfigure(i, weight=1)
-
-
-        probe_name_label.grid(row=0, column=0, pady=5, sticky="e")
-        measurement_space_label.grid(row=1, column=0, pady=5, sticky="e")
-        step_size_label.grid(row=2, column=0, pady=5, sticky="e")
-        self.time_estimated_label.grid(row=3, column=0, pady=5, sticky="w")
-
-        self.seperator.grid(row=4, column=0, columnspan=2, pady=5, sticky="ew")
-        self.simulate_checkbox.grid(row = 5, column=0, columnspan=2, pady=5, sticky="n")
-        
-        wavelength_label.grid(row=6, column=0, pady=5, sticky="e")
-        w_0_label.grid(row=7, column=0, pady=5, sticky="e")
-        i_0_label.grid(row=8, column=0, pady=5, sticky="e")
-        alpha_label.grid(row=9, column=0, pady=5, sticky="e")
-        beta_label.grid(row=10, column=0, pady=5, sticky="e")
-
-        self.probe_name_entry.grid(row=0, column=1, pady=5, sticky="w")
-        self.measurement_space_entry.grid(row=1, column=1, pady=5, sticky="w")
-        self.step_size_entry.grid(row=2, column=1, pady=5, sticky="w")
-
-        self.wavelength_entry.grid(row=6, column=1, pady=5, sticky="w")
-        self.w_0_entry.grid(row=7, column=1, pady=5, sticky="w")
-        self.i_0_entry.grid(row=8, column=1, pady=5, sticky="w")
-        self.alpha_entry.grid(row=9, column=1, pady=5, sticky="w")
-        self.beta_entry.grid(row=10, column=1, pady=5, sticky="w")
-
-        
-        time_estimation_button.grid(row=3, column=1, pady=5, sticky="w")
-        
-
-    def estimate_time(self):
-        one_measurement_time = 0.5 # [second] 
-        
-        grid_size = self.measurement_space_entry.get()
-        grid_size = tuple(map(float, grid_size.split(',')))
-
-        step_size = self.step_size_entry.get()
-        step_size = tuple(map(float, step_size.split(',')))
-
-       
-        measurement_points = int((grid_size[0]+1)/(step_size[0])) * int((grid_size[1]+1)/(step_size[1])) * int((grid_size[2]+1)/(step_size[2]))
-
-        self.time_estimated = measurement_points * one_measurement_time
-        if int(self.time_estimated) > 60:
-            self.time_estimated = str(int(self.time_estimated / 60)) + " [min]"
-            
-        else :
-            self.time_estimated = str(int(self.time_estimated)) + " [s]"
-
-        self.time_estimated_label.config(text="est. time: "+self.time_estimated)
-
-        self.root.log.log_event(f"Estimated time:  {self.time_estimated}")
-
-
-
-class ConnectionFrame: # OLD, NOT USED
-    def __init__(self, parent, root):
-        self.root = root
-        
-        self.frame = tk.LabelFrame(parent, name="connection_frame")
-        
-
-        for i in range(3):
-            self.frame.grid_rowconfigure(i, weight=1)
-        for i in range(2):
-            self.frame.grid_columnconfigure(i, weight=1)
-
-        port_1_label = tk.Label(self.frame, text="Port 1:")
-        port_2_label = tk.Label(self.frame, text="Port 2:")
-        ip_label = tk.Label(self.frame, text="IP:")
-
-        self.port_1_entry = tk.Entry(self.frame, name="port_1_entry")
-        self.port_2_entry = tk.Entry(self.frame, name="port_2_entry")
-        self.ip_entry = tk.Entry(self.frame, name="ip_entry")
-
-        self.port_1_entry.insert(0, str(self.root.hexapod.port_1))
-        self.port_2_entry.insert(0, str(self.root.hexapod.port_2))
-        self.ip_entry.insert(0, str(self.root.hexapod.IP))
-
-        port_1_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
-        port_2_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        ip_label.grid(row=2, column=0, padx=5, pady=5, sticky="w")
-
-        self.port_1_entry.grid(row=0, column=1, padx=5, pady=5)
-        self.port_2_entry.grid(row=1, column=1, padx=5, pady=5)
-        self.ip_entry.grid(row=2, column=1, padx=5, pady=5)
 
 
 if __name__ == "__main__":

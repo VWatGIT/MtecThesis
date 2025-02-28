@@ -17,19 +17,9 @@ def manual_alignment(root):
    
     root.log.log_event(rcv)
 
-def rough_alignment(hexapod, sensor, log):
+def automatic_alignment(root):
     # add additional arguments
-    
-    #self.new_measurement_panel.nametowidget("checkbox_panel").nametowidget("rough_alignment").select()
-    log.log_event("Rough Alignment done")
+        
 
-  
-    pass
-
-def fine_alignment(hexapod, sensor, log):
-    #new_measurement_panel.nametowidget("checkbox_panel").nametowidget("fine_alignment").select()
-    
-    log.log_event("Fine Alignment done")
-
-    
+    root.log.log_event("Rough Alignment done")
     pass

@@ -1,11 +1,13 @@
 import time
 
 from Python_Skripts.GUI_Panels.Panel_Updates import * 
+from Python_Skripts.GUI_Panels.Panel_Updates.update_gauss_beam import update_gauss_beam
 from Python_Skripts.GUI_Panels.Movement_Procedures.do_measurement import doMeasurement
 
 from Python_Skripts.Function_Groups.path_creation import generate_snake_path
 from Python_Skripts.Function_Groups.data_handling import save_data
 from Python_Skripts.Function_Groups.beam_visualization import process_slices
+
 
 def run_measurements(root):
     tab_name = root.tab_group.select()
@@ -21,15 +23,9 @@ def run_measurements(root):
     root.step_size = tuple(map(float, root.step_size.split(',')))
 
 
-    # Get Beam Parameters
-    alpha = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("alpha_entry").get())
-    beta = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("beta_entry").get())
-    root.gauss_beam.set_Trj(alpha, beta)
+    # Update Beam Parameters
+    update_gauss_beam(root)
 
-    root.gauss_beam.w_0 = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("w_0_entry").get())*1e-3
-    root.gauss_beam.wavelength = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("wavelength_entry").get())*1e-9
-    root.gauss_beam.I_0 = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("i_0_entry").get())
-    
 
     # Get the Measurment points and path points
     tab.path_points, root.grid = generate_snake_path(root.grid_size, root.step_size)

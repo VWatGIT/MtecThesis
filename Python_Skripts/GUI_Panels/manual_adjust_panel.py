@@ -13,7 +13,6 @@ class ManualAdjustPanel:
         self.root = root
 
         self.panel = tk.LabelFrame(parent,text="Adjust Hexapod Positon",name="panel")
-        self.panel.pack(side="left", expand=True)
 
         self.root.manual_adjust_panel = self.panel
 
@@ -98,7 +97,7 @@ class ManualAdjustPanel:
         seperator2.grid(row=7, column=0, columnspan=4, sticky="ew", pady=5)
 
         set_to_0_button = tk.Button(self.panel, text="Set 0", command= self.set_to_0)
-        set_to_0_button.grid(row=8, column=3,columnspan=2,rowspan=2, pady=5, sticky="w")
+        set_to_0_button.grid(row=8, column=3,columnspan=1,rowspan=2, pady=5, sticky="w")
 
         self.relative_checkbutton_var = tk.IntVar(name="relative_checkbutton_var")
         self.relative_checkbutton_var.set(0)
@@ -106,11 +105,11 @@ class ManualAdjustPanel:
         self.panel.relative_checkbutton_var = self.relative_checkbutton_var
 
         self.relative_checkbutton = tk.Checkbutton(self.panel, text="Relative", name="relative_checkbutton", variable=self.relative_checkbutton_var)
-        self.relative_checkbutton.grid(row=8, column=0,columnspan=2,pady=5, sticky="ns")
+        self.relative_checkbutton.grid(row=8, column=2,columnspan=1,pady=5, sticky="w")
         #self.relative_checkbutton.rowconfigure(8, weight=100)
 
         manual_align_button = tk.Button(self.panel, text="Confirm", command= lambda: manual_alignment(self.root))
-        manual_align_button.grid(row=9, column=0, columnspan= 2, pady=5, sticky="ns")
+        manual_align_button.grid(row=8, column=1, columnspan= 1, pady=5, sticky="nsew")
         #self.panel.rowconfigure(8, weight=100)
 
     def create_increment_button(self, parent, entry_field, increment):

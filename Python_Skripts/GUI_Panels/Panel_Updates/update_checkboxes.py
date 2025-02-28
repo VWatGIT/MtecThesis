@@ -43,8 +43,12 @@ def check_checkboxes(root):
     for key in root.checkbox_vars.keys():
         if root.checkbox_vars[key].get() != 1:
             ready = False
-            root.log("Not all systems ready, please check the following: " + key)
-            break
+            root.log.log_event(f"{key} not ready")
+            
+    if ready:
+        root.log.log_event("All Systems Ready")
+    else:
+        root.log.log_event("Not all Systems Ready")
 
     return ready
             

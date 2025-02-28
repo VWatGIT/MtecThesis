@@ -10,7 +10,3 @@ class HelpPanel:
         
         self.root = root
         self.root.help_panel = self.panel
-
-        # Move this somewhere else
-        manual_adjust_panel = ManualAdjustPanel(self.panel, self.root).panel
-        manual_adjust_panel.pack(side="left", expand=True)

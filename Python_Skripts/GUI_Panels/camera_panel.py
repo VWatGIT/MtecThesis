@@ -8,6 +8,7 @@ from Python_Skripts.Function_Groups.marker_detection import *
 
 from Python_Skripts.GUI_Panels.camera_calibration_frame import CameraCalibrationFrame
 from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
+from Python_Skripts.GUI_Panels.manual_adjust_panel import ManualAdjustPanel
 
 from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera
 
@@ -42,6 +43,7 @@ class CameraPanel:
         self.camera_calibration_object = CameraCalibrationFrame(self.helper_panel, self.root)
         self.probe_detection_object = ProbeDetectionFrame(self.helper_panel, self.root)
         self.marker_detection_object = MarkerDetectionFrame(self.helper_panel, self.root)
+        self.manual_adjust_panel_object = ManualAdjustPanel(self.helper_panel, self.root)
 
         # attach object to root
         self.root.camera_calibration_object = self.camera_calibration_object
@@ -50,11 +52,13 @@ class CameraPanel:
         self.camera_calibration_frame = self.camera_calibration_object.frame
         self.probe_detection_frame = self.probe_detection_object.frame
         self.marker_detection_frame = self.marker_detection_object.frame
+        self.manual_adjust_panel = self.manual_adjust_panel_object.panel
         
         self.camera_settings_frame.pack(side="top", fill="both", expand=True)
         self.camera_calibration_frame.pack(side="top", fill="both", expand=True)
         self.probe_detection_frame.pack(side="top", fill="both",expand=True)
         self.marker_detection_frame.pack(side="top", fill="both",expand=True)
+        self.manual_adjust_panel.pack(side="top", fill="both", expand=True)
 
         # camera_helper | camera image
         self.helper_panel.grid(row=0, column=0, sticky="ns")

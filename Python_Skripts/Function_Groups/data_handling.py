@@ -14,7 +14,10 @@ def new_data():
     data['Visualization'] = {}
     data['Visualization']['Slices'] = {}
     data['Beam_Parameters'] = {}
-    
+    data['Alignment'] = {}
+    data['Alignment']['Center_Search'] = {}
+    data['Simulation'] = {}
+    data['Simulation']["active"] = False
     return data
 
 def save_data(data_folder, data, probe_name):

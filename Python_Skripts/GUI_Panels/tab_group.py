@@ -57,6 +57,10 @@ class TabGroup:
 
         if data == None:
             new_tab.data = new_data()
+            if self.root.simulate_var.get() == 1:
+                new_tab.data['Simulation']['active'] = True
+
+
         else:
             new_tab.data = data 
 
