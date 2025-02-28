@@ -19,7 +19,6 @@ class Sensor():
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
         config.read(config_path)
 
-
         self.marker_id = config.getint('Sensor', 'marker_id')
         self.marker_size = config.getfloat('Sensor', 'marker_size')
 
@@ -34,7 +33,7 @@ class Sensor():
         self.unique_rvecs = list(map(float, config.get('Sensor', 'unique_rvecs').split(',')))
         self.unique_tvecs = list(map(float, config.get('Sensor', 'unique_tvecs').split(',')))
 
-
+        self.photo_diode_array_position = None # in hexapod coordinates relative to camera position
 
         # Sensor Readings
         self.xpos = None
@@ -45,7 +44,7 @@ class Sensor():
 
         # initialize stage
         self.stage = None
-        self.initialize_stage()
+        #self.initialize_stage()
        
 
     def initialize_stage(self, callback=None, root=None): 

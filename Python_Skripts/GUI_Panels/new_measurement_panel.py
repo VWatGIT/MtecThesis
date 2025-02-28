@@ -7,6 +7,7 @@ import time
 from Python_Skripts.Function_Groups.data_handling import save_data
 from Python_Skripts.GUI_Panels.Panel_Updates.panel_visibility import *
 from Python_Skripts.GUI_Panels.Movement_Procedures.run_measurements import run_measurements
+from Python_Skripts.GUI_Panels.Panel_Updates.update_checkboxes import update_checkboxes, check_checkboxes
 
 class NewMeasurementPanel:
     def __init__(self, parent, root):
@@ -17,7 +18,7 @@ class NewMeasurementPanel:
 
         self.input_frame_object = input_frame(self.panel, self.root)
         self.checkbox_panel_object = CheckboxPanel(self.panel, self.root)
-
+        root.checkbox_panel_object = self.checkbox_panel_object
 
         self.input_frame = self.input_frame_object.frame
         self.checkbox_panel = self.checkbox_panel_object.frame
@@ -53,9 +54,13 @@ class NewMeasurementPanel:
         # Threading to make interaction with UI possible while measurements are running
         if not self.root.measurement_running:
             
-            if self.root.simulate_var.get() == 0 and (self.root.sensor.stage is None or self.root.hexapod.connection_status == False):
-                self.root.log.log_event("Please connect to Hexapod and/or Sensor")
-                return
+            if self.root.simulate_var.get() != 1:
+                # check checkboxes if everything is ready
+                if not check_checkboxes(self.root):
+                    return 
+            else:
+                self.root.log.log_event("Simulating Measurements")
+                
 
             self.root.tab_group_object.create_tab()
             self.root.measurement_running = True
@@ -92,19 +97,23 @@ class CheckboxPanel:
 
         self.frame = tk.LabelFrame(parent, name="checkbox_panel")
 
-        self.camera_connected_var = tk.IntVar()
-        self.camera_calibrated_var = tk.IntVar()
-        self.markers_detected_var = tk.IntVar()
-        self.probe_detected_var = tk.IntVar()
-        self.hexapod_connected_var = tk.IntVar()
-        self.stage_connected_var = tk.IntVar()
+        self.checkbox_vars = {
+            "camera_connected": tk.IntVar(),
+            "camera_calibrated": tk.IntVar(),
+            "markers_detected": tk.IntVar(),
+            "probe_detected": tk.IntVar(),
+            "hexapod_connected": tk.IntVar(),
+            "stage_connected": tk.IntVar()
+        }
 
-        camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled", variable=self.camera_connected_var)
-        camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled", variable=self.camera_calibrated_var)
-        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.markers_detected_var)
-        probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled", variable=self.probe_detected_var)
-        hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.hexapod_connected_var)
-        self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.stage_connected_var)
+        root.checkbox_vars = self.checkbox_vars
+
+        camera_connected = tk.Checkbutton(self.frame, text="Camera connected", name="camera_connected", state="disabled", variable=self.checkbox_vars["camera_connected"])
+        camera_calibrated = tk.Checkbutton(self.frame, text="Camera calibrated", name="camera_calibrated", state="disabled", variable=self.checkbox_vars["camera_calibrated"])
+        markers_detected = tk.Checkbutton(self.frame, text="Markers detected", name="markers_detected", state="disabled", variable=self.checkbox_vars["markers_detected"])
+        probe_detected = tk.Checkbutton(self.frame, text="Probe detected", name="probe_detected", state="disabled", variable=self.checkbox_vars["probe_detected"])
+        hexapod_connected = tk.Checkbutton(self.frame, text="Hexapod connected", name="hexapod_connected", state="disabled", variable=self.checkbox_vars["hexapod_connected"])
+        self.stage_connected = tk.Checkbutton(self.frame, text="Stage connected", name="stage_connected", state="disabled", variable=self.checkbox_vars["stage_connected"])
 
         connect_camera_button = tk.Button(self.frame, text="Connect Camera", command = self.root.camera_object.create_camera)
         open_camera_button = tk.Button(self.frame, text="Open Camera", command = lambda: show_camera_panel(root))
@@ -132,54 +141,20 @@ class CheckboxPanel:
         connect_hexapod_button.grid(row=4, column=1, pady=5, sticky="w")
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
 
-    
+        #update_checkboxes(root)
+
         # Threading to update checkboxes
-        self.lock = threading.Lock()
-        self.checkbox_update_thread = threading.Thread(target=self.update_checkboxes)
+        self.checkbox_update_thread = threading.Thread(target= lambda: update_checkboxes(root))
         self.root.thread_list.append(self.checkbox_update_thread)
         self.checkbox_update_thread.start()
+        
 
-    def update_checkboxes(self):
-        while not self.root.stop_threads:
-            with self.lock:
-                if self.root.camera_object.camera_connected is True:
-                    self.camera_connected_var.set(1)
-                else:
-                    self.camera_connected_var.set(0)
-
-                if self.root.camera_object.camera_calibrated is True:
-                    self.camera_calibrated_var.set(1)
-                else:
-                    self.camera_calibrated_var.set(0)
-
-                if self.root.probe.marker_detected is True and self.root.sensor.marker_detected is True:
-                    self.markers_detected_var.set(1)
-                else:
-                    self.markers_detected_var.set(0)
-
-                if self.root.probe.probe_detected is True:
-                    self.probe_detected_var.set(1)
-                else:
-                    self.probe_detected_var.set(0)
-
-                if self.root.hexapod.connection_status is True:
-                    self.hexapod_connected_var.set(1)
-                else:
-                    self.hexapod_connected_var.set(0)
-
-                if self.root.sensor.stage is not None:
-                    self.stage_connected_var.set(1)
-                else:
-                    self.stage_connected_var.set(0)
-
-            time.sleep(2)
 
     def _schedule_callback(self, message):
         self.root.after(10, self.root.log.log_event, message) 
 
     # Unnecessarily complicated, but i didnt want to pass root to the objects, did it eiter way in the end
     def connect_hexapod(self):
-
         self.root.log.log_event("Connecting to Hexapod. . .")
         self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)) 
         #self.root.hexapod.connect_sockets(callback = lambda message: self.root.after(10, self.root.log.log_event, message))

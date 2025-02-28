@@ -103,7 +103,9 @@ class ManualAdjustPanel:
         self.relative_checkbutton_var = tk.IntVar(name="relative_checkbutton_var")
         self.relative_checkbutton_var.set(0)
 
-        self.relative_checkbutton = tk.Checkbutton(self.panel, text="Relative", name="relative_checkbutton_var", variable=self.relative_checkbutton_var)
+        self.panel.relative_checkbutton_var = self.relative_checkbutton_var
+
+        self.relative_checkbutton = tk.Checkbutton(self.panel, text="Relative", name="relative_checkbutton", variable=self.relative_checkbutton_var)
         self.relative_checkbutton.grid(row=8, column=0,columnspan=2,pady=5, sticky="ns")
         #self.relative_checkbutton.rowconfigure(8, weight=100)
 
@@ -150,6 +152,8 @@ if __name__ == "__main__":
 
     app = UserInterface(root, test_mode = True)
     
+    root.hexapod.connect_sockets()
+
     manual_adjust_panel = ManualAdjustPanel(root, root).panel
     manual_adjust_panel.pack(side = "top", fill = "none")
     root.mainloop()

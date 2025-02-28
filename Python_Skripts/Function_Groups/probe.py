@@ -22,6 +22,8 @@ class Probe():
         self.marker_tvecs = [None, None, None] 
         self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
 
+        self.position = None # tip in hexapod coordinates relative to camera position
+
         self.probe_tip_position_in_camera_image = (0, 0)
         self.probe_tip_position = None
 
@@ -39,7 +41,7 @@ class Probe():
             # refers to the probe tip position in camera coordinates
             self.probe_detected = True
         else:
-            self.probe_detected = True
+            self.probe_detected = False
 
 
     def translate_probe_tip(self, probe_tip_position, mtx, dist):

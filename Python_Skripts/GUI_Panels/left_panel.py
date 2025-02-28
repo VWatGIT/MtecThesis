@@ -11,8 +11,13 @@ class LeftPanel:
         self.frame = tk.Frame(parent, width=340) # change "width"(340 was old default) depending on needed menu size
         self.root.left_panel = self.frame
 
-        home_panel = HomePanel(self.frame, root).frame
-        new_measurement_panel = NewMeasurementPanel(self.frame, root).panel
-        load_measurement_panel = LoadMeasurementPanel(self.frame, root).frame
+        home_panel_object = HomePanel(self.frame, root)
+        new_measurement_panel_object = NewMeasurementPanel(self.frame, root)
+        load_measurement_panel_object = LoadMeasurementPanel(self.frame, root)
+
+        root.home_panel_object = home_panel_object
+        root.new_measurement_panel_object = new_measurement_panel_object
+        root.load_measurement_panel_object = load_measurement_panel_object
+
       
 

@@ -16,8 +16,6 @@ from Python_Skripts.GUI_Panels.event_log_panel import EventLogPanel
 
 
 
-
-
 class UserInterface:
     def __init__(self, root, test_mode=False):
         self.root = root
@@ -49,6 +47,10 @@ class UserInterface:
             root.geometry("1920x1080")
             root.wm_state("zoomed")
             self.top_panel = create_top_panel(root)
+            
+            root.checkbox_panel_object.connect_hexapod()
+            root.checkbox_panel_object.connect_stage()
+
         else:
             # no panel craeated, only fully initialized root
             # used to test individual panels
@@ -59,15 +61,16 @@ class UserInterface:
 
 
     def on_closing(self):
-        self.stop_threads = True
+        self.root.camera_object.updating = False
+        self.root.stop_threads = True
         self.measurement_running = False
         
         """
         for thread in self.root.thread_list:
             thread.join()
         """
-        #self.root.destroy()
-        sys.exit()
+        self.root.destroy()
+        #sys.exit()
 
     def load_config(self):
         config = ConfigParser()

@@ -111,7 +111,7 @@ class CameraCalibrationFrame:
         result, failed_images = self.camera_object.calibrate_camera()
         if result:
             
-            self.log.log_event(f"Calibration successful: {(len(self.camera_object.calibration_images) - len(failed_images))}/{len(self.camera_object.calibration_images)} images valid")
+            self.log.log_event(f"Calibration successful: {(len(self.camera_object.calibration_images) - failed_images)}/{len(self.camera_object.calibration_images)} images valid")
         else:
             self.log.log_event(f"Calibration failed: 0/{len(self.camera_object.calibration_images)} images valid")
 

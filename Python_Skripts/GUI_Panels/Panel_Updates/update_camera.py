@@ -5,58 +5,58 @@ import cv2
 import numpy as np
 
 
-def update_camera(root):      
-        if root.camera.IsOpen() and root.camera_object.updating:
-            root.toggle_camera_var.set(1) # if camera is opened by other means than toggle button
-            image = root.camera_object.capture_image()
+def update_camera(root):
+        while root.camera_object.updating:      
+            if root.camera.IsOpen() is True:
+                try:
+                    root.toggle_camera_var.set(1) # if camera is opened by other means than toggle button
+                    image = root.camera_object.capture_image()
 
-            
-                
-            if root.draw_markers_var.get() == 1:
+                    if root.draw_markers_var.get() == 1:
 
-                mtx = root.camera_object.mtx
-                dist = root.camera_object.dist
-                sensor_marker_size = root.sensor.marker_size
-                probe_marker_size = root.probe.marker_size 
+                        mtx = root.camera_object.mtx
+                        dist = root.camera_object.dist
+                        sensor_marker_size = root.sensor.marker_size
+                        probe_marker_size = root.probe.marker_size 
 
-                marker_size = sensor_marker_size # for now assume same size TODO implement different sizes
-                
-                # marker drawn in detect markers
-                image, marker_rvecs, marker_tvecs = detect_markers(image, marker_size, mtx, dist)
+                        marker_size = sensor_marker_size # for now assume same size TODO implement different sizes
+                        
+                        # marker drawn in detect markers
+                        image, marker_rvecs, marker_tvecs = detect_markers(image, marker_size, mtx, dist)
 
-                if root.camera_object.camera_calibrated:
-                    if len(marker_tvecs) > 0 and len(marker_rvecs) > 0 :
-                        root.sensor.marker_rvecs = marker_rvecs[root.sensor.marker_id]
-                        root.sensor.marker_tvecs = marker_tvecs[root.sensor.marker_id]
-                        root.probe.marker_rvecs = marker_rvecs[root.probe.marker_id]
-                        root.probe.marker_tvecs = marker_tvecs[root.probe.marker_id]
-                
-            if root.draw_probe_tip_var.get() == 1:
-                image = draw_probe_tip(image, root.probe.probe_tip_position_in_camera_image)
+                        if root.camera_object.camera_calibrated:
+                            if len(marker_tvecs) > 0 and len(marker_rvecs) > 0 :
+                                root.sensor.marker_rvecs = marker_rvecs[root.sensor.marker_id]
+                                root.sensor.marker_tvecs = marker_tvecs[root.sensor.marker_id]
+                                root.probe.marker_rvecs = marker_rvecs[root.probe.marker_id]
+                                root.probe.marker_tvecs = marker_tvecs[root.probe.marker_id]
 
-            if root.draw_checkerboard_var.get() == 1:
-                image = draw_calibration(root, image)
+                                print("Sensor Marker tvecs: ", root.sensor.marker_tvecs)
+                                print("Probe Marker tvecs: ", root.probe.marker_tvecs)
+
+                    if root.draw_probe_tip_var.get() == 1:
+                        image = draw_probe_tip(image, root.probe.probe_tip_position_in_camera_image)
+
+                    if root.draw_checkerboard_var.get() == 1:
+                        image = draw_calibration(root, image)
 
 
-            # Update Camera Image
-            canvas = root.camera_plot_frame.canvas
-            ax = canvas.figure.axes[0]
-            
-            ax.clear()
-            ax.imshow(image)
-            canvas.draw()
+                    # Update Camera Image
+                    canvas = root.camera_plot_frame.canvas
+                    ax = canvas.figure.axes[0]
+                    
+                    ax.clear()
+                    ax.imshow(image)
+                    canvas.draw()
 
-            # update again
-            update_frequency = root.camera_object.update_frequency
-            try:
-                root.after(update_frequency, update_camera(root))
-            except Exception as e:
-                root.camera_object.updating = False
-                pass
-        else:
-            root.toggle_camera_var.set(0) 
-        # Draw the calibration image with the checkerboard
-    
+                    #time.sleep(root.camera_object.update_frequency/1000)
+                except Exception as e:
+                    root.camera_object.updating = False
+                    root.log.log_event("Camera Update Error: " + str(e))
+                    pass
+            else:
+                root.toggle_camera_var.set(0) # if camera is closed by other means than toggle button
+        
 
 def draw_calibration(root, image):
     

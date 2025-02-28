@@ -10,10 +10,10 @@ def manual_alignment(root):
     V = manual_adjust_panel.nametowidget("hexapod_V_entry").get()
     W = manual_adjust_panel.nametowidget("hexapod_W_entry").get()
 
-    if manual_adjust_panel.nametowidget("relative_checkbutton_var") == 1:
+    if manual_adjust_panel.relative_checkbutton_var.get() == 1:
         rcv = hexapod.move((x, y, z, U, V, W), flag = "relative")
     else:
-        rcv = hexapod.move((x, y, z, U, V, W), flag = "absolute") 
+        rcv = hexapod.move((x, y, z, U, V, W), flag = "absolute")
    
     root.log.log_event(rcv)
 

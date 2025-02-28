@@ -37,10 +37,8 @@ def take_calibration_images(root):
 def create_calibration_points(root):
     # 27 points total
     hexapod = root.hexapod
-    num_points = root.num_calibration_images.get()
+    num_points = root.camera_object.num_calibration_images.get()
     #root.log.log_event(f"Creating {num_points} Calibration Positions")
-
-    spacing = 3
 
     # these are not the actual travel ranges, they are already smaller than maximum to allow for rotation about multiple axis simultaneusly
     U_max = hexapod.travel_ranges["U"] 

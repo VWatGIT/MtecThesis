@@ -67,7 +67,7 @@ class Hexapod():
 
         self.connecting = False
         self.connection_status = False
-        self.connect_sockets()
+        #self.connect_sockets()
 
         if self.connection_status is True:
             self.move_to_default_position()
@@ -88,8 +88,8 @@ class Hexapod():
         """
 
         if callback is None:
-            print('No callback function provided')
-            callback = lambda x: print("Automatic "+x[0:])
+            #print('No callback function provided')
+            callback = lambda x: print(x)
 
         if self.connecting:
             rcv = 'Already connecting to server'
@@ -101,9 +101,12 @@ class Hexapod():
             callback(rcv)
             return rcv
         
-        connection_thread = threading.Thread(target=self._connect, args=(callback,))
-        connection_thread.start()
-  
+        # TODO fix threading
+        #connection_thread = threading.Thread(target=self._connect, args=(callback,))
+        #connection_thread.start()
+        rcv = self._connect(callback)
+
+
     def _connect(self, callback):
         self.connecting = True
         # Connect to Hexapod Server
@@ -115,7 +118,7 @@ class Hexapod():
             self.tcpipObj_Hexapod_2.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.connection_status = True
             self.connecting = False
-            rcv = f'Hexapod Connection Successful: \nIP: {self.IP} \nPort1: {self.port_1} \nPort2: {self.port_2}'
+            rcv = f'Hexapod Connection Successful: \n       IP: {self.IP} \n        Port1: {self.port_1} \n     Port2: {self.port_2}'
             callback(rcv)
          
             return rcv
@@ -171,7 +174,8 @@ class Hexapod():
                 start_time = time.time()
                 while not rcv:
                     if time.time() - start_time > timeout:
-                        rcv = 'No response from server'
+                        rcv = 'Timeout'
+                        print('Timeout')
                         return rcv
                     
                     #print('waiting for response')
@@ -186,7 +190,7 @@ class Hexapod():
 
     def move(self, pos, flag = "relative"):
         
-        if not self.connection_status:
+        if self.connection_status is False:
             
             pos_current = self.position # use simulated position for testing
 
@@ -199,26 +203,31 @@ class Hexapod():
 
             rcv = 'Hexpod not connected to server'
             return rcv
-        
-        # Send command to get current position
-        rcv = self.send_command('get_pos')
-        #print(f'rcv: {rcv}')
-        pos_current = list(map(float, rcv.split()))[1:] # remove first element which is the command
-        #print(f'Current Position: {pos_current}')
-        if flag == "relative": # relative movement
-            pos_new = [curr + p for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
-        elif flag == "absolute": # absolute movement
-            pos_new = pos
         else:
-            rcv = 'Incorrect input for flag'
-            return rcv
+            # Send command to get current position
+            rcv = self.send_command('get_pos')
+            #print(f'rcv: {rcv}')
+            if rcv == 'Timeout':
+                return rcv
 
-        # Send command to set new position
-        command = f'set_pos {" ".join(map(str, pos_new))}'
-        rcv = self.send_command(command) 
-        self.position = pos_new # update position attribute
-        rcv += f": {self.position}" # add actual position to returned message
-        return rcv
+            pos_current = list(map(float, rcv.split()))[1:] # remove first element which is the command
+            #print(f'Current Position: {pos_current}')
+            if flag == "relative": # relative movement
+                pos_new = [curr + float(p) for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
+            elif flag == "absolute": # absolute movement
+                pos_new = pos
+            else:
+                rcv = 'Incorrect input for flag'
+                return rcv
+
+            # Send command to set new position
+            command = f'set_pos {" ".join(map(str, pos_new))}'
+            rcv = self.send_command(command)
+            if rcv == 'Timeout':
+                return rcv 
+            self.position = pos_new # update position attribute
+            rcv += f": {self.position}" # add actual position to returned message
+            return rcv
 
     def set_velocity(self, velocity):
         if not self.connection_status:
@@ -227,6 +236,8 @@ class Hexapod():
         
         self.velocity = velocity
         rcv = self.send_command(f'set_vel {velocity}')
+        if rcv == 'Timeout':
+            return rcv
         return rcv
 
     def __repr__(self):
@@ -235,13 +246,12 @@ class Hexapod():
 
 if __name__ == "__main__":
     hexapod = Hexapod()
-    print(hexapod)
+    
 
-    #print(hexapod.connect_sockets())
-
+    print("connect: "+ str(hexapod.connect_sockets()))    
+    print("move: " + str(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative")))
+    print("get_pos:" + str(hexapod.send_command("get_pos")))
     """
-    print(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative"))
-    print(hexapod.send_command("get_pos"))
     print(hexapod.move_to_default_position())
     print(hexapod.send_command("get_pos"))
     
