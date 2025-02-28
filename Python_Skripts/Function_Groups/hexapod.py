@@ -101,13 +101,11 @@ class Hexapod():
             callback(rcv)
             return rcv
         
-        # TODO fix threading
+        
         #connection_thread = threading.Thread(target=self._connect, args=(callback,))
         #connection_thread.start()
         rcv = self._connect(callback)
-
-
-
+        
         return rcv
 
 

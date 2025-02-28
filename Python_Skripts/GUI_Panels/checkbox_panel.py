@@ -54,10 +54,12 @@ class CheckboxPanel:
 
         #update_checkboxes(root)
 
+        
         # Threading to update checkboxes
         self.checkbox_update_thread = threading.Thread(target= lambda: update_checkboxes(root))
         self.root.thread_list.append(self.checkbox_update_thread)
         self.checkbox_update_thread.start()
+        #root.after(2000, self.checkbox_update_thread.start())
         
 
 
@@ -67,7 +69,11 @@ class CheckboxPanel:
     # Unnecessarily complicated, but i didnt want to pass root to the objects, did it eiter way in the end
     def connect_hexapod(self):
         self.root.log.log_event("Connecting to Hexapod. . .")
-        self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)) 
+        thread = threading.Thread(target= lambda: self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)))
+        self.root.thread_list.append(thread)
+        thread.start()
+
+        #self.root.hexapod.connect_sockets(callback = lambda message: self._schedule_callback(message)) 
         #self.root.hexapod.connect_sockets(callback = lambda message: self.root.after(10, self.root.log.log_event, message))
 
     def connect_stage(self):

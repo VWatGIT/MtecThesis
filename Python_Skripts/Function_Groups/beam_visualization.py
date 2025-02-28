@@ -9,10 +9,12 @@ from sklearn.linear_model import LinearRegression
 from matplotlib.patches import Ellipse
 from scipy.interpolate import griddata
 
-from .data_handling import load_data, save_data
+from Python_Skripts.Function_Groups.data_handling import load_data, save_data
+from Python_Skripts.Function_Groups.trajectory import calculate_beam_trajectory_LR, calculate_angles
+from Python_Skripts.Testing_Scripts.rotate_points import get_rotation_matrix, rotate_points
 
-# TODO refine and reorder all functions from testing scripts
-from .trajectory import *
+
+
 
 
 def create_slices(data, orientation='vertical'):

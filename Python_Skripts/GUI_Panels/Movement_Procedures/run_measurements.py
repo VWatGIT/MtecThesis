@@ -6,7 +6,7 @@ from Python_Skripts.GUI_Panels.Movement_Procedures.do_measurement import doMeasu
 
 from Python_Skripts.Function_Groups.path_creation import generate_snake_path
 from Python_Skripts.Function_Groups.data_handling import save_data
-from Python_Skripts.Function_Groups.beam_visualization import process_slices
+
 
 
 def run_measurements(root):
@@ -136,6 +136,7 @@ def run_measurements(root):
 
 
 def process_data(root, data):
+    from Python_Skripts.Function_Groups.beam_visualization import process_slices
     root.log.log_event("Processing data")
     process_slices(data)
     root.log.log_event("Created Slices and Beam Model")
