@@ -15,6 +15,13 @@ class EventLogPanel:
         self.event_log.pack(expand =True, fill="both", padx=10, pady=10)
 
     def log_event(self, message):
+        try:
+            message = str(message)
+        except Exception as e:
+            message = f"Error converting message to string: {e}"
+            
+
+
         current_time = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{current_time}] {message}"
         self.event_log.config(state='normal')

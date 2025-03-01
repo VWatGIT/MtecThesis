@@ -16,7 +16,6 @@ from Python_Skripts.Testing_Scripts.rotate_points import get_rotation_matrix, ro
 
 
 
-
 def create_slices(data, orientation='vertical'):
     # Sort Measurment Points by x coordinate 
     # reverse=True because x coordinates are descending <0

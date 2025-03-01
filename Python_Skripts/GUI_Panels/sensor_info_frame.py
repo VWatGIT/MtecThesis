@@ -14,25 +14,28 @@ class SensorInfoFrame:
         # Configure the grid layout within the self.frame LabelFrame
         for i in range(2):
             self.frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
+        for i in range(4):
             self.frame.grid_rowconfigure(i, weight=1)
 
         sensor_readings_frame = self.create_sensor_readings_frame(self.frame)
         sensor_plot_frame = self.create_sensor_plot_frame(self.frame)
-                                                                                            
-        measurement_slider = tk.Scale(self.frame, from_=1, to=100, orient="horizontal", name="measurement_slider", variable=tab.measurement_id_var)
+
+        measurement_slider = tk.Scale(self.frame, from_=1, orient="horizontal", name="measurement_slider", variable=tab.measurement_slider_var)
         measurement_slider.set(1)
-        measurement_slider.config(resolution=1, state="normal", command = lambda value: update_tab(root))
-        
+        measurement_slider.config(resolution=1, state="normal", command = lambda value: update_tab(root)) # value to catch slider event
         self.measurement_slider = measurement_slider
 
-        self.frame.grid_rowconfigure(1, weight=100)
-        self.frame.grid_columnconfigure(1, weight=100)
+        seperator = tk.ttk.Separator(self.frame, orient="horizontal")
+
+        self.frame.grid_rowconfigure(0, weight=2)
+        self.frame.grid_columnconfigure(0, weight=2)
+        self.frame.grid_columnconfigure(1, weight= 0) # 100?
 
 
-        measurement_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
-        sensor_readings_frame.grid(row=1, column=1, columnspan=1, sticky="nsew", padx=10, pady=10)
-        sensor_plot_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)     
+        measurement_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        seperator.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=5)
+        sensor_readings_frame.grid(row=2, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+        sensor_plot_frame.grid(row=2, column=0, columnspan=1, sticky="nsew", padx=5, pady=5)     
 
     def create_sensor_readings_frame(self, parent):    
 
@@ -66,20 +69,20 @@ class SensorInfoFrame:
         
         # display the sensor data in a plot
         fig, ax = plt.subplots()
-
+        fig.tight_layout()
         ax.set_xlabel('X Position')
         ax.set_ylabel('Y Position')
         ax.set_title('Sensor Output')
         ax.grid(True)
         ax.legend(['Signal Position'])
-
+        
         ax.set_aspect('equal')
         ax.set_xlim(-10, 10)
         ax.set_ylim(-10, 10)
 
         canvas = FigureCanvasTkAgg(fig, master=sensor_plot_frame) 
         canvas.draw()
-        canvas.get_tk_widget().pack(fill= "both", expand=True)   
+        canvas.get_tk_widget().pack(side = "top", fill= "both", expand=True)   
         sensor_plot_frame.canvas = canvas # store canvas in sensor_plot_frame
 
         return sensor_plot_frame

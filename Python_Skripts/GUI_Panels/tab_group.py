@@ -42,6 +42,8 @@ class TabGroup:
         # TODO get Tab name from user
         new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
+
+        new_tab.measurement_slider_var = tk.IntVar(value=1)
         new_tab.measurement_id_var = tk.IntVar(value=1) # Measurement ID TODO what default value?
         new_tab.current_point_index = 0
         
@@ -91,9 +93,9 @@ class TabGroup:
         sensor_path_frame = SensorPathFrame(self.subtab_group, self.root).frame
 
         # Pack Frames
-        results_frame.pack(side="right", fill="both", expand=True)
-        measurement_info_frame.pack(side="right", fill="both", expand=True)
-        sensor_path_frame.pack(side="right", fill="both", expand=True)
+        results_frame.pack(side="left", fill="both", expand=True)
+        measurement_info_frame.pack(side="left", fill="both", expand=True)
+        sensor_path_frame.pack(side="left", fill="both", expand=True)
         
         # Add Groups to Subtab
         self.subtab_group.add(sensor_path_frame, text="Measurement")

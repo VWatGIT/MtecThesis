@@ -1,6 +1,23 @@
 from Python_Skripts.Function_Groups.beam_visualization import process_slices
 from Python_Skripts.GUI_Panels.Panel_Updates import *
 
+
+from Python_Skripts.Function_Groups.trajectory import calculate_beam_trajectory_LR, calculate_angles
+
+def process_beam_centers(root):
+    tab = root.tab_group.nametowidget(root.tab_group.select())
+    data = tab.data
+
+    centers = data['Alignment']['Center_Search']['Beam_Centers']
+
+    trj = calculate_beam_trajectory_LR(centers)
+    angles = calculate_angles(trj)
+
+    data['Alignment']['Center_Search']['trajectory'] = trj
+    data['Alignment']['Center_Search']['angles'] = angles
+
+    return trj, angles
+
 def process_data(root):
   
     tab_name = root.tab_group.select()
@@ -18,10 +35,10 @@ def process_data(root):
     subtab_group.select(subtab_group.nametowidget("results_frame"))
     
 
-    vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("vertical_slice_slider")
+    vertical_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("vertical_slice_plot_frame").nametowidget('helper_frame').nametowidget("vertical_slice_slider")
     vertical_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['vertical']), state="normal")
 
-    horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("slice_plot_frame").nametowidget("horizontal_slice_slider")
+    horizontal_slice_slider = subtab_group.nametowidget("results_frame").nametowidget("horizontal_slice_plot_frame").nametowidget('helper_frame').nametowidget("horizontal_slice_slider")
     horizontal_slice_slider.config(from_=1, to=len(data['Visualization']["Slices"]['horizontal']), state="normal")
 
     update_tab(root)

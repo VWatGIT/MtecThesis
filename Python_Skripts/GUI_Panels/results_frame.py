@@ -3,119 +3,52 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from Python_Skripts.GUI_Panels.Panel_Updates.update_slice_plot import update_slice_plot
+from Python_Skripts.GUI_Panels.slice_plot_frames import create_vertical_slice_plot_frame, create_horizontal_slice_plot_frame
 from Python_Skripts.GUI_Panels.sensor_info_frame import SensorInfoFrame 
 
 class ResultsFrame:
     def __init__(self, parent, root):
         
         self.root = root
-        self.frame = tk.LabelFrame(parent, text="Results", name="results_frame")
+        self.frame = tk.LabelFrame(parent, name="results_frame")
 
-        for i in range(2):
-            self.frame.grid_columnconfigure(i, weight=1)
-        for i in range(2):
-            self.frame.grid_rowconfigure(i, weight=1)
         
         sensor_info_frame = SensorInfoFrame(self.frame, root).frame
-        slice_plot_frame = self.create_slice_plot_frame(self.frame)
+        vertical_slice_plot_frame = create_vertical_slice_plot_frame(self.frame, root)
+        horizontal_slice_plot_frame = create_horizontal_slice_plot_frame(self.frame, root)
         beam_plot_frame = self.create_beam_plot_frame(self.frame)
         
 
+ 
 
-        beam_plot_frame.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
-        slice_plot_frame.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=10, pady=10)
-        sensor_info_frame.grid(row=1, column=0, columnspan=1, sticky="nsew", padx=10, pady=10)
+        self.frame.columnconfigure(0, weight=0)
+        self.frame.columnconfigure(1, weight=10)
+        self.frame.columnconfigure(2, weight=100)
 
-        self.frame.grid_rowconfigure(1, weight=7)
+        self.frame.rowconfigure(0, weight=1)
+        self.frame.rowconfigure(1, weight=2)
 
-
-
-    def create_slice_plot_frame(self, parent):
-        slice_plot_frame = tk.LabelFrame(parent, text="Slice", name="slice_plot_frame")
-        for i in range(7):
-            slice_plot_frame.grid_rowconfigure(i, weight=1)
-        for i in range(1): 
-            slice_plot_frame.grid_columnconfigure(i, weight=1)
         
-        vertical_plot_frame = tk.LabelFrame(slice_plot_frame, name="vertical_plot_frame")
-        vertical_plot_frame.grid(row=2, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
-        slice_plot_frame.grid_rowconfigure(2, weight=100) #weight for correct sizing of the slider
-      
-        # Create a canvas for the slice plot
-        fig, ax = plt.subplots()
-        ax.set_xlabel('Y')
-        ax.set_ylabel('Z')
-        ax.set_title('Heatmap of Laser Beam')
-        ax.invert_yaxis()  # invert y axis
-
-        canvas = FigureCanvasTkAgg(fig, master=vertical_plot_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill= "both")
-        vertical_plot_frame.canvas = canvas
-        
-        self.root.vertical_slice_index_var = tk.IntVar()
-        self.root.horizontal_slice_index_var = tk.IntVar()
-
-        self.root.vertical_slice_index_var.set(1)
-        self.root.horizontal_slice_index_var.set(1)
-
-        # Create Labels for the Sliders
-        slice_slider_label = ttk.Label(slice_plot_frame, text=" Vertical Slice Index:", name="slice_slider_label")
-        slice_slider_label.grid(row=0, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
-
-        # Create a slider for the slice plot
-        vertical_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="vertical_slice_slider", variable=self.root.vertical_slice_index_var)
-        vertical_slice_slider.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        vertical_slice_slider.config(resolution=1) # set slider resolution
-
-        # Create the horizontal plot frame
-        horizontal_plot_frame = tk.LabelFrame(slice_plot_frame, name="horizontal_plot_frame")
-        horizontal_plot_frame.grid(row=4, column=0, rowspan=1, columnspan=1, sticky="nsew", padx=5, pady=5)
-
-        # Create a canvas for the horizonatl slice plot
-        fig, ax = plt.subplots()
-        ax.set_xlabel('X')
-        ax.set_ylabel('Z')
-        ax.set_title('Horizontal Slice')
-        
-        canvas = FigureCanvasTkAgg(fig, master=horizontal_plot_frame)
-        canvas.draw()
-        canvas.get_tk_widget().pack(fill= "both")  
-        horizontal_plot_frame.canvas = canvas
-
-
-
-        # Create a Slider for horizontal slice plot
-        horizontal_slice_slider_label = ttk.Label(slice_plot_frame, text="Horizontal Slice Index:", name="horizontal_slice_slider_label")
-        horizontal_slice_slider_label.grid(row=5, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)
-
-        horizontal_slice_slider = tk.Scale(slice_plot_frame, from_=1, to=2, orient="horizontal", name="horizontal_slice_slider", variable=self.root.horizontal_slice_index_var)
-        horizontal_slice_slider.grid(row=6, column=0, rowspan = 1, columnspan=1, sticky="nsew", padx=5)
-        horizontal_slice_slider.config(resolution=1) # set slider resolution
-
-        slice_plot_frame.grid_rowconfigure(4, weight=100) #weight for correct sizing of the slider
-
-        # Create a checkbox for the slice plot
-        self.root.interpolation_var = tk.IntVar()
-        interpolation_checkbox = tk.Checkbutton(slice_plot_frame, text="Interpolation", name="interpolation_checkbox", variable=self.root.interpolation_var)
-        interpolation_checkbox.grid(row=3, column=0, columnspan=1, sticky="w", padx=5, pady=5)
         
 
-        vertical_slice_slider.config(command=lambda value: update_slice_plot(self.root))
-        horizontal_slice_slider.config(command=lambda value: update_slice_plot(self.root))
-        interpolation_checkbox.config(command=lambda: update_slice_plot(self.root)) 
+        beam_plot_frame.grid(row=0, column=0,rowspan=2, columnspan=1, sticky="nsew", padx=5, pady=5)
+        vertical_slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
+        sensor_info_frame.grid(row=0, column=2, columnspan=1, sticky="nsew", padx=5, pady=5)
+        horizontal_slice_plot_frame.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=5, pady=5)
 
-        return slice_plot_frame
+
+
+
 
     def create_beam_plot_frame(self, parent):
         
-        beam_plot_frame = tk.LabelFrame(parent, text="Beam Plot", name="beam_plot_frame")
+        beam_plot_frame = tk.LabelFrame(parent, name="beam_plot_frame")
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-
-        ax.set_title('Beam Plot')
+        fig.subplots_adjust(left=0, right=1, top=1, bottom=0) # expand to fill the whole canvas
+        ax.set_aspect('equal')
+        ax.set_title('Measured Beam')
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')

@@ -30,8 +30,10 @@ class NewMeasurementPanel:
         self.simulation_frame = self.simulation_frame_object.frame
         self.checkbox_panel = self.checkbox_panel_object.frame
        
-
+        root.skip_center_search_var = tk.IntVar()
         root.autosave_var = tk.IntVar()
+
+        skip_center_search_checkbox = tk.Checkbutton(self.panel, text="Skip Center Search", name="skip_center_search_checkbox", variable=self.root.skip_center_search_var)
         autosave_checkbox = tk.Checkbutton(self.panel, text="Autosave", name="autosave_checkbox", variable=self.root.autosave_var)
         #autosave_checkbox.select()
 
@@ -51,7 +53,8 @@ class NewMeasurementPanel:
         self.simulation_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
         self.checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
         
-        autosave_checkbox.grid(row=3, column=0, columnspan=2, pady=5, sticky="nsew")
+        skip_center_search_checkbox.grid(row=3, column=0, columnspan=1, pady=5, sticky="nsew")
+        autosave_checkbox.grid(row=3, column=1, columnspan=1, pady=5, sticky="nsew")
         start_button.grid(row=4, column=0, padx=10, pady=5, sticky = "w")
         save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
         stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")

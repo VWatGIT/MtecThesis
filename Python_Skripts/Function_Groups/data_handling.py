@@ -13,9 +13,12 @@ def new_data():
     data['Info'] = {}
     data['Visualization'] = {}
     data['Visualization']['Slices'] = {}
+    data['Visualization']['Beam_Models'] = {}
     data['Beam_Parameters'] = {}
     data['Alignment'] = {}
     data['Alignment']['Center_Search'] = {}
+    data['Alignment']['trajectory'] = None
+    data['Alignment']['angles'] = None
     data['Simulation'] = {}
     data['Simulation']["active"] = False
     return data

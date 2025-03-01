@@ -44,7 +44,7 @@ class UserInterface:
         if not test_mode:
             root.title("Probe Beam Measurement")
             root.geometry("1920x1080")
-            root.wm_state("zoomed")
+            #root.wm_state("zoomed")
             self.top_panel = create_top_panel(root)
             
             root.checkbox_panel_object.connect_hexapod()

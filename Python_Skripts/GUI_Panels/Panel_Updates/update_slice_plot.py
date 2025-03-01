@@ -8,18 +8,15 @@ def update_slice_plot(root, event=None):
 
     subtab_group = tab.nametowidget("subtab_group")
     results_frame = subtab_group.nametowidget("results_frame")
-    slice_plot_frame = results_frame.nametowidget("slice_plot_frame")
-    vertical_plot_frame = slice_plot_frame.nametowidget("vertical_plot_frame")
-    vertical_canvas = vertical_plot_frame.canvas
+
+    vertical_slice_plot_frame = results_frame.nametowidget("vertical_slice_plot_frame")
+    vertical_canvas = vertical_slice_plot_frame.canvas
     vertical_ax = vertical_canvas.figure.axes[0]
 
-
-    # Update the horizontal slice plot
-    horizontal_plot_frame = slice_plot_frame.nametowidget("horizontal_plot_frame")
-    horizontal_canvas = horizontal_plot_frame.canvas
+    horizontal_slice_plot_frame = results_frame.nametowidget("horizontal_slice_plot_frame")
+    horizontal_canvas = horizontal_slice_plot_frame.canvas
     horizontal_ax = horizontal_canvas.figure.axes[0]
 
-  
     # Interpolation Method with checkbox
     interpolation_method = 'nearest' if root.interpolation_var.get() == 0 else 'gaussian'
 
@@ -34,15 +31,15 @@ def update_slice_plot(root, event=None):
         extent = data['Visualization']['Slices']['vertical'][first_key]['heatmap_extent']
 
 
-        # Update the slice plot
+        # Update the vertical slice plot
         vertical_ax.clear()
 
         cax = vertical_ax.imshow(heatmap,extent=extent, cmap='hot', interpolation=interpolation_method)
         fig = vertical_ax.get_figure()
 
         # Plot colorbar once
-        if not hasattr(vertical_plot_frame, 'check'):
-            vertical_plot_frame.check = True
+        if not hasattr(vertical_slice_plot_frame, 'check'):
+            vertical_slice_plot_frame.check = True
             fig.colorbar(cax, ax=vertical_ax, label='Signal Sum')
         
         vertical_canvas.draw()
@@ -63,8 +60,8 @@ def update_slice_plot(root, event=None):
         fig = horizontal_ax.get_figure()
 
         # Plot colorbar once
-        if not hasattr(horizontal_plot_frame, 'check'):
-            horizontal_plot_frame.check = True
+        if not hasattr(horizontal_slice_plot_frame, 'check'):
+            horizontal_slice_plot_frame.check = True
             fig.colorbar(cax, ax=horizontal_ax, label='Signal Sum')
 
         horizontal_canvas.draw()
