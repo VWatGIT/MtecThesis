@@ -12,9 +12,10 @@ def update_path_plot(root, event = None):
     
     # Extract the path coordinates from the data
     path = data['3D']['path']
-    path_x = path[:int(tab.measurement_id_var.get()), 0] # Extract path up to the current measurement
-    path_y = path[:int(tab.measurement_id_var.get()), 1]
-    path_z = path[:int(tab.measurement_id_var.get()), 2]
+    slice_index = int(tab.measurement_id_var.get()) + 1
+    path_x = path[:slice_index, 0] # Extract path up to the current measurement
+    path_y = path[:slice_index, 1]
+    path_z = path[:slice_index, 2]
 
 
     if not hasattr(tab, 'grid_points'):

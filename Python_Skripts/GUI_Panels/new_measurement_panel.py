@@ -75,9 +75,9 @@ class NewMeasurementPanel:
             self.root.measurement_running = True
 
             # Thread for all the hexapod movement procedures
-            all_procedures_thread = threading.Thread(target=combined_procedures, args=(self.root,))
-            self.root.thread_list.append(all_procedures_thread)
-            all_procedures_thread.start()
+            self.all_procedures_thread = threading.Thread(target=combined_procedures, args=(self.root,))
+            self.root.thread_list.append(self.all_procedures_thread)
+            self.all_procedures_thread.start()
             
         else:
             self.root.log.log_event("Measurements already running")
@@ -96,10 +96,14 @@ class NewMeasurementPanel:
             self.root.log.log_event(f"Data saved to {file_name}")
     
     def stop_button_pushed(self):
-        # Stop the Hexapod Server, needs to be restarted
-        self.root.measurement_running = False
-        self.root.hexapod.send_command("stop") # Stop the Hexapod
         self.root.log.log_event("Terminating Measurements")
+        self.root.measurement_running = False
+        # Stop the Hexapod Server, needs to be restarted
+        rcv = self.root.hexapod.send_command("stop")
+        self.root.log.log_event(rcv) 
+        # TODO: stop all procedures and return to working ui
+        # right now ui has to be closed after stopping measurements
+
 
 
 

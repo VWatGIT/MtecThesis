@@ -20,6 +20,7 @@ def find_beam_centers(root):
     num_centers = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget("num_centers_entry").get())
     center_spacing = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("center_spacing_entry").get())
     initial_search_area = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("initial_search_area_entry").get())
+    initial_step_size = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("initial_step_size_entry").get())
     refinement_factor = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("refinement_factor_entry").get())
     max_num_iterations = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget("max_num_iterations_entry").get())
 
@@ -42,16 +43,15 @@ def find_beam_centers(root):
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
         root.hexapod.move(next_relative_position, flag = "relative")
 
-        center = refine_search(root, data, root.hexapod.position, initial_search_area, refinement_factor, max_num_iterations)
+        center = refine_search(root, data, root.hexapod.position, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
         
         root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
 
         data['Alignment']['Center_Search']['Beam_Centers'].append(center)
 
-
+    update_beam_center_plot(root)
+    
     return data['Alignment']['Center_Search']['Beam_Centers']
-
-
 
 def grid_search(root, data, initial_point, grid_size, step_size):
     max_value = -np.inf
@@ -80,6 +80,7 @@ def grid_search(root, data, initial_point, grid_size, step_size):
 
         current_path_point = (root.hexapod.position[0], root.hexapod.position[1], root.hexapod.position[2])
         if root.simulate_var.get() == 1:
+            # change point to laser coordinates
             value = root.gauss_beam.get_Intensity(point = current_path_point)
 
         signal = root.sensor.get_signal()
@@ -92,32 +93,35 @@ def grid_search(root, data, initial_point, grid_size, step_size):
             y = root.hexapod.position[1]
             z = root.hexapod.position[2]
             max_point = (x, y, z)
-            #print(f'new max value: {max_value:.2f} at {max_point}')
+            print(f'new max value: {max_value:.2f} at {max_point}')
         
 
         tab = root.tab_group.nametowidget(root.tab_group.select())
         tab.current_point_index += 1
         #update_beam_center_plot(root)
         root.after(0, update_beam_center_plot, root)
-    #print(f'finished iteration, new center: {max_point}')
+    print(f'finished iteration, new center: {max_point}')
     return max_point
 
-def refine_search(root, data, initial_point, initial_search_area = 5, refinement_factor = 2, max_iterations = 3):
-    step_size = 1
-    initial_hexapod_position = initial_point
-    center = initial_point
+def refine_search(root, data, initial_point, initial_search_area = 5, initial_step_size = 1, refinement_factor = 2, max_iterations = 3):
+    step_size = initial_step_size
+
+    # Scale to allow for the first search area to not be greater than the initial search area
+    # due to being multiplied by the step size which gets divided by the refinement factor later
+    scaled_area = initial_search_area/step_size
+    
     
     for _ in range(max_iterations):
         # Hexapod moves along the path points, which are relative
         # range and grid_size are formatted in a way so it fits the path creation
-        y_range = z_range = (-initial_search_area*step_size, initial_search_area*step_size) # 5 mm in each direction
+        y_range = z_range = (-scaled_area*step_size, scaled_area*step_size) # 5 mm in each direction
 
         grid_size = (0, y_range[1] - y_range[0], z_range[1] - z_range[0])
 
-        center = grid_search(root, data, center, grid_size, step_size)
+        center = grid_search(root, data, initial_point, grid_size, step_size)
         step_size /= refinement_factor
 
-    root.hexapod.move(initial_hexapod_position, flag = "absolute") # return to initial position after finsished search
+    root.hexapod.move(initial_point, flag = "absolute") # return to initial position after finsished search
 
     return center
 
@@ -128,7 +132,7 @@ if __name__ == "__main__":
     import tkinter as tk
     root = tk.Tk()
 
-    # TODO i dnt know how to properly test this without opening the main gui all the time
+    # TODO i dont know how to properly test this without opening the main gui all the time
     plot_frame = BeamCenterPlotFrame(root, root).frame
     plot_frame.pack(side = "top", fill = "both", expand = True)
 

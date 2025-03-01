@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 
-from .trajectory import get_rotation_matrix
+from Python_Skripts.Function_Groups.trajectory import get_rotation_matrix
+
 
 class GaussBeam:
     def __init__(self, wavelength = 1300e-9, w_0 = 1e-3, I_0 = 6.37e+04):
