@@ -83,7 +83,7 @@ class CameraPanel:
         camera_plot_frame.canvas = canvas
         
         canvas.mpl_connect('button_press_event', self._on_click)
-        canvas.mpl_connect('scroll_event', lambda event: zoom(event, ax, self.camera_object.original_xlim, self.camera_object.original_ylim))
+        canvas.mpl_connect('scroll_event', lambda event: zoom(event, ax, self.camera_object))
 
         ax.axis('off')
         ax.set_aspect('equal')

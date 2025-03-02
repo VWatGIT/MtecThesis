@@ -10,10 +10,6 @@ def update_tab(root, event=None):
 
     data = tab.data
 
-    print("Updating Tab")
-    print(f"measurement_id_var: {tab.measurement_id_var.get()}")
-    print(f"measurement_slider_var: {tab.measurement_slider_var.get()}")
-
     if root.measurement_running is True:
         update_path_plot(root)
     

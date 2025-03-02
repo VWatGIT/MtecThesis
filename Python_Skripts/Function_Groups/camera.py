@@ -13,7 +13,9 @@ class Camera():
         # for zooming
         self.original_ylim = None
         self.original_xlim = None
-        self._set_original_limits()
+        self.current_xlim = None
+        self.current_ylim = None
+        
 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
         self.camera_connected = False
@@ -37,14 +39,17 @@ class Camera():
        
         self.use_default_calibration(startup = True)
 
-    def _set_original_limits(self):
-        fig, ax = plt.subplots()
-        image = self.capture_image()
-        ax.imshow(image)
-
-        self.original_xlim = ax.get_xlim()
-        self.original_ylim = ax.get_ylim()
-        plt.close(fig)
+    def set_current_limits(self, xlim, ylim):
+        if self.original_xlim is None:
+            self.original_xlim = xlim
+        if self.original_ylim is None:
+            self.original_ylim = ylim
+        
+        self.current_xlim = xlim
+        self.current_ylim = ylim
+        
+            
+        
 
     def reset_calibration(self):
         self.use_default_calibration(startup = True)

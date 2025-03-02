@@ -47,6 +47,14 @@ def update_camera(root):
                     
                     ax.clear()
                     ax.imshow(image)
+                    
+                    
+                    if root.camera_object.current_xlim is not None and root.camera_object.current_ylim is not None:
+                        ax.set_xlim(root.camera_object.current_xlim)
+                        ax.set_ylim(root.camera_object.current_ylim)
+                    else:
+                        root.camera_object.set_current_limits(ax.get_xlim(), ax.get_ylim())
+                    
                     canvas.draw()
 
                     #time.sleep(root.camera_object.update_frequency/1000)
@@ -57,7 +65,10 @@ def update_camera(root):
             else:
                 root.toggle_camera_var.set(0) # if camera is closed by other means than toggle button
 
-def zoom(event, ax, original_xlim, original_ylim):
+def zoom(event, ax, camera_object):
+    original_xlim = camera_object.original_xlim
+    original_ylim = camera_object.original_ylim
+    
     if event.inaxes is False:
         return
     
@@ -87,25 +98,29 @@ def zoom(event, ax, original_xlim, original_ylim):
     new_xlim = [xdata - new_width * (1 - relx), xdata + new_width * (relx)]
     new_ylim = [ydata - new_height * (1 - rely), ydata + new_height * (rely)]
 
+    
     # Constrain the new limits to the original limits
     # TODO make this work
-    if original_xlim is not None and original_ylim is not None:
+    if (original_xlim is not None) and (original_ylim is not None):
         if new_xlim[0] < original_xlim[0]:
+            print(f"{new_xlim[0]:.1f} < {original_xlim[0]:.1f}")
             new_xlim[0] = original_xlim[0]
+            print("new_xlim[0] < original_xlim[0] \n")
         if new_xlim[1] > original_xlim[1]:
+            print(f"{new_xlim[1]:.1f} > {original_xlim[1]:.1f}")
             new_xlim[1] = original_xlim[1]
+            print("new_xlim[1] > original_xlim[1] \n")
         if new_ylim[0] < original_ylim[0]:
+            print(f"{new_ylim[0]:.1f} > {original_ylim[0]:.1f}")
             new_ylim[0] = original_ylim[0]
+            print("new_ylim[0] > original_ylim[0] \n")
         if new_ylim[1] > original_ylim[1]:
+            print(f"{new_ylim[1]:.1f} < {original_ylim[1]:.1f}")
             new_ylim[1] = original_ylim[1]
-
-
-    print("new_xlim: ", new_xlim)
-    print("new_ylim: ", new_ylim)
-
-    print("original_xlim: ", original_xlim)
-    print("original_ylim: ", original_ylim)
-
+            print("new_ylim[1] < original_ylim[1] \n")
+    
+    camera_object.set_current_limits(new_xlim, new_ylim)
+    
     ax.set_xlim(new_xlim)
     ax.set_ylim(new_ylim)
     ax.figure.canvas.draw()
