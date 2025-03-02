@@ -24,7 +24,7 @@ class Probe():
 
         self.position = None # tip in hexapod coordinates relative to camera position
 
-        self.probe_tip_position_in_camera_image = (0, 0)
+        self.probe_tip_position_in_camera_image = None
         self.probe_tip_position = None
 
         self.probe_detected = False

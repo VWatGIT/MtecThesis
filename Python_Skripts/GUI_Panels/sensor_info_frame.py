@@ -27,9 +27,13 @@ class SensorInfoFrame:
 
         seperator = tk.ttk.Separator(self.frame, orient="horizontal")
 
-        self.frame.grid_rowconfigure(0, weight=2)
-        self.frame.grid_columnconfigure(0, weight=2)
-        self.frame.grid_columnconfigure(1, weight= 0) # 100?
+        self.frame.grid_rowconfigure(0, weight=1, minsize=50)
+        self.frame.grid_rowconfigure(1, weight=0, minsize=10)
+        self.frame.grid_rowconfigure(2, weight=1, minsize=200)
+
+
+        self.frame.grid_columnconfigure(0, weight=2, minsize=50)
+        self.frame.grid_columnconfigure(1, weight= 1, minsize=50) # 100?
 
 
         measurement_slider.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)

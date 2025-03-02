@@ -57,7 +57,7 @@ class UserInterface:
             root.log = EventLogPanel(root, root)
             root.log.panel.pack(side="bottom", fill="both", expand=True)
             pass
-
+    
 
     def on_closing(self):
         self.root.camera_object.updating = False
@@ -69,7 +69,7 @@ class UserInterface:
             thread.join()
         """
         self.root.destroy()
-        #sys.exit()
+        sys.exit()
 
     def load_config(self):
         config = ConfigParser()

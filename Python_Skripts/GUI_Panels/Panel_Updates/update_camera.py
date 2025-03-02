@@ -56,7 +56,59 @@ def update_camera(root):
                     pass
             else:
                 root.toggle_camera_var.set(0) # if camera is closed by other means than toggle button
-        
+
+def zoom(event, ax, original_xlim, original_ylim):
+    if event.inaxes is False:
+        return
+    
+    base_scale = 1.1
+    if event.button == 'up':
+        # Zoom in
+        scale_factor = 1 / base_scale
+    elif event.button == 'down':
+        # Zoom out
+        scale_factor = base_scale
+    else:
+        # No zoom
+        scale_factor = 1
+
+    cur_xlim = ax.get_xlim()
+    cur_ylim = ax.get_ylim()
+
+    xdata = event.xdata  # get event x location
+    ydata = event.ydata  # get event y location
+
+    new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+    new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+
+    relx = (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])
+    rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
+
+    new_xlim = [xdata - new_width * (1 - relx), xdata + new_width * (relx)]
+    new_ylim = [ydata - new_height * (1 - rely), ydata + new_height * (rely)]
+
+    # Constrain the new limits to the original limits
+    # TODO make this work
+    if original_xlim is not None and original_ylim is not None:
+        if new_xlim[0] < original_xlim[0]:
+            new_xlim[0] = original_xlim[0]
+        if new_xlim[1] > original_xlim[1]:
+            new_xlim[1] = original_xlim[1]
+        if new_ylim[0] < original_ylim[0]:
+            new_ylim[0] = original_ylim[0]
+        if new_ylim[1] > original_ylim[1]:
+            new_ylim[1] = original_ylim[1]
+
+
+    print("new_xlim: ", new_xlim)
+    print("new_ylim: ", new_ylim)
+
+    print("original_xlim: ", original_xlim)
+    print("original_ylim: ", original_ylim)
+
+    ax.set_xlim(new_xlim)
+    ax.set_ylim(new_ylim)
+    ax.figure.canvas.draw()
 
 def draw_calibration(root, image):
     

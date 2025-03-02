@@ -21,7 +21,7 @@ def create_vertical_slice_plot_frame(parent, root):
 
     canvas = FigureCanvasTkAgg(fig, master=plot_frame)
     canvas.draw()
-    canvas.get_tk_widget().pack(side = "top", fill= "none", expand=False)
+    canvas.get_tk_widget().pack(fill= "both", expand=True)  #side = "top",
     vertical_slice_plot_frame.canvas = canvas
     
 
@@ -44,7 +44,7 @@ def create_vertical_slice_plot_frame(parent, root):
     for i in range(4):
         helper_frame.grid_rowconfigure(i, weight=1)
     
-    helper_frame.grid_rowconfigure(1, weight=0) #weight for correct sizing of the slider
+    #helper_frame.grid_rowconfigure(2, weight=0) #weight for correct sizing of the slider
     
 
     seperator.grid(row=0, column=0, rowspan = 1, columnspan=2, sticky="nsew", pady=5)
@@ -54,8 +54,8 @@ def create_vertical_slice_plot_frame(parent, root):
     
 
 
-    vertical_slice_plot_frame.grid_rowconfigure(0, weight=0)
-    vertical_slice_plot_frame.grid_rowconfigure(1, weight=1)
+    vertical_slice_plot_frame.grid_rowconfigure(0, weight=2, minsize=200)
+    vertical_slice_plot_frame.grid_rowconfigure(1, weight=1, minsize=100)
 
 
     plot_frame.grid(row = 0, column = 0, rowspan = 1, columnspan = 1, sticky="nsew", padx=5, pady=5)
@@ -79,7 +79,7 @@ def create_horizontal_slice_plot_frame(parent, root):
         
         canvas = FigureCanvasTkAgg(fig, master=plot_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(side = "top", fill= "both", expand=True)  
+        canvas.get_tk_widget().pack(fill= "both", expand=True)  #side = "top", 
         horizontal_slice_plot_frame.canvas = canvas
 
 
@@ -97,16 +97,15 @@ def create_horizontal_slice_plot_frame(parent, root):
         for i in range(3):
             helper_frame.grid_rowconfigure(i, weight=1)
 
-        #helper_frame.grid_rowconfigure(1, weight=10) #weight for correct sizing of the slider
+        #helper_frame.grid_rowconfigure(2, weight=0) #weight for correct sizing of the slider
 
         seperator.grid(row=0, column=0, rowspan = 1, columnspan=2, sticky="nsew",pady=5)
         horizontal_slice_slider_label.grid(row=1, column=0, rowspan = 1, columnspan=1, sticky="w", padx=5)       
         horizontal_slice_slider.grid(row=2, column=0, rowspan = 1, columnspan=2, sticky="nsew", padx=5)
    
         
-        # now actual grid
-        for i in range(2):
-            horizontal_slice_plot_frame.grid_rowconfigure(i, weight=1)
+        horizontal_slice_plot_frame.grid_rowconfigure(0, weight=2, minsize=200)
+        horizontal_slice_plot_frame.grid_rowconfigure(1, weight=1, minsize=100)
 
         plot_frame.grid(row = 0, column = 0, rowspan = 1, columnspan = 2, sticky="nsew", padx=5, pady=5)
         helper_frame.grid(row = 1, column = 0, rowspan = 1, columnspan = 2, sticky="nsew")

@@ -4,15 +4,26 @@ import cv2
 import os
 import tkinter as tk
 
+import matplotlib.pyplot as plt
 class Camera():
     def __init__(self):
-        self.camera = self.create_camera() 
+        self.camera = None 
+        self.create_camera() 
+    
+        # for zooming
+        self.original_ylim = None
+        self.original_xlim = None
+        self._set_original_limits()
+
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
         self.camera_connected = False
         self.camera_calibrated = False
         
         self.updating = False
         self.update_frequency = 10 #[ms] # set in config
+        
+
+
 
         self.max_number_calibration_images = 10 # set in config
         self.num_calibration_images = tk.IntVar(value=0) # set in config to 
@@ -26,6 +37,14 @@ class Camera():
        
         self.use_default_calibration(startup = True)
 
+    def _set_original_limits(self):
+        fig, ax = plt.subplots()
+        image = self.capture_image()
+        ax.imshow(image)
+
+        self.original_xlim = ax.get_xlim()
+        self.original_ylim = ax.get_ylim()
+        plt.close(fig)
 
     def reset_calibration(self):
         self.use_default_calibration(startup = True)
@@ -37,12 +56,13 @@ class Camera():
 
     def create_camera(self):
         try:
-            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+            self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             self.camera_connected = True
         except Exception as e:
             os.environ["PYLON_CAMEMU"] = "4"
-            camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-        return camera
+            self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+
+        return self.camera
 
     def set_emulated_image(self, path):
         # doesnt work

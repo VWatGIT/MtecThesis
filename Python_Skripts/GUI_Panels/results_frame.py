@@ -19,18 +19,16 @@ class ResultsFrame:
         beam_plot_frame = self.create_beam_plot_frame(self.frame)
         
 
- 
 
-        self.frame.columnconfigure(0, weight=0)
-        self.frame.columnconfigure(1, weight=10)
-        self.frame.columnconfigure(2, weight=100)
 
-        self.frame.rowconfigure(0, weight=1)
-        self.frame.rowconfigure(1, weight=2)
+        self.frame.columnconfigure(0, weight=2, minsize=700)
+        self.frame.columnconfigure(1, weight=1, minsize=400)
+        self.frame.columnconfigure(2, weight=1, minsize=100)
+
+        self.frame.rowconfigure(0, weight=2, minsize=400)
+        self.frame.rowconfigure(1, weight=1, minsize=150)
 
         
-        
-
         beam_plot_frame.grid(row=0, column=0,rowspan=2, columnspan=1, sticky="nsew", padx=5, pady=5)
         vertical_slice_plot_frame.grid(row=0, column=1, columnspan=1, sticky="nsew", padx=5, pady=5)
         sensor_info_frame.grid(row=0, column=2, columnspan=1, sticky="nsew", padx=5, pady=5)

@@ -10,7 +10,7 @@ from Python_Skripts.GUI_Panels.camera_calibration_frame import CameraCalibration
 from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
 from Python_Skripts.GUI_Panels.manual_adjust_panel import ManualAdjustPanel
 
-from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera
+from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera, zoom
 
 
 class CameraPanel:
@@ -29,6 +29,8 @@ class CameraPanel:
         # Attach to Root fore easy access
         self.root.camera_plot_frame = self.camera_plot_frame
         self.root.camera_panel = self.panel
+
+        
 
         for i in range(1):
             self.panel.grid_rowconfigure(i, weight=1)
@@ -69,7 +71,8 @@ class CameraPanel:
         return_button = tk.Button(self.panel, text="Return", command= lambda: self.panel.place_forget())
         return_button.place(relx=1, rely= 0, anchor="ne")
 
-        
+        self.toggle_camera()
+
 
     def create_camera_plot_frame(self, parent):
         camera_plot_frame = tk.LabelFrame(parent, text="Camera Image", name="camera_plot_frame")
@@ -78,17 +81,34 @@ class CameraPanel:
         canvas = FigureCanvasTkAgg(fig, master=camera_plot_frame)
         canvas.get_tk_widget().pack(fill= "both", expand=True)
         camera_plot_frame.canvas = canvas
+        
+        canvas.mpl_connect('button_press_event', self._on_click)
+        canvas.mpl_connect('scroll_event', lambda event: zoom(event, ax, self.camera_object.original_xlim, self.camera_object.original_ylim))
+
         ax.axis('off')
         ax.set_aspect('equal')
         return camera_plot_frame
 
+
+    def _on_click(self, event):
+        if event.inaxes:
+            x, y = event.xdata, event.ydata
+
+            # Store the clicked position in the probe object
+            self.root.probe.probe_tip_position_in_camera_image = (int(x), int(y))
+
+            self.root.log.log_event(f"Set Probe Tip in Camera Image to : ({int(x)}, {int(y)})")
+        
+    
+
+
     def create_camera_settings_frame(self, parent):
         camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         
-        self.root.toggle_camera_var = tk.IntVar()
-        self.root.draw_markers_var = tk.IntVar()
-        self.root.draw_probe_tip_var = tk.IntVar()
-        self.root.draw_checkerboard_var = tk.IntVar()
+        self.root.toggle_camera_var = tk.IntVar(value=0)
+        self.root.draw_markers_var = tk.IntVar(value=0)
+        self.root.draw_probe_tip_var = tk.IntVar(value=1)
+        self.root.draw_checkerboard_var = tk.IntVar(value=0)
 
         toggle_camera_checkbutton = tk.Checkbutton(camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera, variable= self.root.toggle_camera_var)
         draw_markers_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Markers",  variable= self.root.draw_markers_var)
