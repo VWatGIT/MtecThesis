@@ -96,8 +96,21 @@ def crop_coordinate_transform(image, coordinates, top_left):
     return (x, y)
 
 def draw_probe_tip(image, position):
+    
+    def draw_transparent_circle(image, center, radius, color, thickness, alpha):
+        # Create an overlay image with the same size as the original image
+        overlay = image.copy()
+
+        # Draw the circle on the overlay image
+        cv2.circle(overlay, center, radius, color, thickness)
+
+        # Blend the overlay with the original image using the specified alpha value
+        cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0, image)
+
+    
     if position is not None:
-        cv2.circle(image, position, 3, (255, 0, 0), -1)
+        draw_transparent_circle(image, position, 10, (255, 0, 0), -1, alpha = 0.3)
+        draw_transparent_circle(image, position, 0, (255, 0, 0), -1, alpha = 0.8)
     return image
 
 # Example usage

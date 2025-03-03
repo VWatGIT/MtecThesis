@@ -21,6 +21,11 @@ class ManualAdjustPanel:
         for i in range(4):
             self.panel.grid_columnconfigure(i, weight=1)
 
+        self.panel.grid_columnconfigure(0, weight=10, minsize=50)
+        self.panel.grid_columnconfigure(1, weight=10, minsize=50)
+        self.panel.grid_columnconfigure(2, weight=1)
+        self.panel.grid_columnconfigure(3, weight=1)
+        
         e_width = 10
 
         hexapod_x_label = tk.Label(self.panel, text="X: ", name="hexapod_x_label")

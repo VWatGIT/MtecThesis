@@ -29,7 +29,8 @@ def update_beam_center_plot(root, event = None):
         if not hasattr(tab, 'scatter_plot'):
             tab.scatter_plot = ax.scatter(points_x, points_y, points_z, label='Points to measure', color='blue')
         else:
-            tab.scatter_plot._offsets3d = (points_x, points_y, points_z)
+            ax.scatter(points_x, points_y, points_z, label='Points to measure', color='blue', alpha=0.3, s=1)
+            #tab.scatter_plot._offsets3d = (points_x, points_y, points_z)
 
 
         ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', alpha = 0.3, s=1)
@@ -38,8 +39,9 @@ def update_beam_center_plot(root, event = None):
             tab.center_search_path, = ax.plot([], [], [], color='red', label='Path done', linewidth = 1)
           
         else:
-            tab.center_search_path.set_data(path_x, path_y)
-            tab.center_search_path.set_3d_properties(path_z)
+            ax.plot(path_x, path_y, path_z, color='red', label='Path done', linewidth = 1)
+            #tab.center_search_path.set_data(path_x, path_y)
+            #tab.center_search_path.set_3d_properties(path_z)
 
     # Extract the beam center coordinates from the data
     beam_centers = data['Alignment']['Center_Search']['Beam_Centers']
@@ -52,7 +54,8 @@ def update_beam_center_plot(root, event = None):
         if not hasattr(tab, 'beam_centers_plot'):
             tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=300)
         else:
-            tab.beam_centers_plot._offsets3d = (beam_centers_x, beam_centers_y, beam_centers_z)
+            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=300)
+            #tab.beam_centers_plot._offsets3d = (beam_centers_x, beam_centers_y, beam_centers_z)
 
     canvas.draw()
     # TODO fix legend showing every single point

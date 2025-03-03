@@ -19,7 +19,7 @@ class Probe():
         self.unique_rvecs = list(map(float, config.get('Probe', 'unique_rvecs').split(',')))
         self.unique_tvecs = list(map(float, config.get('Probe', 'unique_tvecs').split(',')))
 
-        self.marker_tvecs = [None, None, None] 
+        self.marker_tvecs = [None, None, 1] # todo change back to None 
         self.marker_rvecs = [None, None, None] # rotation of marker not relevant as its very small
 
         self.position = None # tip in hexapod coordinates relative to camera position
@@ -32,13 +32,12 @@ class Probe():
 
 
 
-    def set_detected_probe_position(self, position, camera_object):
-        self.probe_tip_position_in_camera_image = position
+    def save_probe_position(self, camera_object, position = None):
+        if position is None:
+            position = self.probe_tip_position_in_camera_image
 
         if camera_object.camera_calibrated is True:
-                
             self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
-            # refers to the probe tip position in camera coordinates
             self.probe_detected = True
         else:
             self.probe_detected = False
@@ -47,7 +46,7 @@ class Probe():
     def translate_probe_tip(self, probe_tip_position, mtx, dist):
         self.probe_tip_position = probe_tip_position
 
-        z = self.marker_tvecs[2]
+        z = self.marker_tvecs[2] # markers need to be detected before probe tip can be translated
         
         # Step 1: Undistort the pixel coordinates
         undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)

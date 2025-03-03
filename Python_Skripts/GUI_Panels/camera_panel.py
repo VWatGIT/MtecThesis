@@ -44,7 +44,7 @@ class CameraPanel:
         # Fill Helper Panel    
         self.camera_calibration_object = CameraCalibrationFrame(self.helper_panel, self.root)
         self.probe_detection_object = ProbeDetectionFrame(self.helper_panel, self.root)
-        self.marker_detection_object = MarkerDetectionFrame(self.helper_panel, self.root)
+        #self.marker_detection_object = MarkerDetectionFrame(self.helper_panel, self.root)
         self.manual_adjust_panel_object = ManualAdjustPanel(self.helper_panel, self.root)
 
         # attach object to root
@@ -53,13 +53,13 @@ class CameraPanel:
         self.camera_settings_frame = self.create_camera_settings_frame(self.helper_panel)
         self.camera_calibration_frame = self.camera_calibration_object.frame
         self.probe_detection_frame = self.probe_detection_object.frame
-        self.marker_detection_frame = self.marker_detection_object.frame
+        #self.marker_detection_frame = self.marker_detection_object.frame
         self.manual_adjust_panel = self.manual_adjust_panel_object.panel
         
         self.camera_settings_frame.pack(side="top", fill="both", expand=True)
         self.camera_calibration_frame.pack(side="top", fill="both", expand=True)
         self.probe_detection_frame.pack(side="top", fill="both",expand=True)
-        self.marker_detection_frame.pack(side="top", fill="both",expand=True)
+        #self.marker_detection_frame.pack(side="top", fill="both",expand=True)
         self.manual_adjust_panel.pack(side="top", fill="both", expand=True)
 
         # camera_helper | camera image
@@ -83,7 +83,7 @@ class CameraPanel:
         camera_plot_frame.canvas = canvas
         
         canvas.mpl_connect('button_press_event', self._on_click)
-        canvas.mpl_connect('scroll_event', lambda event: zoom(event, ax, self.camera_object))
+        canvas.mpl_connect('scroll_event', lambda event: zoom(event, ax, self.root.camera_object))
 
         ax.axis('off')
         ax.set_aspect('equal')
@@ -96,7 +96,6 @@ class CameraPanel:
 
             # Store the clicked position in the probe object
             self.root.probe.probe_tip_position_in_camera_image = (int(x), int(y))
-
             self.root.log.log_event(f"Set Probe Tip in Camera Image to : ({int(x)}, {int(y)})")
         
     

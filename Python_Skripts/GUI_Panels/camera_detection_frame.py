@@ -32,9 +32,8 @@ class ProbeDetectionFrame:
         self.threshold_slider = tk.Scale(self.frame, from_=0, to=255, orient="horizontal", name="threshold_slider")
         self.threshold_slider.config(command=self.take_probe_image)
 
-        self.take_probe_image_button = tk.Button(self.frame, text="Take Image", command=self.take_probe_image)
-
-        self.save_probe_position_button = tk.Button(self.frame, text="Save Position", command=self.save_probe_position, state="disabled")
+        self.take_probe_image_button = tk.Button(self.frame, text="Detect", command=self.take_probe_image)
+        self.save_probe_position_button = tk.Button(self.frame, text="Save Position", command=self.save_probe_position) # state = disabled
 
         # Place labels and entries using grid
         self.crop_top_left_label.grid(row=0, column=0, pady=5, sticky="w")
@@ -46,10 +45,10 @@ class ProbeDetectionFrame:
         self.threshold_slider_label.grid(row=2, column=0, rowspan=2, pady=5, sticky="ew")
         self.threshold_slider.grid(row=2, column=0,columnspan=2, rowspan=2, pady=5, sticky="ew")
 
-        self.take_probe_image_button.grid(row=4, column=0, columnspan=1, rowspan=2, pady=5, sticky="w")
+        self.take_probe_image_button.grid(row=4, column=0, columnspan=1, rowspan=2, padx=5, pady=5, sticky="w")
 
         #self.frame.grid_rowconfigure(3, weight=3)  # weight row for gap
-        self.save_probe_position_button.grid(row=4, column=1, pady=5, sticky="w")
+        self.save_probe_position_button.grid(row=4, column=1,  padx=5, pady=5, sticky="w")
 
 
     def take_probe_image(self, event=None):
@@ -77,8 +76,7 @@ class ProbeDetectionFrame:
             self.save_probe_position_button.config(state="normal")  
         else:
             self.root.probe_tip_position_in_camera_image = None
-            self.save_probe_position_button.config(state="disabled")
-
+            #self.save_probe_position_button.config(state="disabled")
             self.root.log.log_event("Probe-Tip not detected")
 
         # Show the result
@@ -92,9 +90,17 @@ class ProbeDetectionFrame:
         self.root.log.log_event("Took Probe Image")
 
     def save_probe_position(self):
-        self.updating = True
-      
-        self.probe.translate_probe_tip(self.detected_probe_position, self.mtx, self.dist)
+        if self.root.camera_object.camera_calibrated is False:
+            self.root.log.log_event("Camera not calibrated")
+            return
+        if self.root.probe.probe_tip_position_in_camera_image is None:
+            self.root.log.log_event("Probe Tip not detected")
+            return
+        if self.root.probe.marker_detected is False:
+            self.root.log.log_event("Marker not detected, determination of probe tip position in 3D not possible")
+            return
+        
+        self.root.probe.save_probe_position(self.root.camera_object)
         self.root.log.log_event("Saved Probe Position")
 
 

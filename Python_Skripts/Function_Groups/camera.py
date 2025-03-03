@@ -40,14 +40,28 @@ class Camera():
         self.use_default_calibration(startup = True)
 
     def set_current_limits(self, xlim, ylim):
+        if xlim is None or ylim is None:
+            print("Invalid limits: None")
+            return
+        
+        # convert to int and create new tuple to store limits
+        xlim = tuple((int(xlim[0]), int(xlim[1])))
+        ylim = tuple((int(ylim[0]), int(ylim[1])))
+       
+        if xlim[0] == xlim[1] or ylim[0] == ylim[1]:
+            print("Invalid limits: Singular")
+            return
+        
         if self.original_xlim is None:
-            self.original_xlim = xlim
+            print(f"set original xlim to {xlim}")
+            self.original_xlim = tuple(xlim)
         if self.original_ylim is None:
-            self.original_ylim = ylim
+            print(f"set original ylim to {ylim}")
+            self.original_ylim = tuple(ylim)
         
-        self.current_xlim = xlim
-        self.current_ylim = ylim
-        
+                
+        self.current_xlim = tuple(xlim)
+        self.current_ylim = tuple(ylim)
             
         
 
@@ -60,6 +74,11 @@ class Camera():
         self.camera_calibrated = True
 
     def create_camera(self):
+        self.original_xlim = None
+        self.original_ylim = None
+        self.current_xlim = None
+        self.current_ylim = None
+        
         try:
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             self.camera_connected = True
