@@ -1,8 +1,6 @@
 def update_checkboxes(root):
-    # TODO move to Panel_Updates
-#while not root.stop_threads:
-#with root.lock:
-    if root.stop_threads is True:
+
+    if root.stop_update_checkboxes is True:
         return
     
     if root.camera_object.camera_connected is True:

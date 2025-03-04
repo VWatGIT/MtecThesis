@@ -6,7 +6,7 @@ class Simulation_Frame:
         
         self.frame = tk.LabelFrame(parent, text="Simulation Settings", name="simulation_frame")
         
-        self.simulate_var = tk.IntVar()
+        self.simulate_var = tk.IntVar(value = 1) # TODO change to 0
         self.root.simulate_var = self.simulate_var # add to root for access in other functions
        
         wavelength_label = tk.Label(self.frame, text="Wavelength [nm]:")

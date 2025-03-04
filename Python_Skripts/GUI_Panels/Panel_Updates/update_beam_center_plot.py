@@ -12,7 +12,7 @@ def update_beam_center_plot(root, event = None):
   
     # Extract the path coordinates from the data
     path = data['Alignment']['Center_Search']['Path_Points']
-    
+
     if path != []:
         # scatter the known path points in blue (even futu)
         path = np.array(path)
@@ -26,20 +26,9 @@ def update_beam_center_plot(root, event = None):
         path_z = path[:slice_index, 2]
         
 
-        if not hasattr(tab, 'scatter_plot'):
-            tab.scatter_plot = ax.scatter(points_x, points_y, points_z, label='Points to measure', color='blue')
-        else:
-            ax.scatter(points_x, points_y, points_z, label='Points to measure', color='blue', alpha=0.3, s=1)
-            #tab.scatter_plot._offsets3d = (points_x, points_y, points_z)
-
-
+ 
         ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', alpha = 0.3, s=1)
-
-        if not hasattr(tab, 'center_search_path'):
-            tab.center_search_path, = ax.plot([], [], [], color='red', label='Path done', linewidth = 1)
-          
-        else:
-            ax.plot(path_x, path_y, path_z, color='red', label='Path done', linewidth = 1)
+        ax.plot(path_x, path_y, path_z, color='red', label='Path done', linewidth = 1)
             #tab.center_search_path.set_data(path_x, path_y)
             #tab.center_search_path.set_3d_properties(path_z)
 
@@ -52,9 +41,9 @@ def update_beam_center_plot(root, event = None):
         beam_centers_z = beam_centers[:, 2]
         
         if not hasattr(tab, 'beam_centers_plot'):
-            tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=300)
+            tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='green', marker='x', s=300)
         else:
-            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=300)
+            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='green', marker='x', s=300)
             #tab.beam_centers_plot._offsets3d = (beam_centers_x, beam_centers_y, beam_centers_z)
 
     canvas.draw()

@@ -158,6 +158,14 @@ def zoom(event, ax, camera_object):
     ax.set_ylim(new_ylim)
     ax.figure.canvas.draw()
 
+def reset_zoom(ax, camera_object):
+    ax.set_xlim(camera_object.original_xlim)
+    ax.set_ylim(camera_object.original_ylim)
+
+    camera_object.set_current_limits(camera_object.original_xlim, camera_object.original_ylim)
+
+    ax.figure.canvas.draw()
+
 def draw_calibration(root, image):
     
     # termination criteria

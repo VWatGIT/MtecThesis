@@ -26,6 +26,7 @@ class Input_Frame:
 
         self.seperator = ttk.Separator(self.frame, orient="horizontal")
 
+        
         self.num_centers_label = tk.Label(self.frame, text="Centers to find:")
         self.center_spacing_label = tk.Label(self.frame, text="Center Spacing [mm]")
         self.initial_search_area_label = tk.Label(self.frame, text="Search Area [mm]")
@@ -39,6 +40,8 @@ class Input_Frame:
         self.initial_step_size_entry = tk.Entry(self.frame, name="initial_step_size_entry")
         self.refinement_factor_entry = tk.Entry(self.frame, name="refinement_factor_entry")
         self.max_num_iterations_entry = tk.Entry(self.frame, name="max_num_iterations_entry")
+
+        self.quadrant_search_checkbox = tk.Checkbutton(self.frame, text="Quadrant Search", name="quadrant_search_checkbox", variable=self.root.quadrant_search_var)
 
         self.seperator2 = ttk.Separator(self.frame, orient="horizontal")
 
@@ -91,6 +94,8 @@ class Input_Frame:
         
         self.time_estimated_label.grid(row=11, column=0, pady=5, sticky="e")
         time_estimation_button.grid(row=11, column=1, pady=5, sticky="w")
+
+        self.quadrant_search_checkbox.grid(row=12, column=0, columnspan=2, pady=5, sticky="ew")
 
 
     def estimate_time(self):

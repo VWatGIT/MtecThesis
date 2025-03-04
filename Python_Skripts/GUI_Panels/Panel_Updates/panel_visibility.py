@@ -23,13 +23,12 @@ def show_load_measurement_panel(root):
 
 
 def show_camera_panel(root):
-  
     root.help_panel.place_forget()
     root.camera_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
+    root.camera_object.updating = True
 
 
 def show_help_panel(root):
-
     root.camera_panel.place_forget()
     root.help_panel.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
 
@@ -37,6 +36,8 @@ def show_tabgroup(root):
     root.help_panel.place_forget()
     root.camera_panel.place_forget()
     root.tab_group.place(relx=0, rely=0, anchor="nw", relheight=1, relwidth=1)
+    
+    root.camera_object.updating = False
 
 
 def hide_all_panels(root):
@@ -45,4 +46,6 @@ def hide_all_panels(root):
     root.load_measurement_panel.place_forget()
     root.camera_panel.place_forget()
     root.help_panel.place_forget()
+
+    root.camera_object.updating = False
 

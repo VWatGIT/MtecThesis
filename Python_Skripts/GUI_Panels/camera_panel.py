@@ -10,7 +10,7 @@ from Python_Skripts.GUI_Panels.camera_calibration_frame import CameraCalibration
 from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
 from Python_Skripts.GUI_Panels.manual_adjust_panel import ManualAdjustPanel
 
-from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera, zoom
+from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera, zoom, reset_zoom
 
 
 class CameraPanel:
@@ -98,8 +98,6 @@ class CameraPanel:
             self.root.probe.probe_tip_position_in_camera_image = (int(x), int(y))
             self.root.log.log_event(f"Set Probe Tip in Camera Image to : ({int(x)}, {int(y)})")
         
-    
-
 
     def create_camera_settings_frame(self, parent):
         camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
@@ -116,14 +114,23 @@ class CameraPanel:
 
         connect_camera_button = tk.Button(camera_settings_frame, text="Connect Camera", command = self.camera_object.create_camera)
 
+        reset_zoom_button = tk.Button(camera_settings_frame, text="Reset Zoom", command= lambda: reset_zoom(self.canvas.figure.axes[0] , self.root.camera_object))
+        
+
         for i in range(4):
             camera_settings_frame.grid_rowconfigure(i, weight=1)
 
-        connect_camera_button.grid(row=0, column=0, sticky="w")
-        toggle_camera_checkbutton.grid(row=1, column=0, sticky="w")
-        draw_markers_checkbutton.grid(row=2, column=0, sticky="w")
-        draw_probe_tip_checkbutton.grid(row=3, column=0, sticky="w")
-        draw_checkerboard_checkbutton.grid(row=4, column=0, sticky="w")
+        for i in range(2):
+            camera_settings_frame.grid_columnconfigure(i, weight=1)
+
+        toggle_camera_checkbutton.grid(row=0, column=0, sticky="w")
+        draw_markers_checkbutton.grid(row=1, column=0, sticky="w")
+        draw_probe_tip_checkbutton.grid(row=2, column=0, sticky="w")
+        draw_checkerboard_checkbutton.grid(row=3, column=0, sticky="w")
+
+
+        connect_camera_button.grid(row=0, column=1, sticky="w")
+        reset_zoom_button.grid(row=2, column=1, sticky="w")
 
         return camera_settings_frame
 

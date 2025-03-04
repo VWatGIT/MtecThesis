@@ -27,7 +27,7 @@ class GaussBeam:
         self.trj = rotation.apply(self.default_trj)
        
 
-    def get_Intensity(self, r= None, z= None, point = None):
+    def get_Intensity(self, r= None, z= None, point = None, shift = None):
 
         if np.all(self.trj != self.default_trj) and point is not None:
             # Simulate angled beam
@@ -35,9 +35,18 @@ class GaussBeam:
             point = np.dot(point, rotation_matrix.T)
 
         if point is not None:
+            # shift beam for testing TODO remove
+            #print(point)
+            beam_point = point.copy()
+
+            if shift is not None:
+                beam_point[0] += shift[0]
+                beam_point[1] += shift[1]
+                beam_point[2] += shift[2]
+
             # convert path coordinates to zylindrical coordinates
-            r = np.sqrt(point[1]**2 + point[2]**2)*1e-3 # convert to mm
-            z = -point[0]*1e-3 # convert to mm  flip the x coordinate to match the coordinate system
+            r = np.sqrt(beam_point[1]**2 + beam_point[2]**2)*1e-3 # convert to mm
+            z = -beam_point[0]*1e-3 # convert to mm  flip the x coordinate to match the coordinate system
             # TODO check for correct trajectory
 
         w_z = self.get_Beam_Radius(z)
@@ -66,6 +75,9 @@ if __name__ == "__main__":
     I_0 = 2 * P / (np.pi * w_0**2)
     print(f"Die Intensität im Zentrum des Strahls beträgt {I_0:.2e} W/m^2")
     '''
+
+    gauss_beam.get_Intensity(point = [0, 0, 0])
+
 
     # Test at z = 0 and z = 1
     z = np.arange(5)

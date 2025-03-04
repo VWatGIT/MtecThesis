@@ -35,7 +35,9 @@ class UserInterface:
         root.camera_plot_frame = None
         root.camera_object.updating = False
         root.measurement_running = False
+        root.stop_update_checkboxes = False
         root.simulate_var = tk.IntVar(value = 0)
+        root.quadrant_search_var = tk.BooleanVar(value = True)
 
         self.load_config()
 
@@ -61,6 +63,7 @@ class UserInterface:
 
     def on_closing(self):
         self.root.camera_object.updating = False
+        self.root.stop_update_checkboxes = True
         self.root.stop_threads = True
         self.measurement_running = False
         
