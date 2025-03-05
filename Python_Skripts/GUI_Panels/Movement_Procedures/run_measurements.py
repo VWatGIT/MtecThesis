@@ -16,10 +16,10 @@ def run_measurements(root):
 
 
     # Get the grid size and step size
-    root.grid_size = root.new_measurement_panel.nametowidget("input_frame").nametowidget("measurement_space_entry").get()
+    root.grid_size = root.new_measurement_panel.nametowidget("input_frame").nametowidget('path_input_frame').nametowidget("measurement_space_entry").get()
     root.grid_size = tuple(map(float, root.grid_size.split(',')))
 
-    root.step_size = root.new_measurement_panel.nametowidget("input_frame").nametowidget("step_size_entry").get()
+    root.step_size = root.new_measurement_panel.nametowidget("input_frame").nametowidget('path_input_frame').nametowidget("step_size_entry").get()
     root.step_size = tuple(map(float, root.step_size.split(',')))
 
 
@@ -52,28 +52,22 @@ def run_measurements(root):
         if root.measurement_running is False:
             root.log.log_event("Measurement stopped")
             break
-        #root.log.log_event(f"Measurement {i+1} of {tab.measurement_points}")
 
         # As Path points are absolute, transform them to relative positions
         next_point = (tab.path_points[i][0], tab.path_points[i][1], tab.path_points[i][2], 0, 0, 0) 
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
         
-        #root.log.log_event(f"Next Relative Position: {next_relative_position}")
-        
-        if root.hexapod.connection_status is True:
-            root.hexapod.move(next_relative_position, flag = "relative") 
+
+        rcv = root.hexapod.move(next_relative_position, flag = "relative") 
 
         last_point = next_point # Update the last point
 
         doMeasurement(root, data, root.sensor, root.hexapod, i)
         tab.measurement_id_var.set(i)
 
-        if i > 0: # TODO make this work
-            root.log.event_log.replace("end-3l", "end-2l", f"Performed measurement {i+1} / {tab.measurement_points}\n")
-            #root.log.event_log.delete("end-2l", "end-1l")
-            #root.log.log_event(f"Performed measurement {i+1} / {tab.measurement_points}")
-            #root.log.event_log.insert("end-1l", f"Performed measurement {i+1} / {tab.measurement_points}\n")
-            #root.log.log_event(f"Performed measurement {i+1} / {tab.measurement_points}")
+        if i > 0:
+            root.log.delete_last_event()
+            root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
         else:
             root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
 

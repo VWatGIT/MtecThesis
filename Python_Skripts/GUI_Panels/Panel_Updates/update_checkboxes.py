@@ -38,11 +38,20 @@ def update_checkboxes(root):
 
 def check_checkboxes(root):
     ready = True
-    for key in root.checkbox_vars.keys():
-        if root.checkbox_vars[key].get() != 1:
+    if root.simulate_var.get() == True:
+        ready = True
+        root.log.log_event("Simulation Mode Active")
+        return ready
+
+    if root.manual_alignment_var.get() == True:
+        if not root.checkbox_vars["hexapod_connected"].get() or not root.checkbox_vars['stage_connected'].get():
             ready = False
-            root.log.log_event(f"{key} not ready")
-            
+    else:
+        for key in root.checkbox_vars.keys():
+            if root.checkbox_vars[key].get() != 1:
+                ready = False
+                root.log.log_event(f"{key} not ready")
+                
     if ready:
         root.log.log_event("All Systems Ready")
     else:

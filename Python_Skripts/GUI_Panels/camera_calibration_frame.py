@@ -19,9 +19,6 @@ class CameraCalibrationFrame:
         self.log = root.log
         self.canvas = root.camera_plot_frame.canvas
 
-        # start thread with calibration button
-        self.calibration_thread = threading.Thread(target=self.calibrate_camera)
-
         self.frame = tk.LabelFrame(parent, text="Camera Calibration", name="camera_calibration_frame")
 
         for i in range(5):
@@ -49,7 +46,7 @@ class CameraCalibrationFrame:
         self.num_calibratrion_images_slider = tk.Scale(self.frame, from_=1, to=root.camera_object.max_num_calibration_images, orient="horizontal", name="num_calibratrion_images_slider", variable=self.checkerboard_image_amount)
         self.num_calibratrion_images_slider.grid(row=2, column=1,columnspan=1, pady=5, sticky="ew")
 
-        self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.calibration_thread.start, state="active") 
+        self.calibrate_button = tk.Button(self.frame, text="Calibrate", command=self.start_calibration, state="active") 
         self.calibrate_button.grid(row=3, column=1, pady=5, sticky="w")
 
         self.reset_button = tk.Button(self.frame, text="Reset", command=self.reset_calibration)
@@ -102,6 +99,11 @@ class CameraCalibrationFrame:
     def reset_calibration(self):
         self.camera_object.reset_calibration()
         self.log.log_event("Reset Camera Calibration")
+
+    def start_calibration(self):
+        # start thread with calibration button
+        calibration_thread = threading.Thread(target=self.calibrate_camera)
+        calibration_thread.start()
 
     def calibrate_camera(self):
         # get images from different angles

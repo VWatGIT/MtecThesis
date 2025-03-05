@@ -86,7 +86,7 @@ def autosave(root):
     data = root.tab_group.nametowidget(root.tab_group.select()).data
 
     # autosave data
-    if root.autosave_var.get() == 1:
+    if root.autosave_var.get() == True:
         root.log.log_event("Autosaving data")
         # TODO make this a user input
         folder_path = 'C:/Users/mtec/Desktop/Thesis_Misc_Valentin/Git_repository/MtecThesis/Python_Skripts/experiment_data'

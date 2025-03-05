@@ -36,8 +36,13 @@ class UserInterface:
         root.camera_object.updating = False
         root.measurement_running = False
         root.stop_update_checkboxes = False
-        root.simulate_var = tk.IntVar(value = 0)
-        root.quadrant_search_var = tk.BooleanVar(value = True)
+
+        root.autosave_var = tk.BooleanVar(value = False)
+        root.simulate_var = tk.BooleanVar(value = True)
+        root.center_search_method_var = tk.StringVar(value="quadrant")
+        root.center_search_var = tk.BooleanVar(value = True)
+        root.box_measurements_var = tk.BooleanVar(value = True)
+        root.manual_alignment_var = tk.BooleanVar(value = False)
 
         self.load_config()
 

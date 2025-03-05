@@ -21,10 +21,12 @@ class NewMeasurementPanel:
         self.root.new_measurement_panel = self.panel
 
         self.input_frame_object = Input_Frame(self.panel, self.root)
-        self.simulation_frame_object = Simulation_Frame(self.panel, self.root)
         self.checkbox_panel_object = CheckboxPanel(self.panel, self.root)
-       
         root.checkbox_panel_object = self.checkbox_panel_object
+        self.simulation_frame_object = Simulation_Frame(self.panel, self.root)
+
+       
+  
 
         self.input_frame = self.input_frame_object.frame
         self.simulation_frame = self.simulation_frame_object.frame
@@ -32,10 +34,6 @@ class NewMeasurementPanel:
        
         root.skip_center_search_var = tk.IntVar()
         root.autosave_var = tk.IntVar()
-
-        skip_center_search_checkbox = tk.Checkbutton(self.panel, text="Skip Center Search", name="skip_center_search_checkbox", variable=self.root.skip_center_search_var)
-        autosave_checkbox = tk.Checkbutton(self.panel, text="Autosave", name="autosave_checkbox", variable=self.root.autosave_var)
-        #autosave_checkbox.select()
 
         start_button = tk.Button(self.panel, text="START", name="start_button", command=self.start_button_pushed, width = 20, height = 3)
         save_button = tk.Button(self.panel, text="SAVE",name="save_button", command=self.save_button_pushed, width = 20, height =3, state="disabled")
@@ -49,12 +47,10 @@ class NewMeasurementPanel:
         for i in range(2):
             self.panel.grid_columnconfigure(i, weight=1)
 
-        self.input_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=10, pady=10) 
-        self.simulation_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=10, pady=10)
+        self.input_frame.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=5, pady=10) 
+        self.simulation_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=10)
         self.checkbox_panel.grid(row=2, column=0, columnspan=2, padx= 10, pady=5, sticky="nsew")
         
-        skip_center_search_checkbox.grid(row=3, column=0, columnspan=1, pady=5, sticky="nsew")
-        autosave_checkbox.grid(row=3, column=1, columnspan=1, pady=5, sticky="nsew")
         start_button.grid(row=4, column=0, padx=10, pady=5, sticky = "w")
         save_button.grid(row=4, column=1, padx=10, pady=5, sticky="e")
         stop_button.grid(row=5, column=0, columnspan=2, padx=10, pady=5, sticky="nsew")
@@ -64,14 +60,9 @@ class NewMeasurementPanel:
         # Threading to make interaction with UI possible while measurements are running
         if not self.root.measurement_running:
             
-            if self.root.simulate_var.get() != 1:
-                # check checkboxes if everything is ready
-                if check_checkboxes(self.root) == False:
-                    return
-            else:
-                self.root.log.log_event("Simulating Measurements")
-
-
+            if check_checkboxes(self.root) == False:
+                return
+  
             self.root.tab_group_object.create_tab()
             show_tabgroup(self.root)
             self.root.measurement_running = True

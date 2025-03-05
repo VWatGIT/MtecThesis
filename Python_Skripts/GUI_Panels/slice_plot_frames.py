@@ -113,7 +113,7 @@ def create_horizontal_slice_plot_frame(parent, root):
 
 
 
-        horizontal_slice_plot_frame.grid_rowconfigure(0, weight=2, minsize=150)
+        horizontal_slice_plot_frame.grid_rowconfigure(0, weight=2, minsize=140)
         horizontal_slice_plot_frame.grid_rowconfigure(1, weight=1, minsize=70)
 
         horizontal_slice_plot_frame.grid_columnconfigure(0, weight=1, minsize=700)

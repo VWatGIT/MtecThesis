@@ -9,7 +9,7 @@ def doMeasurement(root, data, sensor, hexapod, i):
 
     # Get data from the sensor
     
-    if root.simulate_var.get() == 1:
+    if root.simulate_var.get() == True:
         # create fake random signal
         signal = sensor.get_test_signal()
 

@@ -13,22 +13,29 @@ def take_calibration_images(root):
     calibration_points = create_calibration_points(root)
     for i, point in enumerate(calibration_points):
         rcv = hexapod.move(point, flag="absolute")
-        root.log.log_event(rcv)
+        
 
         image = None
 
-        # TODO improve this this is only a temporary fix                                                                              
+        # TODO improve this, this is only a temporary fix                                                                              
         while image is None:
             try:
-                image = camera_object.capture_image() # TODO this shouldnt interfere with the update_camera function
+                image = camera_object.capture_image() # this shouldnt interfere with the update_camera function
             except Exception as e:
-                print("failed to capture image")
+                #print("failed to capture image")
                 image = None
                 pass
 
-
         calibration_images.append(image)
-        root.log.log_event(f"Took calibration image {i+1} of {len(calibration_points)}")
+
+        if i > 0:
+            root.log.delete_last_event()
+            root.log.delete_last_event()
+            root.log.log_event(rcv)
+            root.log.log_event(f"Took calibration image {i+1}/{len(calibration_points)}")
+        else:
+            root.log.log_event(rcv)
+            root.log.log_event(f"Took calibration image {i+1}/{len(calibration_points)}")
 
     hexapod.move_to_default_position()
 

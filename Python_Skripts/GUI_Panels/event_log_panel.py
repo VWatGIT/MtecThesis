@@ -20,8 +20,6 @@ class EventLogPanel:
         except Exception as e:
             message = f"Error converting message to string: {e}"
             
-
-
         current_time = datetime.now().strftime("%H:%M:%S")
         formatted_message = f"[{current_time}] {message}"
         self.event_log.config(state='normal')
@@ -29,14 +27,45 @@ class EventLogPanel:
         self.event_log.config(state='disabled')
         self.event_log.see(tk.END)
 
+    def delete_last_event(self):
+        self.event_log.config(state='normal')
+        try:
+            self.event_log.delete("end-2l", "end-1l")
+        except Exception as e:
+            self.log_event(f"Error deleting last event: {e}")
+
+        
+        self.event_log.config(state='disabled')
+    
 
 if __name__ == "__main__":
-    from configparser import ConfigParser
-    import os
+    import time
+    import threading
+    
+    root = tk.Tk()
+    root.geometry("400x400")
 
-    config = ConfigParser()
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'config.ini')
-    config.read(config_path)
+    log = EventLogPanel(root, root)
+    log.panel.pack(side = "top", fill = "both", expand = True)
 
-    print(config_path)
-    print(config.sections())
+    def test_text(log):
+        def run_test(log):
+            for i in range(10):
+                log.log_event(f"New Test")
+                if i != 0:
+                    log.delete_last_event()
+                log.log_event(f"Test Event {i}")
+                time.sleep(0.2)
+                #log.panel.after(300, log.log_event(f"Test Event {i}"))
+
+            log.log_event("Test finished")
+
+
+        test_thread = threading.Thread(target=run_test, args=(log,))
+        test_thread.start()
+
+            
+
+    button = tk.Button(root, text="Test text", command=lambda: test_text(log))
+    button.pack(side="bottom", fill="both", expand=True)
+    root.mainloop()

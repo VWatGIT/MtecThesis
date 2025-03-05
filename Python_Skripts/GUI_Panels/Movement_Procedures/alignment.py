@@ -18,8 +18,7 @@ def manual_alignment(root):
     root.log.log_event(rcv)
 
 def automatic_alignment(root):
-    # add additional arguments
-        
+    # TODO implement automatic alignment
 
-    root.log.log_event("Rough Alignment done")
-    pass
+    root.log.log_event("Automatic Alignment done")
+    

@@ -27,6 +27,9 @@ class SensorInfoFrame:
         measurement_slider.config(resolution=1, state="normal", command = lambda value: self.update_all(root)) # value to catch slider event
         self.measurement_slider = measurement_slider
 
+        measurement_spinbox = tk.Spinbox(self.frame, from_=1, to=100, increment=1, textvariable=root.measurement_slider_var, width=2, command = lambda: self.update_all(root))
+
+
         seperator = tk.ttk.Separator(self.frame, orient="horizontal")
         seperator_2 = tk.ttk.Separator(self.frame, orient="horizontal")
 
@@ -37,15 +40,18 @@ class SensorInfoFrame:
         self.frame.grid_rowconfigure(4, weight= 1, minsize=70)
 
 
-        self.frame.grid_columnconfigure(0, weight= 1, minsize=200)
+        self.frame.grid_columnconfigure(0, weight= 1, minsize=190)
+        self.frame.grid_columnconfigure(1, weight= 1, minsize=10)
         
         measurement_slider.grid(row=0, column=0, columnspan=1, sticky="nsew", padx=5)
-        seperator.grid(row=1, column=0, columnspan=1, sticky="nsew")
+        measurement_spinbox.grid(row=0, column=1, columnspan=1, sticky="sew", padx=5, pady = 5)
+        
+        seperator.grid(row=1, column=0, columnspan=2, sticky="nsew")
 
 
-        sensor_plot_frame.grid(row=2, column=0, columnspan=1, sticky="nsew")     
-        seperator_2.grid(row=3, column=0, columnspan=1, sticky="nsew")
-        sensor_readings_frame.grid(row=4, column=0, columnspan=1, sticky="nsew")
+        sensor_plot_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")     
+        seperator_2.grid(row=3, column=0, columnspan=2, sticky="nsew")
+        sensor_readings_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
     def create_sensor_readings_frame(self, parent):    
 

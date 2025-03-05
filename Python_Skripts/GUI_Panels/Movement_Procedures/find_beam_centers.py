@@ -17,12 +17,12 @@ def find_beam_centers(root):
     root.after(0, update_gauss_beam, root)
     #update_gauss_beam(root)
 
-    num_centers = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget("num_centers_entry").get())
-    center_spacing = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("center_spacing_entry").get())
-    initial_search_area = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("initial_search_area_entry").get())
-    initial_step_size = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("initial_step_size_entry").get())
-    refinement_factor = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("refinement_factor_entry").get())
-    max_num_iterations = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget("max_num_iterations_entry").get())
+    num_centers = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("num_centers_entry").get())
+    center_spacing = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("center_spacing_entry").get())
+    initial_search_area = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("initial_search_area_entry").get())
+    initial_step_size = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("initial_step_size_entry").get())
+    refinement_factor = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("refinement_factor_entry").get())
+    max_num_iterations = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("max_num_iterations_entry").get())
 
 
     data['Alignment']['Center_Search']['Beam_Centers'] = []
@@ -44,10 +44,10 @@ def find_beam_centers(root):
         root.hexapod.move(next_relative_position, flag = "relative")
         current_pos = root.hexapod.position
 
-        if root.quadrant_search_var.get() == True:
+        if root.center_search_method_var.get() == 'quadrant':
             center = quadrant_search(root, data, root.hexapod.position, initial_search_area, max_num_iterations)
             root.hexapod.move(current_pos, flag = "absolute") # move back to the current position as quadrant search moves the hexapod
-        else:
+        elif root.center_search_method_var.get() == 'refine':
             center = refine_search(root, data, root.hexapod.position, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
         
         root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
@@ -84,7 +84,7 @@ def grid_search(root, data, initial_point, grid_size, step_size):
         last_point = next_point
 
         current_path_point = (root.hexapod.position[0], root.hexapod.position[1], root.hexapod.position[2])
-        if root.simulate_var.get() == 1:
+        if root.simulate_var.get() == True:
             # change point to laser coordinates
             value = root.gauss_beam.get_Intensity(point = current_path_point)
 
@@ -157,7 +157,7 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
         root.hexapod.move(position, flag = "absolute")
         data['Alignment']['Center_Search']['Path_Points'].append(point)
 
-        if root.simulate_var.get() == 1:
+        if root.simulate_var.get() == True:
             # change point to laser coordinates
             value = root.gauss_beam.get_Intensity(point = point)#, shift = [0, -1, +2]) # example shift
         else:      
