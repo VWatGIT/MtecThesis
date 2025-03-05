@@ -45,20 +45,20 @@ def update_beam_plot(root, event = None):
 
         # Vertical plane at x_coord
         X_vertical = np.full_like(Y, x_coord)
-        ax.plot_surface(X_vertical, Y, Z, color='cyan', alpha=0.2, edgecolor='none')
+        ax.plot_surface(X_vertical, Y, Z, color='cyan', theta=0.2, edgecolor='none')
 
         # Horizontal plane at y_coord
         x = np.linspace(-grid_size[0], 0, 10)
         X, Z = np.meshgrid(x, z)
         Y_horizontal = np.full_like(X, y_coord)
-        ax.plot_surface(X, Y_horizontal, Z, color='magenta', alpha=0.2, edgecolor='none')
+        ax.plot_surface(X, Y_horizontal, Z, color='magenta', theta=0.2, edgecolor='none')
 
 
         # Plot the beam
         all_beam_points = data['Visualization']['Beam_Models']['Measured_Beam']['beam_points']
         hull_simplices = data['Visualization']['Beam_Models']['Measured_Beam']['hull_simplices']
         if hull_simplices is not None:
-                ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
+                ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', theta=0.5, edgecolor='black', label='Convex Hull')
 
         # Plot the beam trajectory 
         if data['Alignment']['trajectory'] is not None:
@@ -81,7 +81,7 @@ def update_beam_plot(root, event = None):
         index = str(root.measurement_slider_var.get())
         current_point = data["Measurements"][index]["Measurement_point"]
 
-        ax.scatter(current_point[0], current_point[1], current_point[2], color='red', label='Measurement Point', s=100, alpha = 0.5)
+        ax.scatter(current_point[0], current_point[1], current_point[2], color='red', label='Measurement Point', s=100, theta = 0.5)
 
         ax.legend()
         canvas.draw()

@@ -13,16 +13,16 @@ class GaussBeam:
 
         self.theta = self.w_0 / self.z_r
 
-        self.alpha = 0
-        self.beta = 0
+        self.theta = 0
+        self.phi = 0
         self.default_trj = [1, 0, 0]
         self.trj = self.default_trj
 
-    def set_Trj(self, alpha, beta):
-        self.alpha = alpha
-        self.beta = beta
+    def set_Trj(self, theta, phi):
+        self.theta = theta
+        self.phi = phi
         
-        rotation = R.from_euler('zy', [alpha,beta], degrees=True)
+        rotation = R.from_euler('zy', [theta,phi], degrees=True)
         self.trj = rotation.apply(self.default_trj)
        
 

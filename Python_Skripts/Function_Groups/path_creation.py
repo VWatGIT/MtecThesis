@@ -158,7 +158,7 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(X_flat, Y_flat, Z_flat, color='blue', label='Meshgrid Points', s = 5)
-    ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', alpha=0.3, rstride=100, cstride=100)
+    ax.plot_surface(X_plane, Y_plane, Z_plane, color='blue', theta=0.3, rstride=100, cstride=100)
     
     plt.show()
 

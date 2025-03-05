@@ -26,20 +26,20 @@ def rotate_points(points, rotation_matrix):
 
     return rotated_point
 
-def rotate_alpha_beta(vector, alpha, beta):
+def rotate_theta_phi(vector, theta, phi):
     # Convert angles from degrees to radians
-    alpha = np.radians(alpha)
-    beta = np.radians(beta)
+    theta = np.radians(theta)
+    phi = np.radians(phi)
 
     # Rotation matrix around the x-axis
     R_x = np.array([[1, 0, 0],
-                    [0, np.cos(alpha), -np.sin(alpha)],
-                    [0, np.sin(alpha), np.cos(alpha)]])
+                    [0, np.cos(theta), -np.sin(theta)],
+                    [0, np.sin(theta), np.cos(theta)]])
 
     # Rotation matrix around the y-axis
-    R_y = np.array([[np.cos(beta), 0, np.sin(beta)],
+    R_y = np.array([[np.cos(phi), 0, np.sin(phi)],
                     [0, 1, 0],
-                    [-np.sin(beta), 0, np.cos(beta)]])
+                    [-np.sin(phi), 0, np.cos(phi)]])
 
     # Apply the rotations
     rotated_vector = np.dot(R_y, np.dot(R_x, vector))

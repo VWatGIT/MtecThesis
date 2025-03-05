@@ -7,12 +7,12 @@ from matplotlib import pyplot as plt
 
 '''
 Parameters:
-p = [w_0, I_0, alpha, beta]
+p = [w_0, I_0, theta, phi]
 
 w_0: Beam radius at z = 0
 I_0: Intensity at z = 0, r = 0
-alpha: angle of beam
-beta: angle of beam
+theta: angle of beam
+phi: angle of beam
 
 
 
@@ -49,14 +49,14 @@ def get_I(v, I_0, w_0):
 
 def I_p(v, p):
     # v = [x, y, z]
-    # p = [w_0, I_0, alpha, beta]
+    # p = [w_0, I_0, theta, phi]
     w_0 = p[0]
     i_0 = p[1]
-    alpha = 0 # p[2]
-    beta = 0 # p[3]
+    theta = 0 # p[2]
+    phi = 0 # p[3]
 
     # Rotate the point
-    rotation = R.from_euler('xy', [alpha,beta], degrees=True)      
+    rotation = R.from_euler('xy', [theta,phi], degrees=True)      
     v = rotation.apply(v)
     
     # Calculate the intensity
@@ -85,14 +85,14 @@ if __name__ == "__main__":
     points = np.array(points)*1e-3 # Convert to [m]
 
     # Initial guess
-    # actual values: w_0 = 1e-3, i_0 = 6.37e+04, alpha = 0, beta = 0
+    # actual values: w_0 = 1e-3, i_0 = 6.37e+04, theta = 0, phi = 0
 
     w_0 = 2e-3 # 2 [mm]
     i_0 = 4e+04
-    alpha = 0
-    beta = 0
+    theta = 0
+    phi = 0
 
-    p0 = [w_0, i_0]#, alpha, beta]
+    p0 = [w_0, i_0]#, theta, phi]
     bounds = [(0.00001, 2), (0.1, 7e+04)] #, (-180, 180), (-180, 180)]
 
 
@@ -101,8 +101,8 @@ if __name__ == "__main__":
 
     # Extract the optimized parameters
     w_0_opt, I_0_opt = result.x
-    #w_0_opt, I_0_opt, alpha_opt, beta_opt = result.x
-    print(f"Optimized parameters: w_0={w_0_opt}, I_0={I_0_opt}")#, alpha={alpha_opt}, beta={beta_opt}")
+    #w_0_opt, I_0_opt, theta_opt, phi_opt = result.x
+    print(f"Optimized parameters: w_0={w_0_opt}, I_0={I_0_opt}")#, theta={theta_opt}, phi={phi_opt}")
 
 
     # Plot the optimized beam

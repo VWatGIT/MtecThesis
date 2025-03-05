@@ -24,7 +24,7 @@ def update_path_plot(root, event = None):
         ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
         ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
 
-        tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
+        tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',theta=0.3, s=1)
         #print("Initialized grid points")
 
     if not hasattr(tab, 'path'):

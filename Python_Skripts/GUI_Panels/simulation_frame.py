@@ -12,20 +12,20 @@ class Simulation_Frame:
         wavelength_label = tk.Label(self.frame, text="Wavelength [nm]:")
         w_0_label = tk.Label(self.frame, text="Beam Waist [mm]:")
         i_0_label = tk.Label(self.frame, text="I_0 [W/m^2]:")
-        alpha_label = tk.Label(self.frame, text="Simulate Pitch [deg]:")
-        beta_label = tk.Label(self.frame, text="Simulate Yaw [deg]:")
+        theta_label = tk.Label(self.frame, text="Simulate Pitch [deg]:")
+        phi_label = tk.Label(self.frame, text="Simulate Yaw [deg]:")
 
         self.wavelength_entry = tk.Entry(self.frame, name="wavelength_entry")
         self.w_0_entry = tk.Entry(self.frame, name="w_0_entry")
         self.i_0_entry = tk.Entry(self.frame, name="i_0_entry")
-        self.alpha_entry = tk.Entry(self.frame, name="alpha_entry")
-        self.beta_entry = tk.Entry(self.frame, name="beta_entry")
+        self.theta_entry = tk.Entry(self.frame, name="theta_entry")
+        self.phi_entry = tk.Entry(self.frame, name="phi_entry")
 
         self.wavelength_entry.insert(0, "1300")
         self.w_0_entry.insert(0, "1")
         self.i_0_entry.insert(0, "60000")
-        self.alpha_entry.insert(0, "0")
-        self.beta_entry.insert(0, "0")
+        self.theta_entry.insert(0, "0")
+        self.phi_entry.insert(0, "0")
 
         self.simulate_checkbox = tk.Checkbutton(self.frame, text="Simulation Active", name="simulate_checkbox", variable=self.simulate_var)
 
@@ -39,13 +39,13 @@ class Simulation_Frame:
         wavelength_label.grid(row=1, column=0, pady=5, sticky="e")
         w_0_label.grid(row=2, column=0, pady=5, sticky="e")
         i_0_label.grid(row=3, column=0, pady=5, sticky="e")
-        alpha_label.grid(row=4, column=0, pady=5, sticky="e")
-        beta_label.grid(row=5, column=0, pady=5, sticky="e")
+        theta_label.grid(row=4, column=0, pady=5, sticky="e")
+        phi_label.grid(row=5, column=0, pady=5, sticky="e")
 
 
 
         self.wavelength_entry.grid(row=1, column=1, pady=5, sticky="w")
         self.w_0_entry.grid(row=2, column=1, pady=5, sticky="w")
         self.i_0_entry.grid(row=3, column=1, pady=5, sticky="w")
-        self.alpha_entry.grid(row=4, column=1, pady=5, sticky="w")
-        self.beta_entry.grid(row=5, column=1, pady=5, sticky="w")
+        self.theta_entry.grid(row=4, column=1, pady=5, sticky="w")
+        self.phi_entry.grid(row=5, column=1, pady=5, sticky="w")

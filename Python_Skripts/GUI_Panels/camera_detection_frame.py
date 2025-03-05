@@ -83,7 +83,7 @@ class ProbeDetectionFrame:
         canvas = self.root.camera_plot_frame.canvas
         axes = self.root.camera_plot_frame.canvas.figure.axes[0]
         axes.clear()
-        axes.imshow(result_image, alpha = 0.5)  # Show image with detected tip drawn
+        axes.imshow(result_image, theta = 0.5)  # Show image with detected tip drawn
         canvas.draw()
         axes.axis('off')
 
