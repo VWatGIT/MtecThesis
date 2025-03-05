@@ -27,7 +27,7 @@ def update_beam_center_plot(root, event = None):
         
 
  
-        ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', theta = 0.3, s=1)
+        ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', alpha = 0.3, s=1)
         ax.plot(path_x, path_y, path_z, color='red', label='Path done', linewidth = 1)
             #tab.center_search_path.set_data(path_x, path_y)
             #tab.center_search_path.set_3d_properties(path_z)

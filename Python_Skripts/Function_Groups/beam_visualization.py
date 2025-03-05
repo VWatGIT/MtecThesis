@@ -513,7 +513,7 @@ def plot_beam(data, beam_model='Measured_Beam'):
     # Plot the convex hull
     hull_simplices = data['Visualization']['Beam_Models'][beam_model]['hull_simplices']
     if hull_simplices is not None:
-        ax_3d.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', theta=0.5, edgecolor='black', label='Convex Hull')
+        ax_3d.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
 
     # Plot the trajectory
     trajectory = data['Visualization']['Beam_Models'][beam_model]['trajectory']

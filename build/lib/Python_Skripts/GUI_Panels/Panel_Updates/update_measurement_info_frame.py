@@ -29,5 +29,5 @@ def update_measurement_info_frame(root, event = None):
     yaw_label = laser_info_frame.nametowidget("yaw_label")
 
     # TODO update correctly
-    #pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['theta']:.2f}")
-    #yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['phi']:.2f}")
+    #pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['alpha']:.2f}")
+    #yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['beta']:.2f}")

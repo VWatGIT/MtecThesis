@@ -22,9 +22,9 @@ def run_measurements(root):
 
 
     # Get Beam Parameters
-    theta = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("theta_entry").get())
-    phi = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("phi_entry").get())
-    root.gauss_beam.set_Trj(theta, phi)
+    alpha = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("alpha_entry").get())
+    beta = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("beta_entry").get())
+    root.gauss_beam.set_Trj(alpha, beta)
 
     root.gauss_beam.w_0 = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("w_0_entry").get())*1e-3
     root.gauss_beam.wavelength = float(root.new_measurement_panel.nametowidget("input_frame").nametowidget("wavelength_entry").get())*1e-9

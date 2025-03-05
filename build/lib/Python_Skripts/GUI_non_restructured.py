@@ -29,8 +29,8 @@ from Python_Skripts.Function_Groups.gauss_beam import Gauss_Beam # Used for test
 from Python_Skripts.Function_Groups.gauss_beam import create_Test_Beam # Used for testing
 from Python_Skripts.GUI_Panels import ManualAdjustPanel
 
-from Python_Skripts.Testing_Scripts.Beam_Trajectory import calculate_theta_phi
-from Python_Skripts.Testing_Scripts.Beam_Trajectory import plot_theta_phi
+from Python_Skripts.Testing_Scripts.Beam_Trajectory import calculate_alpha_beta
+from Python_Skripts.Testing_Scripts.Beam_Trajectory import plot_alpha_beta
 
 
 
@@ -200,17 +200,17 @@ class UserInterface:
         self.i_0_entry.grid(row=6, column=1, pady=5, sticky="w")
         self.i_0_entry.insert(0, "60000")
 
-        theta_label = tk.Label(input_frame, text="Simulate Pitch [deg]:")
-        theta_label.grid(row=7, column=0, pady=5, sticky="e")
-        self.theta_entry = tk.Entry(input_frame, name="theta_entry")
-        self.theta_entry.grid(row=7, column=1, pady=5, sticky="w")
-        self.theta_entry.insert(0, "0")
+        alpha_label = tk.Label(input_frame, text="Simulate Pitch [deg]:")
+        alpha_label.grid(row=7, column=0, pady=5, sticky="e")
+        self.alpha_entry = tk.Entry(input_frame, name="alpha_entry")
+        self.alpha_entry.grid(row=7, column=1, pady=5, sticky="w")
+        self.alpha_entry.insert(0, "0")
 
-        phi_label = tk.Label(input_frame, text="Simulate Yaw [deg]:")
-        phi_label.grid(row=8, column=0, pady=5, sticky="e")
-        self.phi_entry = tk.Entry(input_frame, name="phi_entry")
-        self.phi_entry.grid(row=8, column=1, pady=5, sticky="w")
-        self.phi_entry.insert(0, "0")
+        beta_label = tk.Label(input_frame, text="Simulate Yaw [deg]:")
+        beta_label.grid(row=8, column=0, pady=5, sticky="e")
+        self.beta_entry = tk.Entry(input_frame, name="beta_entry")
+        self.beta_entry.grid(row=8, column=1, pady=5, sticky="w")
+        self.beta_entry.insert(0, "0")
 
         #Set up checkboxes
         checkbox_panel = tk.Frame(self.new_measurement_panel, name="checkbox_panel")
@@ -1308,8 +1308,8 @@ class UserInterface:
         i_0_label.config(text="I_0: " + str(data['Beam_Parameters']['i_0']))
         z_r_label.config(text="z_r: " + str(data['Beam_Parameters']['z_r']))
         '''
-        pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['theta']:.2f}")
-        yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['phi']:.2f}")
+        pitch_label.config(text=f"Pitch: {data['Visualization']['Beam_Models']['Measured_Beam']['alpha']:.2f}")
+        yaw_label.config(text=f"Yaw: {data['Visualization']['Beam_Models']['Measured_Beam']['beta']:.2f}")
 
 
     def update_progress_bar(self, progress_bar, measurements_done):
@@ -1495,20 +1495,20 @@ class UserInterface:
 
         # Vertical plane at x_coord
         X_vertical = np.full_like(Y, x_coord)
-        ax.plot_surface(X_vertical, Y, Z, color='cyan', theta=0.2, edgecolor='none')
+        ax.plot_surface(X_vertical, Y, Z, color='cyan', alpha=0.2, edgecolor='none')
 
         # Horizontal plane at y_coord
         x = np.linspace(-grid_size[0], 0, 10)
         X, Z = np.meshgrid(x, z)
         Y_horizontal = np.full_like(X, y_coord)
-        ax.plot_surface(X, Y_horizontal, Z, color='magenta', theta=0.2, edgecolor='none')
+        ax.plot_surface(X, Y_horizontal, Z, color='magenta', alpha=0.2, edgecolor='none')
 
 
         # Plot the beam
         all_beam_points = data['Visualization']['Beam_Models']['Measured_Beam']['beam_points']
         hull_simplices = data['Visualization']['Beam_Models']['Measured_Beam']['hull_simplices']
         if hull_simplices is not None:
-                ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', theta=0.5, edgecolor='black', label='Convex Hull')
+                ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
         ax.legend()
         canvas.draw()
     def update_trajectory_plot(self, event = None):
@@ -1523,7 +1523,7 @@ class UserInterface:
         canvas = trajectory_plot_frame.canvas
         ax = canvas.figure.axes[0]
         
-        plot_theta_phi(data, ax)
+        plot_alpha_beta(data, ax)
     def update_path_plot(self, event = None):
         tab = self.tab_group.nametowidget(self.tab_group.select())
         data = tab.data
@@ -1550,7 +1550,7 @@ class UserInterface:
             ax.set_ylim(Y_flat.min()-0.1, Y_flat.max()+0.1)
             ax.set_zlim(Z_flat.min()-0.1, Z_flat.max()+0.1)
 
-            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',theta=0.3, s=1)
+            tab.grid_points = ax.scatter([X_flat], [Y_flat], [Z_flat], color='blue', label='Meshgrid Points',alpha=0.3, s=1)
             #print("Initialized grid points")
 
         if not hasattr(tab, 'path'):
@@ -1756,9 +1756,9 @@ class UserInterface:
 
 
         # Get Beam Parameters
-        theta = float(self.theta_entry.get())
-        phi = float(self.phi_entry.get())
-        self.gauss_beam.set_Trj(theta, phi)
+        alpha = float(self.alpha_entry.get())
+        beta = float(self.beta_entry.get())
+        self.gauss_beam.set_Trj(alpha, beta)
 
         self.gauss_beam.w_0 = float(self.w_0_entry.get())*1e-3
         self.gauss_beam.wavelength = float(self.wavelength_entry.get())*1e-9
