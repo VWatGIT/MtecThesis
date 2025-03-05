@@ -24,9 +24,6 @@ class Camera():
         self.updating = False
         self.update_frequency = 10 #[ms] # set in config
         
-
-
-
         self.max_number_calibration_images = 10 # set in config
         self.num_calibration_images = tk.IntVar(value=0) # set in config to 
         self.calibration_images = []
@@ -83,6 +80,9 @@ class Camera():
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             self.camera_connected = True
         except Exception as e:
+            path = r'C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Python_Skripts\Checkerboard_Images\checkerboard_1.jpg'
+            self.set_emulated_image(path)
+
             os.environ["PYLON_CAMEMU"] = "4"
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
 
@@ -92,7 +92,6 @@ class Camera():
         # doesnt work
         os.environ["PYLON_CAMEMU_IMAGE"] = path
 
-    
     def use_default_calibration(self, startup = False):
         self.mtx = self.default_mtx.copy()
         self.dist = self.default_dist.copy()
@@ -124,6 +123,9 @@ class Camera():
         
             # If found, add object points, image points (after refining them)
             if ret == True:
+                # TODO check weather this scaling is correct
+                objp = objp * self.checkerboard_size # scale object point by checkerboard size
+
                 objpoints.append(objp)
         
                 corners2 = cv2.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)

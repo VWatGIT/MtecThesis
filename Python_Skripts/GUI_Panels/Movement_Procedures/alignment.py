@@ -1,3 +1,4 @@
+from Python_Skripts.Function_Groups.position_calculation import translate_marker_vecs_to_position, relative_hexapod_delta_position
 def manual_alignment(root):
     manual_adjust_panel = root.manual_adjust_panel
     hexapod = root.hexapod
@@ -19,6 +20,22 @@ def manual_alignment(root):
 
 def automatic_alignment(root):
     # TODO implement automatic alignment
+    '''
+    photo_diode_position = translate_marker_vecs_to_position(root.sensor.marker_tvecs, root.sensor.marker_rvecs, root.sensor.unique_tvecs, root.sensor.unique_rvecs)
+    probe_tip_position = translate_marker_vecs_to_position(root.probe.marker_tvecs, root.probe.marker_rvecs, root.probe.unique_tvecs, root.probe.unique_rvecs)
+    '''
+
+    
+
 
     root.log.log_event("Automatic Alignment done")
     
+
+if __name__ == "__main__":
+    from Python_Skripts.Function_Groups.hexapod import Hexapod
+    from Python_Skripts.Function_Groups.sensor import Sensor
+    from Python_Skripts.Function_Groups.probe import Probe
+    from Python_Skripts.Function_Groups.camera import Camera    
+    
+
+

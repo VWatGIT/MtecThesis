@@ -25,7 +25,7 @@ class Probe():
         self.position = None # tip in hexapod coordinates relative to camera position
 
         self.probe_tip_position_in_camera_image = None
-        self.probe_tip_position = None
+        self.probe_tip_position = None # in camera coordinates
 
         self.probe_detected = False
         self.marker_detected = False
@@ -47,7 +47,9 @@ class Probe():
         self.probe_tip_position = probe_tip_position
 
         z = self.marker_tvecs[2] # markers need to be detected before probe tip can be translated
-        
+        z += self.unique_tvecs[2] # add unique z coordinate (unique_tvecs are in hexapod coordinates)
+
+
         # Step 1: Undistort the pixel coordinates
         undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)
 
@@ -64,3 +66,16 @@ class Probe():
 
     def __repr__(self):
         return f"Probe(position={self.position}, rotation={self.rotation})"
+
+
+if __name__ == "__main__":
+    
+    default_mtx = np.array((1000, 0.0, 900., 0.0, 1000, 600., 0.0, 0.0, 1.0)).reshape(3, 3)
+    default_dist = np.array((-0.1, 0.59, 0.01, 0.02, -0.86))
+
+    print(f"default_mtx: \n {default_mtx}")
+
+    probe = Probe()
+
+    coords = probe.translate_probe_tip((100, 100), default_mtx, default_dist)
+    print(coords)

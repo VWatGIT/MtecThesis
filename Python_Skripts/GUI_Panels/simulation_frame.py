@@ -6,10 +6,6 @@ class Simulation_Frame:
         
         self.frame = tk.LabelFrame(parent, text="Simulation Parameters", name="simulation_frame")
         
-        self.simulate_var = tk.IntVar(value = 1) # TODO change to 0
-        self.root.simulate_var = self.simulate_var # add to root for access in other functions
-       
-
         checkbox_panel_object = self.root.checkbox_panel_object
 
 
@@ -31,7 +27,7 @@ class Simulation_Frame:
         self.alpha_entry.insert(0, "0")
         self.beta_entry.insert(0, "0")
 
-        self.simulate_checkbox = tk.Checkbutton(self.frame, text="Simulation Active", name="simulate_checkbox", variable=self.simulate_var, command = lambda: checkbox_panel_object.grey_out(flag = True))
+        self.simulate_checkbox = tk.Checkbutton(self.frame, text="Simulation Active", name="simulate_checkbox", variable=root.simulate_var, command = lambda: checkbox_panel_object.grey_out(flag = True))
         seperator = tk.ttk.Separator(self.frame, orient="horizontal")
 
         for i in range(7):
@@ -49,8 +45,6 @@ class Simulation_Frame:
         i_0_label.grid(row=4, column=0, pady=5, sticky="w")
         alpha_label.grid(row=5, column=0, pady=5, sticky="w")
         beta_label.grid(row=6, column=0, pady=5, sticky="w")
-
-
 
         self.wavelength_entry.grid(row=2, column=1, pady=5, sticky="w")
         self.w_0_entry.grid(row=3, column=1, pady=5, sticky="w")

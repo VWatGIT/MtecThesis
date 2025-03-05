@@ -16,8 +16,6 @@ def translate_marker_vecs_to_position(marker_tvecs, marker_rvecs, unique_tvecs =
     camera x --> hexapod y + unique_tvecs[1]
     camera z --> hexapod z * (-1) + unique_tvecs[2]
 
-    
-    
     unique_tvecs and r_vecs already in hexapod coordinates
     
     marker_r_vecs and unique_rvecs are assumed to be negligible
@@ -67,22 +65,23 @@ def relative_hexapod_delta_position(pos1, pos2):
 if __name__ == "__main__":
     #example Camera Matrix and Distortion Coefficients
 
-    """
-    default_mtx = np.array((1181.5538676416058, 0.0, 922.8506388793359, 0.0, 1192.4200603170682, 611.958902443558, 0.0, 0.0, 1.0)).reshape(3, 3)
-    default_dist = np.array((-0.18060857511646508, 0.593329343507457, 0.009627163668556659, 0.019474406020336347, -0.8617057006539887))
-    print(default_mtx)
-    """
-
+    default_mtx = np.array((1000, 0.0, 900, 0.0, 1000, 600, 0.0, 0.0, 1.0)).reshape(3, 3)
+    default_dist = np.array((-0.1, 0.59, 0.01, 0.02, -0.86))
+    
     sensor = Sensor()
     probe = Probe()
 
-    sensor.marker_tvecs =  np.array((-8.92362443e-06, -1.37329851e-01, 3.12919983e-01))
-    probe.marker_tvecs=  np.array((0.00893626, -0.00671135,  0.33286018))
+    sensor.marker_tvecs = np.array((-8.9e-06, -1.3e-01, 3.1e-01))
+    probe.marker_tvecs= np.array((0.008, -0.006,  0.3))
 
     sensor.photo_diode_array_position = translate_marker_vecs_to_position(sensor.marker_tvecs, sensor.marker_rvecs, sensor.unique_tvecs, sensor.unique_rvecs)
     probe.position = translate_marker_vecs_to_position(probe.marker_tvecs, probe.marker_rvecs, probe.unique_tvecs, probe.unique_rvecs)
+
+    print(f"mtx: \n {default_mtx} \n")
+    print(f"dist: {default_dist} \n")
+
     print(f"sensor position: {sensor.photo_diode_array_position}")
-    print(f"probe position: {probe.position}")
+    print(f"probe position: {probe.position} \n")
 
 
     delta_pos = relative_hexapod_delta_position(sensor.photo_diode_array_position, probe.position)

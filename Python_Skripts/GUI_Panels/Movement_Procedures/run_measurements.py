@@ -65,15 +65,19 @@ def run_measurements(root):
         doMeasurement(root, data, root.sensor, root.hexapod, i)
         tab.measurement_id_var.set(i)
 
-        if i > 0:
-            root.log.delete_last_event()
-            root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
-        else:
-            root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
+
 
         # update only every ~10% of measurements to save time by not updating the UI every step
         update_interval = tab.measurement_points // 10
         if i%update_interval == 0:
+            
+            if i > 0:
+                root.log.delete_last_event()
+                root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
+            else:   
+                root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
+
+
 
             update_tab(root)
             update_progress_bar(root)

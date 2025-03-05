@@ -83,10 +83,10 @@ class CameraPanel:
     def create_camera_settings_frame(self, parent):
         camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         
-        self.toggle_camera_var = tk.IntVar()
-        self.draw_markers_var = tk.IntVar()
-        self.draw_probe_tip_var = tk.IntVar()
-        self.draw_checkerboard_var = tk.IntVar()
+        self.toggle_camera_var = tk.BooleanVar()
+        self.draw_markers_var = tk.BooleanVar()
+        self.draw_probe_tip_var = tk.BooleanVar()
+        self.draw_checkerboard_var = tk.BooleanVar()
 
         toggle_camera_checkbutton = tk.Checkbutton(camera_settings_frame, text="Camera ON/OFF", command=self.toggle_camera, variable= self.toggle_camera_var)
         draw_markers_checkbutton = tk.Checkbutton(camera_settings_frame, text="Draw Markers",  variable= self.draw_markers_var)
@@ -123,12 +123,12 @@ class CameraPanel:
 
     def update_camera(self):      
         if self.camera.IsOpen() and self.updating:
-            self.toggle_camera_var.set(1) # if camera is opened by other means than toggle button
+            self.toggle_camera_var.set(True) # if camera is opened by other means than toggle button
             image = self.camera_object.capture_image()
 
             if self.root.camera_object.camera_calibrated:
                 
-                if self.draw_markers_var == 1:
+                if self.draw_markers_var == True:
 
                     mtx = self.root.camera_object.mtx
                     dist = self.root.camera_object.dist
@@ -146,10 +146,10 @@ class CameraPanel:
                         self.probe.marker_rvecs = marker_rvecs[self.probe.marker_id]
                         self.probe.marker_tvecs = marker_tvecs[self.probe.marker_id]
                 
-                if self.draw_probe_tip_var == 1:
+                if self.draw_probe_tip_var == True:
                     image = draw_probe_tip(image, self.root.probe.probe_tip_position_in_camera_image)
 
-            if self.draw_checkerboard_var == 1:
+            if self.draw_checkerboard_var == True:
                 image = self.camera_calibration_object.draw_calibration(image)
 
 
@@ -166,7 +166,7 @@ class CameraPanel:
             #self.root.log.log_event("Updated Camera Image")
             self.update_camera()
         else:
-            self.toggle_camera_var.set(0) 
+            self.toggle_camera_var.set(False) 
         # Draw the calibration image with the checkerboard
        
 

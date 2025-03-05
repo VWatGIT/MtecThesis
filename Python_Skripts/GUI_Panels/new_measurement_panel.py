@@ -99,8 +99,6 @@ class NewMeasurementPanel:
 
 
 
-
-
 if __name__ == "__main__":
     from Python_Skripts.GUI import UserInterface
     root = tk.Tk()
