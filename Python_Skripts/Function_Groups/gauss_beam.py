@@ -37,7 +37,10 @@ class GaussBeam:
         if point is not None:
             # shift beam for testing TODO remove
             #print(point)
-            beam_point = point.copy()
+            try:
+                beam_point = point.copy()
+            except:
+                beam_point = point
 
             if shift is not None:
                 beam_point[0] += shift[0]
@@ -47,7 +50,7 @@ class GaussBeam:
             # convert path coordinates to zylindrical coordinates
             r = np.sqrt(beam_point[1]**2 + beam_point[2]**2)*1e-3 # convert to mm
             z = -beam_point[0]*1e-3 # convert to mm  flip the x coordinate to match the coordinate system
-            # TODO check for correct trajectory
+            
 
         w_z = self.get_Beam_Radius(z)
         I_rz = self.I_0 * (self.w_0 / w_z)**2 * np.exp(-2 * r**2 / w_z**2)

@@ -5,7 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class BeamCenterPlotFrame:
     def __init__(self, parent, root):
-        self.frame = tk.LabelFrame(parent, text="Beam Center Search", name="beam_center_plot_frame")
+        self.frame = tk.Frame(parent, name="beam_center_plot_frame")
         self.root = root
 
         fig, ax = plt.subplots(subplot_kw={'projection': '3d'})

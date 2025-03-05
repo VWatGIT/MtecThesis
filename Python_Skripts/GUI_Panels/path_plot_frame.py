@@ -4,7 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class PathPlotFrame:
     def __init__(self, parent, root):
-        self.frame = tk.LabelFrame(parent, text="Path", name="path_plot_frame")
+        self.frame = tk.Frame(parent, name="path_plot_frame")
         
         fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
         canvas = FigureCanvasTkAgg(fig, master=self.frame)

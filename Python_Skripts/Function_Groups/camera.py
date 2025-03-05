@@ -41,7 +41,7 @@ class Camera():
 
     def set_current_limits(self, xlim, ylim):
         if xlim is None or ylim is None:
-            print("Invalid limits: None")
+            #print("Invalid limits: None")
             return
         
         # convert to int and create new tuple to store limits
@@ -49,14 +49,14 @@ class Camera():
         ylim = tuple((int(ylim[0]), int(ylim[1])))
        
         if xlim[0] == xlim[1] or ylim[0] == ylim[1]:
-            print("Invalid limits: Singular")
+            #print("Invalid limits: Singular")
             return
         
         if self.original_xlim is None:
-            print(f"set original xlim to {xlim}")
+            #print(f"set original xlim to {xlim}")
             self.original_xlim = tuple(xlim)
         if self.original_ylim is None:
-            print(f"set original ylim to {ylim}")
+            #print(f"set original ylim to {ylim}")
             self.original_ylim = tuple(ylim)
         
                 

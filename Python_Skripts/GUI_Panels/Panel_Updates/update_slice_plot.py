@@ -42,6 +42,8 @@ def update_slice_plot(root, event=None):
             vertical_slice_plot_frame.check = True
             fig.colorbar(cax, ax=vertical_ax, label='Signal Sum')
         
+        vertical_ax.invert_yaxis() # TODO there is some slicing ordering error
+        vertical_ax.set_aspect('auto')
         vertical_canvas.draw()
 
         # Update Beam Plot for Seethrough Planes
@@ -64,6 +66,8 @@ def update_slice_plot(root, event=None):
             horizontal_slice_plot_frame.check = True
             fig.colorbar(cax, ax=horizontal_ax, label='Signal Sum')
 
+        #horizontal_ax.invert_yaxis() # TODO there is some slicing ordering error
+        horizontal_ax.set_aspect('auto')
         horizontal_canvas.draw()
 
 

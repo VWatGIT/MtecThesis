@@ -60,20 +60,28 @@ def update_beam_plot(root, event = None):
         if hull_simplices is not None:
                 ax.plot_trisurf(all_beam_points[:, 0], all_beam_points[:, 1], all_beam_points[:, 2], triangles=hull_simplices, color='cyan', alpha=0.5, edgecolor='black', label='Convex Hull')
 
-        # Plot the beam trajectory
-        # TODO draw trajectory line
-        '''
+        # Plot the beam trajectory 
         if data['Alignment']['trajectory'] is not None:
-                trajectory = data['Alignment']['trajectory']
-                ax.plot(trajectory[:, 0], trajectory[:, 1], trajectory[:, 2], color='blue', label='Trajectory', linewidth=1)
-        '''
+                trj_vec = data['Alignment']['trajectory']
+                #now_plot a line from the start to the end
+                # scale the vector to the grid size
+                grid_size = data['3D']['grid_size'][0]
+                trajectory = np.array([trj_vec[0], trj_vec[1], trj_vec[2]]) * (grid_size) # grid_size*1.1
+          
 
-        # TODO draw probe position ?
+                start_point = np.array(data['Alignment']['Center_Search']['Beam_Centers'][0])
+                end_point = start_point + trajectory
+               
+                
+                ax.plot([start_point[0], end_point[0]], [start_point[1], end_point[1]], [start_point[2], end_point[2]], color='red', label='Trajectory', linewidth=5)
+
+
+        # draw probe position ?
         
-        index = str(tab.measurement_slider_var.get())
+        index = str(root.measurement_slider_var.get())
         current_point = data["Measurements"][index]["Measurement_point"]
 
-        ax.scatter(current_point[0], current_point[1], current_point[2], color='red', label='Current Point', s=100, alpha = 0.5)
+        ax.scatter(current_point[0], current_point[1], current_point[2], color='red', label='Measurement Point', s=100, alpha = 0.5)
 
         ax.legend()
         canvas.draw()

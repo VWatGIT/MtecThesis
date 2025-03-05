@@ -13,8 +13,8 @@ def process_beam_centers(root):
     trj = calculate_beam_trajectory_LR(centers)
     angles = calculate_angles(trj)
 
-    data['Alignment']['Center_Search']['trajectory'] = trj
-    data['Alignment']['Center_Search']['angles'] = angles
+    data['Alignment']['trajectory'] = trj
+    data['Alignment']['angles'] = angles
 
     return trj, angles
 

@@ -23,16 +23,17 @@ class TabGroup:
         self.root.tab_group.bind("<<NotebookTabChanged>>", self.on_tab_change)
         """
 
-        # TODO dont create default tab, this is only for testing
-        self.create_tab() # Create the Default Tab
+        # dont create default tab, this is only for testing
+        #self.create_tab() # Create the Default Tab
     
     def on_tab_change(self, event):
         # currently data is stored in the data of the selected tab
         # this is suboptimal but works for now
-
         if self.root.measurement_running is True:
             self.root.log.log_event("Measurement Running, Tab Change not allowed")
             self.tab_group.select(self.root.tab_group.index("current"))
+        
+
           
 
     def create_tab(self, name = "default", data = None):
@@ -43,7 +44,6 @@ class TabGroup:
         new_tab = ttk.Frame(self.tab_group, name=f"{name}_{self.tab_count}")
         self.tab_group.add(new_tab, text=name)
 
-        new_tab.measurement_slider_var = tk.IntVar(value=1)
         new_tab.measurement_id_var = tk.IntVar(value=1) # Measurement ID TODO what default value?
         new_tab.current_point_index = 0
         

@@ -133,13 +133,10 @@ def refine_search(root, data, initial_point, initial_search_area = 5, initial_st
 
 
 def quadrant_search(root, data, initial_point, initial_search_area, max_iterations):
-    
     # recursive function
-    if max_iterations == 0:
-        return initial_point
 
 
-    # define the 5 points to measure relative to the initial point
+    # define the 4 points to measure relative to the initial point
     center = initial_point
     # these should be touples!
     top_left = [initial_point[0], initial_point[1] - initial_search_area, initial_point[2] + initial_search_area]
@@ -162,7 +159,7 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
 
         if root.simulate_var.get() == 1:
             # change point to laser coordinates
-            value = root.gauss_beam.get_Intensity(point = point, shift = [0, -1, +2]) # TODO delete example shift
+            value = root.gauss_beam.get_Intensity(point = point)#, shift = [0, -1, +2]) # example shift
         else:      
             signal = root.sensor.get_signal()
             value = signal.sum
@@ -182,10 +179,15 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
         print("Error in determining the new new_center")
         return initial_point
 
-    if np.all(np.isclose(initial_point, max_point, rtol = 1e-4, atol = 1e-4)):
+    max_iterations -= 1
+    if max_iterations == 0:
+        return initial_point
+
+
+    if np.all(np.isclose(initial_point, max_point, rtol = 1e-3, atol = 1e-3)):
         return max_point
     else:
-        return quadrant_search(root, data, new_center, initial_search_area/2, max_iterations - 1)
+        return quadrant_search(root, data, new_center, initial_search_area/2, max_iterations)
 
 
 

@@ -61,7 +61,6 @@ class NewMeasurementPanel:
         progress_bar.grid(row=6, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
 
     def start_button_pushed(self):
-        # TODO close default tab
         # Threading to make interaction with UI possible while measurements are running
         if not self.root.measurement_running:
             

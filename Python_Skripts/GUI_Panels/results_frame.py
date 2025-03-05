@@ -17,16 +17,21 @@ class ResultsFrame:
         vertical_slice_plot_frame = create_vertical_slice_plot_frame(self.frame, root)
         horizontal_slice_plot_frame = create_horizontal_slice_plot_frame(self.frame, root)
         beam_plot_frame = self.create_beam_plot_frame(self.frame)
-        
+        """
+
+        sensor_info_frame = tk.LabelFrame(self.frame, name="sensor_info_frame")
+        vertical_slice_plot_frame = tk.LabelFrame(self.frame, name="vertical_slice_plot_frame")
+        horizontal_slice_plot_frame = tk.LabelFrame(self.frame, name="horizontal_slice_plot_frame")
+        beam_plot_frame = tk.LabelFrame(self.frame, name="beam_plot_frame")
+        """
 
 
+        self.frame.columnconfigure(0, weight=2, minsize=710)
+        self.frame.columnconfigure(1, weight=1, minsize=510)
+        self.frame.columnconfigure(2, weight=1, minsize=210)
 
-        self.frame.columnconfigure(0, weight=2, minsize=700)
-        self.frame.columnconfigure(1, weight=1, minsize=400)
-        self.frame.columnconfigure(2, weight=1, minsize=100)
-
-        self.frame.rowconfigure(0, weight=2, minsize=400)
-        self.frame.rowconfigure(1, weight=1, minsize=150)
+        self.frame.rowconfigure(0, weight=2, minsize=460)
+        self.frame.rowconfigure(1, weight=1, minsize=260)
 
         
         beam_plot_frame.grid(row=0, column=0,rowspan=2, columnspan=1, sticky="nsew", padx=5, pady=5)
@@ -57,3 +62,10 @@ class ResultsFrame:
         beam_plot_frame.canvas = canvas
 
         return beam_plot_frame
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    frame = ResultsFrame(root, root).frame
+    frame.pack(side = "top", fill = "both", expand = True)
+    root.mainloop()

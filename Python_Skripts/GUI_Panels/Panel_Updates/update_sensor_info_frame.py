@@ -8,13 +8,13 @@ def update_sensor_info_frame(root, event = None):
     sensor_info_frame = results_frame.nametowidget("sensor_info_frame")
     sensor_readings_frame = sensor_info_frame.nametowidget("sensor_readings_frame")
 
-    current_measurement_data = data["Measurements"][str(tab.measurement_slider_var.get())]
+    current_measurement_data = data["Measurements"][str(root.measurement_slider_var.get())]
 
-    sensor_info_frame.config(text="Measurement " + str(tab.measurement_slider_var.get()) + "/" + str(tab.measurement_points)) # Update the title
+    sensor_info_frame.config(text="Measurement " + str(root.measurement_slider_var.get()) + "/" + str(tab.measurement_points)) # Update the title
 
     measurement_slider = sensor_info_frame.nametowidget("measurement_slider")
     if tab.measurement_points != measurement_slider.config()["to"][4]:
-       measurement_slider.config(from_=1, to= int(tab.measurement_points), state = "normal") # Update the slider range
+       measurement_slider.config(from_=1, to= int(tab.measurement_points)) # Update the slider range
 
     # Update the sensor readings
     xpos_label = sensor_readings_frame.nametowidget("xpos_label")
