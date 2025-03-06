@@ -28,38 +28,45 @@ def translate_marker_vecs_to_position(marker_tvecs, marker_rvecs, unique_tvecs =
     if uniqe_rvecs is None:
         unique_rvecs = [0.0, 0.0, 0.0]
 
-    x = marker_tvecs[1] + unique_tvecs[0]
-    y = marker_tvecs[0] + unique_tvecs[1]
-    z = marker_tvecs[2] * (-1) + unique_tvecs[2]
+    print("marker_tevcs:" , marker_tvecs)
+    print("unique_tvecs:" , unique_tvecs)
+
+    x = marker_tvecs[1] # + unique_tvecs[0] # marker y is hexapod x TODO ?
+    y = marker_tvecs[2] # + unique_tvecs[1] # marker x is hexapod y TODO fix
+    z = marker_tvecs[0] # + unique_tvecs[2] 
+
+    print("unique_tvecs applied: ", (x,y,z), "\n")
 
     U = V = W = 0
 
+
     """
     # left out for now
-    U = marker_rvecs[0] + unique_rvecs[0]
-    V = marker_rvecs[1] + unique_rvecs[1]
+    U = marker_rvecs[1] + unique_rvecs[0]
+    V = marker_rvecs[0] + unique_rvecs[1]
     W = marker_rvecs[2] + unique_rvecs[2]
     """
 
-    return [x, y, z, U, V, W]
+    return np.array((x, y, z, U, V, W))
     
 def relative_hexapod_delta_position(pos1, pos2):
     """
-    calculate the movement of the hexapod to move from pos1 to pos2
-    pos1: photo diode array position
-    pos2: probe tip position
+    calculate the movement of the hexapod to move from pos2 to pos1
+    pos1: photo diode array position    # from
+    pos2: probe tip position            # to
 
-    --> Hexapod goes from pos1 to pos2
+    --> Hexapod should go goes from pos1 to pos2
     """
 
-    dx = pos2[0] - pos1[0]
-    dy = pos2[1] - pos1[1]
-    dz = pos2[2] - pos1[2]
-    dU = pos2[3] - pos1[3]
-    dV = pos2[4] - pos1[4]
-    dW = pos2[5] - pos1[5]
+    # first transform camera coordinates to hexapod coordinates
+    # sensor_position as origin
+    pos1 = np.array(pos1)
+    pos2 = np.array(pos2)
 
-    return [dx, dy, dz, dU, dV, dW]
+    delta_pos = pos1 - pos2 # TODO i am stupid please help
+ 
+
+    return delta_pos
 
 
 if __name__ == "__main__":
@@ -71,18 +78,21 @@ if __name__ == "__main__":
     sensor = Sensor()
     probe = Probe()
 
-    sensor.marker_tvecs = np.array((-8.9e-06, -1.3e-01, 3.1e-01))
-    probe.marker_tvecs= np.array((0.008, -0.006,  0.3))
+    
+    probe.marker_tvecs = np.array([20.8, -119.4, 270.8])
+    sensor.marker_tvecs = np.array([17.7,  17.1, 286.8 ])
+    expected_movement = [136.5, -3.1, 16.0]
+    """
 
-    sensor.photo_diode_array_position = translate_marker_vecs_to_position(sensor.marker_tvecs, sensor.marker_rvecs, sensor.unique_tvecs, sensor.unique_rvecs)
-    probe.position = translate_marker_vecs_to_position(probe.marker_tvecs, probe.marker_rvecs, probe.unique_tvecs, probe.unique_rvecs)
+    probe.marker_tvecs = np.array([-10, 20, 30])
+    sensor.marker_tvecs = np.array([10, 10, -30])
+    expected_movement = np.array([20, -10, -60])
+    """
 
-    print(f"mtx: \n {default_mtx} \n")
-    print(f"dist: {default_dist} \n")
+    photo_diode_array_position = translate_marker_vecs_to_position(sensor.marker_tvecs, sensor.marker_rvecs, sensor.unique_tvecs, sensor.unique_rvecs)
+    probe_tip_position = translate_marker_vecs_to_position(probe.marker_tvecs, probe.marker_rvecs, probe.unique_tvecs, probe.unique_rvecs)
 
-    print(f"sensor position: {sensor.photo_diode_array_position}")
-    print(f"probe position: {probe.position} \n")
-
-
-    delta_pos = relative_hexapod_delta_position(sensor.photo_diode_array_position, probe.position)
+    
+    delta_pos = relative_hexapod_delta_position(photo_diode_array_position, probe_tip_position)
+    print(f"expected movement: {expected_movement}")
     print(f"delta position: {delta_pos}")

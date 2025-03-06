@@ -26,13 +26,9 @@ def update_camera(root):
 
                         if root.camera_object.camera_calibrated:
                             if len(marker_tvecs) > 0 and len(marker_rvecs) > 0 :
-                                root.sensor.marker_rvecs = marker_rvecs[root.sensor.marker_id]
-                                root.sensor.marker_tvecs = marker_tvecs[root.sensor.marker_id]
-                                root.probe.marker_rvecs = marker_rvecs[root.probe.marker_id]
-                                root.probe.marker_tvecs = marker_tvecs[root.probe.marker_id]
+                                root.sensor.set_marker_vecs(marker_tvecs[root.sensor.marker_id], marker_rvecs[root.sensor.marker_id])
+                                root.probe.set_marker_vecs(marker_tvecs[root.probe.marker_id], marker_rvecs[root.probe.marker_id])
 
-                                #print("Sensor Marker tvecs: ", root.sensor.marker_tvecs)
-                                #print("Probe Marker tvecs: ", root.probe.marker_tvecs)
 
                     if root.draw_probe_tip_var.get() == 1:
                         image = draw_probe_tip(image, root.probe.probe_tip_position_in_camera_image)

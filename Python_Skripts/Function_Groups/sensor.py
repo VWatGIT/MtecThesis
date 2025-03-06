@@ -45,7 +45,13 @@ class Sensor():
         # initialize stage
         self.stage = None
         #self.initialize_stage()
-       
+
+    def set_marker_vecs(self, marker_tvecs, marker_rvecs):
+        self.marker_tvecs = marker_tvecs
+        self.marker_rvecs = marker_rvecs
+        if marker_tvecs is not None and marker_rvecs is not None:
+            self.marker_detected = True
+
 
     def initialize_stage(self, callback=None, root=None): 
         # initialize the stage

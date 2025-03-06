@@ -25,7 +25,7 @@ class Camera():
         self.update_frequency = 10 #[ms] # set in config
         
         self.max_number_calibration_images = 10 # set in config
-        self.num_calibration_images = tk.IntVar(value=0) # set in config to 
+        self.num_calibration_images = 0#tk.IntVar(value=0) # set in config to 
         self.calibration_images = []
         self.checkerboard_dimensions = (7, 4) # set in config
         self.checkerboard_size = 5  # set in config
@@ -202,7 +202,7 @@ def save_checkerboard_images(camera_object, num_images = 1, save_dir = r'C:\User
     for i in range(num_images):
         camera.Open()
         image_array = camera_object.capture_image()
-        image_array = crop_image(image_array, (600, 130), (875, 385))
+        #image_array = crop_image(image_array, (600, 130), (875, 385))
         camera.Close()
         image_array = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
         image_path = os.path.join(save_dir, f'checkerboard_{i+1}.jpg')
@@ -216,6 +216,11 @@ def save_checkerboard_images(camera_object, num_images = 1, save_dir = r'C:\User
     return 0
 
 
+
+if __name__ == "__main__":
+    camera = Camera()
+    path = r"C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Git_repository\MtecThesis\Python_Skripts\Checkerboard_Images"
+    save_checkerboard_images(camera, save_dir=path)
 
 
 

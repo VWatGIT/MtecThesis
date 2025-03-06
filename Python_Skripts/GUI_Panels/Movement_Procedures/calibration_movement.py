@@ -30,11 +30,8 @@ def take_calibration_images(root):
 
         if i > 0:
             root.log.delete_last_event()
-            root.log.delete_last_event()
-            root.log.log_event(rcv)
             root.log.log_event(f"Took calibration image {i+1}/{len(calibration_points)}")
         else:
-            root.log.log_event(rcv)
             root.log.log_event(f"Took calibration image {i+1}/{len(calibration_points)}")
 
     hexapod.move_to_default_position()

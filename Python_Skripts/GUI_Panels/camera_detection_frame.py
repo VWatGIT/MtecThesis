@@ -100,7 +100,11 @@ class ProbeDetectionFrame:
             self.root.log.log_event("Marker not detected, determination of probe tip position in 3D not possible")
             return
         
-        self.root.probe.save_probe_position(self.root.camera_object)
+        #self.root.probe.save_probe_position(self.root.camera_object)
+        #print(f"probe tip: {self.root.probe.probe_tip_position}")
+        print(f"sensor marker: {self.root.sensor.marker_tvecs}")
+        print(f"probe marker: {self.root.probe.marker_tvecs}")
+
         self.root.log.log_event("Saved Probe Position")
 
 

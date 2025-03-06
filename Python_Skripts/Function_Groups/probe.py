@@ -31,6 +31,12 @@ class Probe():
         self.marker_detected = False
 
 
+    def set_marker_vecs(self, marker_tvecs, marker_rvecs):
+        self.marker_tvecs = marker_tvecs
+        self.marker_rvecs = marker_rvecs
+        if marker_tvecs is not None and marker_rvecs is not None:
+            self.marker_detected = True
+
 
     def save_probe_position(self, camera_object, position = None):
         if position is None:

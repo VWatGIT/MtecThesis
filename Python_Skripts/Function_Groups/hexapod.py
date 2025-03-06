@@ -120,7 +120,7 @@ class Hexapod():
             self.tcpipObj_Hexapod_2.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             self.connection_status = True
             self.connecting = False
-            rcv = f'Hexapod Connection Successful: \n   IP: {self.IP} \n    Port1: {self.port_1} \n Port2: {self.port_2}'
+            rcv = f'Hexapod Connection Successful: | IP: {self.IP} | Port1: {self.port_1} | Port2: {self.port_2}'
             callback(rcv)
 
             # Autmoatically move to default position after successful connection
