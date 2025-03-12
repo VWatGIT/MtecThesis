@@ -17,22 +17,25 @@ class GaussBeam:
         self.alpha = 0
         self.beta = 0
         self.default_trj = [1, 0, 0]
-        self.trj = self.default_trj
+        self.trj = self.default_trj.copy()
 
     def set_Trj(self, alpha, beta):
+        self.trj = self.default_trj.copy()
         self.alpha = alpha
         self.beta = beta
         
         rotation = R.from_euler('zy', [alpha,beta], degrees=True)
-        self.trj = rotation.apply(self.default_trj)
-       
+        new_trj = rotation.apply(self.trj)
+        self.trj = new_trj
+        print(f"new trj: {self.trj}")
+        print(f"default trj: {self.default_trj}")
 
     def get_Intensity(self, r= None, z= None, point = None, shift = None):
-
-        if np.all(self.trj != self.default_trj) and point is not None:
+        if np.any(self.trj != self.default_trj) and (point is not None):
             # Simulate angled beam
             rotation_matrix = get_rotation_matrix(self.default_trj, self.trj)
             point = np.dot(point, rotation_matrix.T)
+            #print("simulated angle")
 
         if point is not None:
             # shift beam for testing TODO remove
@@ -78,6 +81,7 @@ if __name__ == "__main__":
     I_0 = 2 * P / (np.pi * w_0**2)
     print(f"Die Intensität im Zentrum des Strahls beträgt {I_0:.2e} W/m^2")
     '''
+    gauss_beam.set_Trj(45, 0)
 
     gauss_beam.get_Intensity(point = [0, 0, 0])
 

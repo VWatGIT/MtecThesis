@@ -14,6 +14,8 @@ The ( y )-axis points down, parallel to the image plane.
 def relative_hexapod_delta_position(pos1, pos2):
     """
     calculate the movement of the hexapod to move from pos2 to pos1
+    bott position inputs are in camera coordinates
+    
     pos1: photo diode array position    # from
     pos2: probe tip position            # to
 
@@ -25,12 +27,13 @@ def relative_hexapod_delta_position(pos1, pos2):
     pos1 = np.array(pos1)
     pos2 = np.array(pos2)
 
-    delta = pos1 - pos2 # TODO i am stupid please help
+    delta = pos1 - pos2 
+    # TODO check signs and coordinate tranformations
     x = delta[1]
     y = -delta[0]
     z = delta[2]
     
-    delta_pos = np.array((x, y, z, 0, 0, 0)) # transform to hexapod position
+    delta_pos = np.array((x, y, z, 0, 0, 0)) # add 0s to get a hexapod position
     delta[0] -= 1 # 1mm tolerance
     return delta_pos
 

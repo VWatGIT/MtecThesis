@@ -22,9 +22,14 @@ def update_slice_plot(root, event=None):
 
     #only update if data is available
     if data["Visualization"]["Slices"]["vertical"] != {}:
+        # flip the slice order
+        #max_index = len(data["Visualization"]["Slices"]["vertical"]) + 1
+        #vertical_index = str(max_index - root.vertical_slice_index_var.get())
+        
+        vertical_index = str(root.vertical_slice_index_var.get())
         
         # Update the vertical slice plot
-        vertical_slice= data['Visualization']["Slices"]['vertical'][str(root.vertical_slice_index_var.get())] # Get the slice data
+        vertical_slice= data['Visualization']["Slices"]['vertical'][vertical_index] # Get the slice data
         heatmap = vertical_slice['heatmap']
         keys = data['Visualization']['Slices']['vertical'].keys()
         first_key = next(iter(keys))
@@ -42,7 +47,7 @@ def update_slice_plot(root, event=None):
             vertical_slice_plot_frame.check = True
             fig.colorbar(cax, ax=vertical_ax, label='Signal Sum')
         
-        vertical_ax.invert_yaxis() # TODO there is some slicing ordering error
+        vertical_ax.invert_yaxis() 
         vertical_ax.set_aspect('auto')
         vertical_canvas.draw()
 
@@ -50,8 +55,10 @@ def update_slice_plot(root, event=None):
         update_beam_plot(root)
 
     if data["Visualization"]["Slices"]["horizontal"] != {}:
-
-        horizontal_index = str(root.horizontal_slice_index_var.get())
+        # flip the slice order
+        max_index = len(data["Visualization"]["Slices"]["horizontal"]) + 1
+        horizontal_index = str(max_index - root.horizontal_slice_index_var.get())
+    
         horizontal_slice = data['Visualization']["Slices"]['horizontal'][horizontal_index] # Get the slice data
         heatmap = horizontal_slice['heatmap']
         extent = data['Visualization']['Slices']['horizontal'][horizontal_index]['heatmap_extent']

@@ -6,3 +6,4 @@ def update_gauss_beam(root):
     root.gauss_beam.wavelength = float(root.new_measurement_panel.nametowidget("simulation_frame").nametowidget("wavelength_entry").get())*1e-9
     root.gauss_beam.I_0 = float(root.new_measurement_panel.nametowidget("simulation_frame").nametowidget("i_0_entry").get())
     
+    root.log.log_event(f"Updated Gauss Beam Parameters: | alpha: {alpha} | beta: |  {beta} |")

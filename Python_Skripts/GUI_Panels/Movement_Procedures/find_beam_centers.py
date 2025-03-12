@@ -14,7 +14,7 @@ def find_beam_centers(root):
     data = tab.data
 
     # update gauss beam
-    root.after(0, update_gauss_beam, root)
+    root.after(10, update_gauss_beam, root)
     #update_gauss_beam(root)
 
     num_centers = int(root.new_measurement_panel.nametowidget("input_frame").nametowidget('center_search_input_frame').nametowidget("num_centers_entry").get())

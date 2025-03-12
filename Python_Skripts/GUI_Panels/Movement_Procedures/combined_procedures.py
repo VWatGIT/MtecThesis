@@ -9,8 +9,8 @@ from Python_Skripts.Function_Groups.data_handling import autosave
 
 
 def combined_procedures(root):
-    
-    if root.manual_alignment_var.get() == True:
+   
+    if (root.manual_alignment_var.get() == True) or (root.simulate_var.get() == True):
         # assume manual alignment is done
         root.log.log_event("Skipping Automatic Alignment")
         pass
