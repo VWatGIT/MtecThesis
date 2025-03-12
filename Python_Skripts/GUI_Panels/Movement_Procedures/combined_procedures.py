@@ -12,13 +12,12 @@ def combined_procedures(root):
     
     if root.manual_alignment_var.get() == True:
         # assume manual alignment is done
+        root.log.log_event("Skipping Automatic Alignment")
         pass
     else:
+        root.log.log_event("Starting Automatic Alignment")
         automatic_alignment(root)
-
-
-
-
+        root.log.log_event("Automatic Alignment done")
 
     if root.center_search_var.get() == True:
             

@@ -1,4 +1,7 @@
-from Python_Skripts.Function_Groups.position_calculation import translate_marker_vecs_to_position, relative_hexapod_delta_position
+from Python_Skripts.Function_Groups.position_calculation import relative_hexapod_delta_position
+
+
+
 def manual_alignment(root):
     manual_adjust_panel = root.manual_adjust_panel
     hexapod = root.hexapod
@@ -20,15 +23,19 @@ def manual_alignment(root):
 
 def automatic_alignment(root):
     # TODO implement automatic alignment
-    '''
-    photo_diode_position = translate_marker_vecs_to_position(root.sensor.marker_tvecs, root.sensor.marker_rvecs, root.sensor.unique_tvecs, root.sensor.unique_rvecs)
-    probe_tip_position = translate_marker_vecs_to_position(root.probe.marker_tvecs, root.probe.marker_rvecs, root.probe.unique_tvecs, root.probe.unique_rvecs)
-    '''
-
+    sensor = root.sensor
+    probe = root.probe
+    hexapod = root.hexapod
     
-
-
-    root.log.log_event("Automatic Alignment done")
+    
+    
+    photo_diode_array_position = sensor.apply_unique_tvecs()
+    probe_tip_position = probe.probe_tip_position # Unique tvecs already applied
+    
+    delta_position = relative_hexapod_delta_position(probe_tip_position, photo_diode_array_position)
+    rcv = hexapod.move(delta_position, flag = "relative")
+    root.log.log_event(rcv)
+    
     
 
 if __name__ == "__main__":

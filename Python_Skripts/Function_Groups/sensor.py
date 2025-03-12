@@ -52,6 +52,23 @@ class Sensor():
         if marker_tvecs is not None and marker_rvecs is not None:
             self.marker_detected = True
 
+    def apply_unique_tvecs(self):
+        """
+        camera y --> hexapod x + unique_tvecs[0]
+        camera x --> hexapod y + unique_tvecs[1]
+        camera z --> hexapod z * (-1) + unique_tvecs[2]
+
+        unique_tvecs and r_vecs already in hexapod coordinates
+        
+        marker_r_vecs and unique_rvecs are assumed to be negligible
+        """
+        # TODO check orientation of x, y, z axes
+        x = self.marker_tvecs[0] - self.unique_tvecs[1] # marker y is hexapod x 
+        y = self.marker_tvecs[1] - self.unique_tvecs[0] # marker x is hexapod y 
+        z = self.marker_tvecs[2] + self.unique_tvecs[2] # -?
+
+        return np.array((x, y, z))
+    
 
     def initialize_stage(self, callback=None, root=None): 
         # initialize the stage

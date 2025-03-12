@@ -52,9 +52,8 @@ class Probe():
     def translate_probe_tip(self, probe_tip_position, mtx, dist):
         self.probe_tip_position = probe_tip_position
 
-        z = self.marker_tvecs[2] # markers need to be detected before probe tip can be translated
-        z += self.unique_tvecs[2] # add unique z coordinate (unique_tvecs are in hexapod coordinates)
-
+        # markers need to be detected before probe tip can be translated
+        z = self.marker_tvecs[2] + self.unique_tvecs # add unique z coordinate
 
         # Step 1: Undistort the pixel coordinates
         undistorted_pixel = cv2.undistortPoints(np.array([self.probe_tip_position], dtype=np.float32), mtx, dist, P=mtx)
@@ -79,9 +78,11 @@ if __name__ == "__main__":
     default_mtx = np.array((1000, 0.0, 900., 0.0, 1000, 600., 0.0, 0.0, 1.0)).reshape(3, 3)
     default_dist = np.array((-0.1, 0.59, 0.01, 0.02, -0.86))
 
-    print(f"default_mtx: \n {default_mtx}")
+    #print(f"default_mtx: \n {default_mtx}")
 
     probe = Probe()
+    probe.marker_tvecs = [None, None, 100]
 
-    coords = probe.translate_probe_tip((100, 100), default_mtx, default_dist)
-    print(coords)
+
+    probe_tip_position = probe.translate_probe_tip((100, 100), default_mtx, default_dist)
+    print(f"probe tip position: {probe_tip_position}")
