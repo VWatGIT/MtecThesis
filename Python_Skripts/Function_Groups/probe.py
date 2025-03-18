@@ -42,11 +42,14 @@ class Probe():
         if position is None:
             position = self.probe_tip_position_in_camera_image
 
-        if camera_object.camera_calibrated is True:
+        try:
             self.probe_tip_position = self.translate_probe_tip(position, camera_object.mtx, camera_object.dist)
             self.probe_detected = True
-        else:
+        except Exception as e:
             self.probe_detected = False
+
+        return self.probe_detected
+
 
 
     def translate_probe_tip(self, probe_tip_position, mtx, dist):

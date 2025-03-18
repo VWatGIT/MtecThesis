@@ -28,11 +28,14 @@ def automatic_alignment(root):
     hexapod = root.hexapod
     
     
-    
     photo_diode_array_position = sensor.apply_unique_tvecs()
-    probe_tip_position = probe.probe_tip_position # Unique tvecs already applied
-    
+    probe_tip_position = probe.probe_tip_position # Unique tvecs already applied when saving probe tip position
     delta_position = relative_hexapod_delta_position(probe_tip_position, photo_diode_array_position)
+
+    if delta_position[0] >= root.hexapod.travel_ranges["X"] or delta_position[1] >= root.hexapod.travel_ranges["Y"] or delta_position[2] >= root.hexapod.travel_ranges["Z"]:
+        root.log.log_event("Error: Movement too large")
+
+
     rcv = hexapod.move(delta_position, flag = "relative")
     root.log.log_event(rcv)
     

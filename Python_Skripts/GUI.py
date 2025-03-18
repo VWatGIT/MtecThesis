@@ -76,6 +76,7 @@ class UserInterface:
         for thread in self.root.thread_list:
             thread.join()
         """
+        
         self.root.destroy()
         sys.exit()
 
@@ -103,10 +104,6 @@ class UserInterface:
         self.root.camera_object.update_frequency = int(config.get('Camera', 'update_frequency'))
         self.root.camera_object.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
         self.root.camera_object.checkerboard_dimensions = tuple(map(int, config.get('Camera', 'checkerboard_dimensions').split(',')))
-
-        # TODO maybe also load config for Hexapod/Probe/Sensor here
-
-
         
 if __name__ == "__main__":
     root = tk.Tk()

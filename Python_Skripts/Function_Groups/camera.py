@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 class Camera():
     def __init__(self):
         self.camera = None 
+        self.camera_connected = False
+        self.camera_calibrated = False
         self.create_camera() 
     
         # for zooming
@@ -18,8 +20,8 @@ class Camera():
         
 
         self.ret, self.mtx, self.dist, self.rvecs, self.tvecs = None , None, None, None , None
-        self.camera_connected = False
-        self.camera_calibrated = False
+
+
         
         self.updating = False
         self.update_frequency = 10 #[ms] # set in config
@@ -79,6 +81,7 @@ class Camera():
         try:
             self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
             self.camera_connected = True
+            print(self.camera_connected)
         except Exception as e:
             path = r'C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Python_Skripts\Checkerboard_Images\checkerboard_1.jpg'
             self.set_emulated_image(path)
@@ -219,8 +222,11 @@ def save_checkerboard_images(camera_object, num_images = 1, save_dir = r'C:\User
 
 if __name__ == "__main__":
     camera = Camera()
-    path = r"C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Git_repository\MtecThesis\Python_Skripts\Checkerboard_Images"
-    save_checkerboard_images(camera, save_dir=path)
+
+    print(camera.camera_connected)
+
+    #path = r"C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Git_repository\MtecThesis\Python_Skripts\Checkerboard_Images"
+    #save_checkerboard_images(camera, save_dir=path)
 
 
 

@@ -22,13 +22,19 @@ def update_camera(root):
                         marker_size = sensor_marker_size # for now assume same size TODO implement different sizes
                         
                         # marker drawn in detect markers
-                        image, marker_rvecs, marker_tvecs, ids = detect_markers(image, marker_size, mtx, dist)
+                        image, rvecs, tvecs, ids = detect_markers(image, marker_size, mtx, dist)
 
                         if root.camera_object.camera_calibrated:
-                            if len(marker_tvecs) > 0 and len(marker_rvecs) > 0 :
-                                root.sensor.set_marker_vecs(marker_tvecs[root.sensor.marker_id], marker_rvecs[root.sensor.marker_id])
-                                root.probe.set_marker_vecs(marker_tvecs[root.probe.marker_id], marker_rvecs[root.probe.marker_id])
+                            if len(tvecs) > 0 and len(rvecs) > 0 :
+                                for i in range(len(ids)):
+                                    if ids[i][0] == root.probe.marker_id:
+                                        root.probe.set_marker_vecs(tvecs[i][0], rvecs[i][0])
+                                        #print(f"Probe with ID:  {ids[i]} | tvecs: {tvecs[i][0]}")
+                                    if ids[i][0] == root.sensor.marker_id:
+                                        root.sensor.set_marker_vecs(tvecs[i][0], rvecs[i][0])
+                                        #print(f"Sensor with ID: {ids[i]} | tvecs: {tvecs[i][0]}")  
 
+                            
 
                     if root.draw_probe_tip_var.get() == 1:
                         image = draw_probe_tip(image, root.probe.probe_tip_position_in_camera_image)

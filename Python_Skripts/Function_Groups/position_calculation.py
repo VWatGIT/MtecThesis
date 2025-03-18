@@ -34,7 +34,7 @@ def relative_hexapod_delta_position(pos1, pos2):
     z = -delta[2]
     
     delta_pos = np.array((x, y, z, 0, 0, 0)) # add 0s to get a hexapod position
-    delta[0] -= 1 # 1mm tolerance
+    delta[0] -= 1 # 1mm tolerance TODO decide on this
     return delta_pos
 
 

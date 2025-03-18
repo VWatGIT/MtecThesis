@@ -1,5 +1,6 @@
-def update_checkboxes(root):
 
+# Update mechanism is unnecessary, better option would be to use tk variables in the objects and update them directly
+def update_checkboxes(root):
     if root.stop_update_checkboxes is True:
         return
     

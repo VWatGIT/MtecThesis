@@ -143,11 +143,8 @@ if __name__ == "__main__":
     
     
     
-    delta_movement[0] = 0 # !!! dont crash
-
     print(f"delta movement:             {delta_movement}")
-    cv2.waitKey(0)
-
+    delta_movement[0] = 0 # !!! dont crash
 
     #rcv = hexapod.move(delta_movement, flag='relative')
     #print(f"moving: {rcv}")
