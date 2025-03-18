@@ -22,7 +22,7 @@ def update_camera(root):
                         marker_size = sensor_marker_size # for now assume same size TODO implement different sizes
                         
                         # marker drawn in detect markers
-                        image, marker_rvecs, marker_tvecs = detect_markers(image, marker_size, mtx, dist)
+                        image, marker_rvecs, marker_tvecs, ids = detect_markers(image, marker_size, mtx, dist)
 
                         if root.camera_object.camera_calibrated:
                             if len(marker_tvecs) > 0 and len(marker_rvecs) > 0 :
