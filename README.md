@@ -1,6 +1,8 @@
-# MtecThesis
+# Thesis Title
+Development of an User Interface for Beam Profile Evaluation
 
-Development of an User Interface to measure the angle of an OCT laser 
+## Description
 
 
-![Flowchart Description](C:\Users\mtec\Desktop\Thesis_Misc_Valentin\Git_repository\MtecThesis\Thesis_Writeup\flowchart.png)
+# Project Flowchart
+![Flowchart Description](Thesis_Writeup\flowchart.svg)
