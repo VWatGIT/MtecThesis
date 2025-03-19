@@ -72,10 +72,12 @@ class UserInterface:
         self.root.stop_threads = True
         self.measurement_running = False
         
-        """
         for thread in self.root.thread_list:
+            print(f"Waiting for Thread: {thread}")
             thread.join()
-        """
+            print(f"Thread {thread} finished")
+
+        
         
         self.root.destroy()
         sys.exit()

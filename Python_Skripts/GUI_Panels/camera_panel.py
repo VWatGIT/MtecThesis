@@ -111,7 +111,7 @@ class CameraPanel:
         camera_settings_frame = tk.LabelFrame(parent, text="Camera Settings", name="camera_settings_frame")
         
         self.root.toggle_camera_var = tk.IntVar(value=0)
-        self.root.draw_markers_var = tk.IntVar(value=0)
+        self.root.draw_markers_var = tk.IntVar(value=1)
         self.root.draw_probe_tip_var = tk.IntVar(value=1)
         self.root.draw_checkerboard_var = tk.IntVar(value=0)
 

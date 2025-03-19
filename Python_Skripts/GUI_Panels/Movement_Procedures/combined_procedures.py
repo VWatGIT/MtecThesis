@@ -3,22 +3,12 @@ import threading
 from Python_Skripts.GUI_Panels.Movement_Procedures.run_measurements import run_measurements
 from Python_Skripts.GUI_Panels.Movement_Procedures.find_beam_centers import find_beam_centers
 from Python_Skripts.GUI_Panels.Movement_Procedures.process_data import process_data, process_beam_centers
-from Python_Skripts.GUI_Panels.Movement_Procedures.alignment import automatic_alignment
 
 from Python_Skripts.Function_Groups.data_handling import autosave
 
 
 def combined_procedures(root):
    
-    if (root.manual_alignment_var.get() == True) or (root.simulate_var.get() == True):
-        # assume manual alignment is done
-        root.log.log_event("Skipping Automatic Alignment")
-        pass
-    else:
-        root.log.log_event("Starting Automatic Alignment")
-        automatic_alignment(root)
-        root.log.log_event("Automatic Alignment done")
-
     if root.center_search_var.get() == True:
             
         root.log.log_event("Starting Search for Beam Centers")

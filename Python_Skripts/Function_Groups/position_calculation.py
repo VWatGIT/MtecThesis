@@ -27,10 +27,10 @@ def relative_hexapod_delta_position(pos1, pos2):
     pos1 = np.array(pos1)
     pos2 = np.array(pos2)
 
-    delta = pos2 - pos1 
+    delta = pos1 - pos2
     # TODO check signs and coordinate tranformations
     x = delta[1]
-    y = -delta[0] # -?
+    y = delta[0]
     z = -delta[2]
     
     delta_pos = np.array((x, y, z, 0, 0, 0)) # add 0s to get a hexapod position

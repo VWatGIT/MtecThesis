@@ -34,7 +34,7 @@ class CheckboxPanel:
         connect_stage_button = tk.Button(self.frame, text="Connect Stage", command= self.connect_stage)
         connect_hexapod_button = tk.Button(self.frame, text="Connect Hexapod", command= self.connect_hexapod)
 
-        self.manual_alignment_checkbutton = tk.Checkbutton(self.frame, text="Manual Alignment", name="manual_alignment", variable=root.manual_alignment_var, command = self.grey_out)
+        #self.manual_alignment_checkbutton = tk.Checkbutton(self.frame, text="Manual Alignment", name="manual_alignment", variable=root.manual_alignment_var, command = self.grey_out)
 
         for i in range(9):
             self.frame.grid_rowconfigure(i, weight=1)
@@ -54,7 +54,7 @@ class CheckboxPanel:
         connect_stage_button.grid(row=5, column=1, pady=5, sticky="w")
 
 
-        self.manual_alignment_checkbutton.grid(row=2, column=1, rowspan=2, pady=5, sticky="w")
+        #self.manual_alignment_checkbutton.grid(row=2, column=1, rowspan=2, pady=5, sticky="w")
         #update_checkboxes(root)
 
         
