@@ -80,7 +80,7 @@ def zoom(event, ax, camera_object):
     if event.inaxes is False:
         return
     
-    base_scale = 1.1
+    base_scale = 1.2
     if event.button == 'up':
         # Zoom in
         scale_factor = 1 / base_scale

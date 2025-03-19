@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 def detect_markers(image, marker_size, mtx, dist):
  
     # Load the predefined dictionary
-    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50) # TODO use DICT_7x7_50 for higher accuracy
     parameters = cv2.aruco.DetectorParameters()
     #detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 

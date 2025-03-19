@@ -7,9 +7,8 @@ from Python_Skripts.Function_Groups.camera import *
 from Python_Skripts.Function_Groups.marker_detection import *
 
 from Python_Skripts.GUI_Panels.camera_calibration_frame import CameraCalibrationFrame
-from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, MarkerDetectionFrame
+from Python_Skripts.GUI_Panels.camera_detection_frame import ProbeDetectionFrame, save_probe_position
 from Python_Skripts.GUI_Panels.manual_adjust_panel import ManualAdjustPanel
-
 from Python_Skripts.GUI_Panels.Panel_Updates.update_camera import update_camera, zoom, reset_zoom
 
 
@@ -105,6 +104,9 @@ class CameraPanel:
             # Store the clicked position in the probe object
             self.root.probe.probe_tip_position_in_camera_image = (int(x), int(y))
             self.root.log.log_event(f"Set Probe Tip in Camera Image to : ({int(x)}, {int(y)})")
+            save_probe_position(self.root)
+            
+            
         
 
     def create_camera_settings_frame(self, parent):

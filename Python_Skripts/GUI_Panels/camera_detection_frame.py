@@ -33,7 +33,7 @@ class ProbeDetectionFrame:
         self.threshold_slider.config(command=self.take_probe_image)
 
         self.take_probe_image_button = tk.Button(self.frame, text="Detect", command=self.take_probe_image)
-        self.save_probe_position_button = tk.Button(self.frame, text="Save Position", command=self.save_probe_position) # state = disabled
+        self.save_probe_position_button = tk.Button(self.frame, text="Save Position", command= lambda: save_probe_position(self.root)) # state = disabled
 
         # Place labels and entries using grid
         self.crop_top_left_label.grid(row=0, column=0, pady=5, sticky="w")
@@ -89,19 +89,19 @@ class ProbeDetectionFrame:
 
         self.root.log.log_event("Took Probe Image")
 
-    def save_probe_position(self):
-        if self.root.camera_object.camera_calibrated is False:
-            self.root.log.log_event("Camera not calibrated")
-            return
-        if self.root.probe.probe_tip_position_in_camera_image is None:
-            self.root.log.log_event("Probe Tip not detected")
-            return
-        if self.root.probe.marker_detected is False:
-            self.root.log.log_event("Marker not detected, determination of probe tip position in 3D not possible")
-            return
-        
-        self.root.probe.save_probe_position(self.root.camera_object)
-        self.root.log.log_event("Saved Probe Position")
+def save_probe_position(root):
+    if root.camera_object.camera_calibrated is False:
+        root.log.log_event("Probe-Tip Position Calculation Error: Camera not calibrated")
+        return
+    if root.probe.probe_tip_position_in_camera_image is None:
+        root.log.log_event("Probe-Tip Position Calculation Error: Probe Tip not detected")
+        return
+    if root.probe.marker_detected is False:
+        root.log.log_event("Probe-Tip Position Calculation Error: Marker(s) not detected")
+        return
+    
+    root.probe.save_probe_position(root.camera_object)
+    root.log.log_event("Saved Probe Position")
 
 
 class MarkerDetectionFrame:
