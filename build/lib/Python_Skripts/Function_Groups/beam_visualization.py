@@ -241,16 +241,17 @@ def create_heatmap(points, sum_values, data, orientation='vertical'):
 
 def detect_beam_points(points, sum_values, orientation='vertical'):
     beam_points = []
-    beam_sum_values = []
+    beam_sum_values = [] # intensities are stored here
     if orientation == 'vertical':
         max_intensity = max(sum_values)
-        edge_intensity = max_intensity * (1/np.e**2)
-        # 1/e^2 of the max intensity
+        edge_intensity = max_intensity * (1/np.e**2) # 1/e^2 of the max intensity
+   
         for i, sum in enumerate(sum_values):
             if sum > edge_intensity:
                 beam_points.append(points[i])
                 beam_sum_values.append(sum)
-    if orientation == 'horizontal':
+
+    if orientation == 'horizontal': 
         for point, sum in zip(points, sum_values):
             if sum > 2.5:
                 beam_points.append(point)
