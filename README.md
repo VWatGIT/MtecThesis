@@ -1,5 +1,8 @@
-# MtecThesis
+# Thesis Title
+Development of an User Interface for Beam Profile Evaluation
 
-WIP 
+## Description
 
-Development of an User Interface to measure the angle of an OCT laser 
+
+# Project Flowchart
+![Flowchart Description](Thesis_Writeup\flowchart.svg)

@@ -72,10 +72,13 @@ class UserInterface:
         self.root.stop_threads = True
         self.measurement_running = False
         
-        """
         for thread in self.root.thread_list:
+            print(f"Waiting for Thread: {thread}")
             thread.join()
-        """
+            print(f"Thread {thread} finished")
+
+        
+        
         self.root.destroy()
         sys.exit()
 
@@ -103,10 +106,6 @@ class UserInterface:
         self.root.camera_object.update_frequency = int(config.get('Camera', 'update_frequency'))
         self.root.camera_object.checkerboard_size = int(config.get('Camera', 'checkerboard_size'))
         self.root.camera_object.checkerboard_dimensions = tuple(map(int, config.get('Camera', 'checkerboard_dimensions').split(',')))
-
-        # TODO maybe also load config for Hexapod/Probe/Sensor here
-
-
         
 if __name__ == "__main__":
     root = tk.Tk()

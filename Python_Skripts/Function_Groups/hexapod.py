@@ -1,4 +1,3 @@
-#from pylablib.devices import Thorlabs # TODO uncomment later
 import numpy as np
 import socket
 import time
@@ -254,10 +253,10 @@ if __name__ == "__main__":
     
 
     print("connect: "+ str(hexapod.connect_sockets()))    
-    print("move: " + str(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative")))
+    #print("move: " + str(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative")))
+    print(hexapod.move_to_default_position())
     print("get_pos:" + str(hexapod.send_command("get_pos")))
     """
-    print(hexapod.move_to_default_position())
     print(hexapod.send_command("get_pos"))
     
 

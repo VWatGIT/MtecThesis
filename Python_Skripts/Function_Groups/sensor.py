@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from configparser import ConfigParser
+from pylablib.devices import Thorlabs # TODO uncomment later
 
 
 class Signal: # Dummy
@@ -54,17 +55,16 @@ class Sensor():
 
     def apply_unique_tvecs(self):
         """
-        camera y --> hexapod x + unique_tvecs[0]
-        camera x --> hexapod y + unique_tvecs[1]
-        camera z --> hexapod z * (-1) + unique_tvecs[2]
+        returns the position of the photo diode array in camera coordinates
+       
+        unique_tvecs and r_vecs already in camera coordinates
+        unique tvecs go from the marker corner, not the center
 
-        unique_tvecs and r_vecs already in hexapod coordinates
-        
         marker_r_vecs and unique_rvecs are assumed to be negligible
         """
         # TODO check orientation of x, y, z axes
-        x = self.marker_tvecs[0] - self.unique_tvecs[1] # marker y is hexapod x 
-        y = self.marker_tvecs[1] - self.unique_tvecs[0] # marker x is hexapod y 
+        x = self.marker_tvecs[0] + self.unique_tvecs[0] + (self.marker_size/2) # -?
+        y = self.marker_tvecs[1] + self.unique_tvecs[1] - (self.marker_size/2) # -?
         z = self.marker_tvecs[2] + self.unique_tvecs[2] # -?
 
         return np.array((x, y, z))
@@ -81,8 +81,8 @@ class Sensor():
             callback = lambda x: print(x)
 
         try:
-            #self.stage = Thorlabs.KinesisQuadDetector("69251980") TODO uncomment
-            x = "5" + 6  # TODO delete later only for error creation
+            self.stage = Thorlabs.KinesisQuadDetector("69251980")# TODO uncomment
+            #x = "5" + 6  # TODO delete later only for error creation
             result = "Stage initialized sucessfully" # 
             callback(result)
 
