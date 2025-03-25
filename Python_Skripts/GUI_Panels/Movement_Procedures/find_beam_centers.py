@@ -51,9 +51,12 @@ def find_beam_centers(root):
         elif root.center_search_method_var.get() == 'refine':
             center = refine_search(root, data, root.hexapod.position, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
         
-        root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
+        if np.isclose(np.abs(center[1]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3) or np.isclose(np.abs(center[2]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3):
+            root.log.log_event(f'Center {i+1}/{num_centers} not found, search area too small')
+        else:
+            data['Alignment']['Center_Search']['Beam_Centers'].append(center)
+            root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
 
-        data['Alignment']['Center_Search']['Beam_Centers'].append(center)
 
     root.after(10, update_beam_center_plot, root)
     

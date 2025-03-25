@@ -12,8 +12,8 @@ class Simulation_Frame:
         wavelength_label = tk.Label(self.frame, text="Wavelength [nm]:")
         w_0_label = tk.Label(self.frame, text="Beam Waist [mm]:")
         i_0_label = tk.Label(self.frame, text="I_0 [W/m^2]:")
-        alpha_label = tk.Label(self.frame, text="Simulate Pitch [deg]:")
-        beta_label = tk.Label(self.frame, text="Simulate Yaw [deg]:")
+        alpha_label = tk.Label(self.frame, text="polar angle theta   [°]:") # physics convention 
+        beta_label = tk.Label(self.frame,  text="azimuthal angle phi [°]:")
 
         self.wavelength_entry = tk.Entry(self.frame, name="wavelength_entry", width=10)
         self.w_0_entry = tk.Entry(self.frame, name="w_0_entry", width=10)

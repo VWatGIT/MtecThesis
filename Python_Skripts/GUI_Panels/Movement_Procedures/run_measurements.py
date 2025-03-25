@@ -70,13 +70,14 @@ def run_measurements(root):
         update_interval = tab.measurement_points // 10
         if i%update_interval == 0:
             
-            if i > 0:
+            if i > 0 or i == tab.measurement_points - 1:
                 root.log.delete_last_event()
                 root.log.log_event(rcv)
                 root.log.delete_last_event()
                 root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
 
             else:   
+                root.log.log_event(rcv)
                 root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
 
 

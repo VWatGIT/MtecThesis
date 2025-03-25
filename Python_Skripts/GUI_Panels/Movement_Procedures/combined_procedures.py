@@ -17,11 +17,11 @@ def combined_procedures(root):
 
         # Now calculate the trajectory
         root.log.log_event("Calculating Trajectory")
-        trj, angles = process_beam_centers(root)
-        root.log.log_event(f"Trajectory: {trj}, Angles: {angles}")
+        trj, theta, phi = process_beam_centers(root)
+        root.log.log_event(f"Trajectory: {trj} | Angles: theta = {theta:.2f}, phi = {phi:.2f}")
 
         # Now align the probe with sensor in an angle
-        # TODO implement angled alignment
+        # maybe
         # Alignment finished
         
     else:
@@ -44,7 +44,7 @@ def combined_procedures(root):
     # Move to default position  
     if root.hexapod.connection_status is True:
         rcv = root.hexapod.move_to_default_position() 
-        root.log.log_event("rcv")
+        root.log.log_event(rcv)
 
     autosave(root)
     root.new_measurement_panel.nametowidget("save_button").config(state="normal")
