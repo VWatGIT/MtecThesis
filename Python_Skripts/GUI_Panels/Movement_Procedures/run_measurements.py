@@ -57,9 +57,8 @@ def run_measurements(root):
         next_point = (tab.path_points[i][0], tab.path_points[i][1], tab.path_points[i][2], 0, 0, 0) 
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2], 0, 0, 0)
         
-
-        rcv = root.hexapod.move(next_relative_position, flag = "relative") 
-
+        rcv = root.hexapod.move(next_relative_position, flag = "relative", simulate = root.simulate_var.get())
+      
         last_point = next_point # Update the last point
 
         doMeasurement(root, data, root.sensor, root.hexapod, i)
@@ -73,7 +72,10 @@ def run_measurements(root):
             
             if i > 0:
                 root.log.delete_last_event()
+                root.log.log_event(rcv)
+                root.log.delete_last_event()
                 root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
+
             else:   
                 root.log.log_event(f"Performed measurement: {i+1} / {tab.measurement_points}")
 

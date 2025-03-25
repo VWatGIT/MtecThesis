@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1">
+    <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Tk - tk" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="Frame - top_panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="0" y="40" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="TPanedwindow - !panedwindow" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="3">
+          <mxGeometry x="0" y="80" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="5" value="Frame - !frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="4">
+          <mxGeometry x="0" y="120" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="6" value="TNotebook - tab_group" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="5">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="7" value="Frame - camera_panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="5">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="8" value="Labelframe - camera_plot_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="9" value="Canvas - !canvas" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="8">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="10" value="Frame - !frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="11" value="Labelframe - camera_calibration_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="12" value="Label - checkerboard_size_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="13" value="Entry - checkerboard_size_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="14" value="Label - checkerboard_corners_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="15" value="Entry - checkerboard_corners_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="16" value="Label - num_calibratrion_images_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="17" value="Scale - num_calibratrion_images_slider" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="18" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="19" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="20" value="Button - !button3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="21" value="Button - !button4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="11">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="22" value="Labelframe - probe_detection_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="23" value="Label - crop_top_left_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="24" value="Entry - crop_top_left_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="25" value="Label - crop_bottom_right_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="26" value="Entry - crop_bottom_right_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="27" value="Label - threshold_slider_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="28" value="Scale - threshold_slider" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="29" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="30" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="22">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="31" value="Labelframe - panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="32" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="33" value="Checkbutton - !checkbutton-1" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="34" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="35" value="Label - hexapod_x_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="36" value="Entry - hexapod_x_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="37" value="Label - hexapod_y_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="38" value="Entry - hexapod_y_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="39" value="Label - hexapod_z_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="40" value="Entry - hexapod_z_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="41" value="Label - hexapod_U_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="42" value="Entry - hexapod_U_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="43" value="Label - hexapod_V_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="44" value="Entry - hexapod_V_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="45" value="Label - hexapod_W_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="46" value="Entry - hexapod_W_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="47" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="48" value="Button - !button3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="49" value="Button - !button4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="50" value="Button - !button5" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="51" value="Button - !button6" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="52" value="Button - !button7" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="53" value="Button - !button8" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="54" value="Button - !button9" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="55" value="Button - !button10" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="56" value="Button - !button11" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="57" value="Button - !button12" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="58" value="Button - !button13" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="59" value="TSeparator - !separator2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="60" value="Button - !button14" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="61" value="Checkbutton - relative_checkbutton" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="62" value="Button - !button15" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="31">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="63" value="Labelframe - camera_settings_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="10">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="64" value="Checkbutton - !checkbutton-2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="65" value="Checkbutton - !checkbutton-3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="66" value="Checkbutton - !checkbutton-4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="67" value="Checkbutton - !checkbutton-5" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="68" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="69" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="63">
+          <mxGeometry x="0" y="280" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="70" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="71" value="Frame - help_panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="5">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="72" value="Labelframe - !labelframe" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="4">
+          <mxGeometry x="0" y="120" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="73" value="Text - !text" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="72">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="74" value="Frame - !frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="3">
+          <mxGeometry x="0" y="80" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="75" value="Frame - !frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="74">
+          <mxGeometry x="0" y="120" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="76" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="77" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="78" value="Button - !button3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="79" value="Button - !button4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="80" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="81" value="TSeparator - !separator2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="82" value="TSeparator - !separator3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="83" value="TSeparator - !separator4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="75">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="84" value="Frame - new_measurement_panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="74">
+          <mxGeometry x="0" y="120" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="85" value="Labelframe - input_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="86" value="Frame - path_input_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="85">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="87" value="Label - !label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="88" value="Label - !label2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="89" value="Label - !label3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="90" value="Entry - probe_name_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="91" value="Entry - measurement_space_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="92" value="Entry - step_size_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="93" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="94" value="Checkbutton - center_search_checkbox" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="95" value="Checkbutton - box_measurement_checkbox" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="96" value="Checkbutton - autosave_checkbox" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="86">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="97" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="85">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="98" value="Frame - center_search_input_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="85">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="99" value="TRadiobutton - quadrant_search_radiobutton" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="100" value="TRadiobutton - center_search_radiobutton" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="101" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="102" value="TSeparator - !separator2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="103" value="Label - !label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="104" value="Label - !label2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="105" value="Label - !label3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="106" value="Label - !label4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="107" value="Label - !label5" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="108" value="Label - !label6" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="109" value="Entry - num_centers_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="110" value="Entry - center_spacing_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="111" value="Entry - initial_search_area_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="112" value="Entry - initial_step_size_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="113" value="Entry - refinement_factor_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="114" value="Entry - max_num_iterations_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="98">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="115" value="TSeparator - !separator2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="85">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="116" value="Frame - time_estimation_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="85">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="117" value="Label - time_estimated_label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="116">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="118" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="116">
+          <mxGeometry x="0" y="240" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="119" value="Labelframe - checkbox_panel" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="120" value="Checkbutton - camera_connected" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="121" value="Checkbutton - camera_calibrated" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="122" value="Checkbutton - markers_detected" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="123" value="Checkbutton - probe_detected" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="124" value="Checkbutton - hexapod_connected" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="125" value="Checkbutton - stage_connected" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="126" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="127" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="128" value="Button - !button3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="129" value="Button - !button4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="119">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="130" value="Labelframe - simulation_frame" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="131" value="Label - !label" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="132" value="Label - !label2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="133" value="Label - !label3" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="134" value="Label - !label4" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="135" value="Label - !label5" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="136" value="Entry - wavelength_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="137" value="Entry - w_0_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="138" value="Entry - i_0_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="139" value="Entry - alpha_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="140" value="Entry - beta_entry" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="141" value="Checkbutton - simulate_checkbox" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="142" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="130">
+          <mxGeometry x="0" y="200" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="143" value="Button - start_button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="144" value="Button - save_button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="145" value="Button - stop_button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="146" value="TProgressbar - progress_bar" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="84">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="147" value="Frame - !frame2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="74">
+          <mxGeometry x="0" y="120" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="148" value="Button - !button" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="147">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="149" value="Button - !button2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="147">
+          <mxGeometry x="0" y="160" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="150" value="TSeparator - !separator" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="3">
+          <mxGeometry x="0" y="80" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="151" value="TSeparator - !separator2" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="3">
+          <mxGeometry x="0" y="80" width="120" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="152" value="Menu - !menu" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="2">
+          <mxGeometry x="0" y="40" width="120" height="40" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
