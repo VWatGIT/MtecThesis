@@ -192,9 +192,14 @@ class Hexapod():
 
         return rcv
 
-    def move(self, pos, flag = "relative"):
+
+
+
+
+
+    def move(self, pos, flag = "relative", simulate = False):
         
-        if self.connection_status is False:
+        if (self.connection_status is False) or (simulate):
             
             pos_current = self.position # use simulated position for testing
 
@@ -256,6 +261,8 @@ if __name__ == "__main__":
     #print("move: " + str(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative")))
     print(hexapod.move_to_default_position())
     print("get_pos:" + str(hexapod.send_command("get_pos")))
+    print(hexapod.move([1.001, 1, 1.0003, 1.02, 0, 0, 0], flag = "relative"))
+    print(type(hexapod.position[0]))
     """
     print(hexapod.send_command("get_pos"))
     

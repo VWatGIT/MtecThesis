@@ -14,21 +14,20 @@ class GaussBeam:
 
         self.theta = self.w_0 / self.z_r
 
-        self.alpha = 0
-        self.beta = 0
+        self.theta = 0
+        self.phi = 0
         self.default_trj = [1, 0, 0]
         self.trj = self.default_trj.copy()
 
-    def set_Trj(self, alpha, beta):
+    def set_Trj(self, theta, phi):
         self.trj = self.default_trj.copy()
-        self.alpha = alpha
-        self.beta = beta
+        self.theta = float(theta) # polar angle theta
+        self.phi = float(phi)   # azimuthal angle phi
         
-        rotation = R.from_euler('zy', [alpha,beta], degrees=True)
+        # rotate the default trajectory
+        rotation = R.from_euler('yx', [-self.theta,self.phi], degrees=True) # using physics convention for the angles
         new_trj = rotation.apply(self.trj)
         self.trj = new_trj
-        print(f"new trj: {self.trj}")
-        print(f"default trj: {self.default_trj}")
 
     def get_Intensity(self, r= None, z= None, point = None, shift = None):
         if np.any(self.trj != self.default_trj) and (point is not None):

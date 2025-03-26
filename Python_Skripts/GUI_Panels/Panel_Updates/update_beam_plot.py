@@ -62,18 +62,28 @@ def update_beam_plot(root, event = None):
 
         # Plot the beam trajectory 
         if data['Alignment']['trajectory'] is not None:
-                trj_vec = data['Alignment']['trajectory']
+                trj = data['Alignment']['trajectory']
                 #now_plot a line from the start to the end
                 # scale the vector to the grid size
                 grid_size = data['3D']['grid_size'][0]
-                trajectory = np.array([trj_vec[0], trj_vec[1], trj_vec[2]]) * (grid_size) # grid_size*1.1
-          
-
-                start_point = np.array(data['Alignment']['Center_Search']['Beam_Centers'][0])
-                end_point = start_point + trajectory
-               
+       
+                centers = data['Alignment']['Center_Search']['Beam_Centers']
+                centers = np.array(centers)
                 
-                ax.plot([start_point[0], end_point[0]], [start_point[1], end_point[1]], [start_point[2], end_point[2]], color='red', label='Trajectory', linewidth=5)
+                origin = np.array(centers[0])
+
+                def center_line(trj, origin, t):
+                        return trj * t  + origin
+                
+                max_distance = np.sqrt(np.sum((centers[0] - centers[-1])**2)) 
+
+                t_values = np.linspace(-max_distance*0.15,max_distance *1.15 , 100)
+
+                trj_x = [center_line(trj, origin, t)[0] for t in t_values]
+                trj_y = [center_line(trj, origin, t)[1] for t in t_values]
+                trj_z = [center_line(trj, origin, t)[2] for t in t_values]
+                        
+                ax.plot(trj_x, trj_y, trj_z, color='red', label='Trajectory', linewidth=3, linestyle='dashed')
 
 
         # draw probe position ?

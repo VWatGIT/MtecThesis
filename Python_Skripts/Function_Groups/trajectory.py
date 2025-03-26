@@ -41,12 +41,18 @@ def calculate_angles(trajectory):
 
     
     r = np.sqrt(x**2 + y**2 + z**2)
-
-    phi = np.sign(y) * np.arccos(z/np.sqrt(x**2 + y**2))
-    theta = np.arccos(x/r)
     
-    angles = np.degrees(np.array([phi, theta]))
-    return angles
+    if r == 0:
+        theta = 0
+        phi = 0    
+    else:
+        phi = np.sign(y) * np.arccos(z/np.sqrt(x**2 + y**2))
+        theta = np.arccos(x/r)
+    
+        theta =-(np.degrees(theta)-180)%360 # due to flip of the x-axis
+        phi = -np.degrees(phi)%360
+
+    return theta, phi
 
 def calculate_beam_trajectory_LR(center_points):
     center_points = np.array(center_points)
@@ -121,7 +127,7 @@ def normalize(v):
     return v / np.linalg.norm(v)
 
 if __name__ == "__main__":
-    pass
+    print(0%180)
 
 
 

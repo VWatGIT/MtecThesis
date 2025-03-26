@@ -39,20 +39,24 @@ def find_beam_centers(root):
         root.log.log_event(f'Searching for center {i+1}/{num_centers}')
 
         last_point = root.hexapod.position
+
         next_point = (x_path_points[i][0], x_path_points[i][1], x_path_points[i][2])
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2])
-        root.hexapod.move(next_relative_position, flag = "relative")
+        root.hexapod.move(next_relative_position, flag = "relative", simulate = root.simulate_var.get())
         current_pos = root.hexapod.position
 
         if root.center_search_method_var.get() == 'quadrant':
             center = quadrant_search(root, data, root.hexapod.position, initial_search_area, max_num_iterations)
-            root.hexapod.move(current_pos, flag = "absolute") # move back to the current position as quadrant search moves the hexapod
+            root.hexapod.move(current_pos, flag = "absolute", simulate = root.simulate_var.get()) # move back to the current position as quadrant search moves the hexapod
         elif root.center_search_method_var.get() == 'refine':
             center = refine_search(root, data, root.hexapod.position, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
         
-        root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
+        if np.isclose(np.abs(center[1]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3) or np.isclose(np.abs(center[2]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3):
+            root.log.log_event(f'Center {i+1}/{num_centers} not found, search area too small')
+        else:
+            data['Alignment']['Center_Search']['Beam_Centers'].append(center)
+            root.log.log_event(f'Center {i+1}/{num_centers} found at {center}')
 
-        data['Alignment']['Center_Search']['Beam_Centers'].append(center)
 
     root.after(10, update_beam_center_plot, root)
     
@@ -74,13 +78,13 @@ def grid_search(root, data, initial_point, grid_size, step_size):
     root.after(10, update_beam_center_plot, root)
     #print(f'Path Points: \n {path_points}')
     last_point = initial_point
-    root.hexapod.move(initial_point, flag = "absolute")
+    root.hexapod.move(initial_point, flag = "absolute", simulate = root.simulate_var.get())
     for i in range(len(path_points)):
 
         # As Path points are absolute, transform them to relative positions
         next_point = np.array((path_points[i][0] + initial_point[0], path_points[i][1] + initial_point[1], path_points[i][2] + initial_point[2]))
         next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2])
-        root.hexapod.move(next_relative_position, flag = "relative")
+        root.hexapod.move(next_relative_position, flag = "relative", simulate = root.simulate_var.get())
         last_point = next_point
 
         current_path_point = (root.hexapod.position[0], root.hexapod.position[1], root.hexapod.position[2])
@@ -154,7 +158,7 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
 
     for point in points:
         position = (initial_position[0] + point[0],initial_position[1] + point[1],initial_position[2] + point[2], 0, 0, 0)
-        root.hexapod.move(position, flag = "absolute")
+        root.hexapod.move(position, flag = "absolute", simulate = root.simulate_var.get())
         data['Alignment']['Center_Search']['Path_Points'].append(point)
 
         if root.simulate_var.get() == True:
@@ -197,15 +201,7 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
 
 if __name__ == "__main__":
     from Python_Skripts.GUI_Panels.beam_center_plot_frame import BeamCenterPlotFrame
-
+    from Python_Skripts.Function_Groups.hexapod import Hexapod
     import tkinter as tk
-    root = tk.Tk()
-
-    # TODO i dont know how to properly test this without opening the main gui all the time
-    plot_frame = BeamCenterPlotFrame(root, root).frame
-    plot_frame.pack(side = "top", fill = "both", expand = True)
-
-    button = tk.Button(root, text = "Find Beam Centers", command = lambda: find_beam_centers(root))
-    button.pack(side = "bottom")
-
-    root.mainloop()
+    
+    

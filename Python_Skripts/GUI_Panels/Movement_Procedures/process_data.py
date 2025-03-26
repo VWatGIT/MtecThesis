@@ -11,12 +11,16 @@ def process_beam_centers(root):
     centers = data['Alignment']['Center_Search']['Beam_Centers']
 
     trj = calculate_beam_trajectory_LR(centers)
-    angles = calculate_angles(trj)
+    theta, phi = calculate_angles(trj)
 
     data['Alignment']['trajectory'] = trj
-    data['Alignment']['angles'] = angles
+    data['Alignment']['angles'] = {}
+    data['Alignment']['angles']['theta'] = theta
+    data['Alignment']['angles']['phi'] = phi
 
-    return trj, angles
+    update_beam_center_plot(root)
+
+    return trj, theta, phi
 
 def process_data(root):
   
