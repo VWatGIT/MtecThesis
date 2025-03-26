@@ -26,9 +26,15 @@ def update_beam_center_plot(root, event = None):
         path_z = path[:slice_index, 2]
         
 
- 
-        ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', alpha = 0.3, s=3)
-        ax.plot(path_x, path_y, path_z, color='orange', label='Path done', linewidth = 0.5)
+        if not hasattr(tab, 'points_to_measure_plot'):
+            tab.points_to_measure_plot = ax.scatter(points_x, points_y, points_z, label = 'Points to measure', color = 'blue', alpha = 0.3, s=3)
+        else:
+            ax.scatter(points_x, points_y, points_z, color = 'blue', alpha = 0.3, s=3)
+
+        if not hasattr(tab, 'center_search_path'):
+            tab.center_search_path = ax.plot(path_x, path_y, path_z, label='Path done', color='lightsteelblue', linewidth = 0.5)
+        else:
+            ax.plot(path_x, path_y, path_z, color='lightsteelblue', linewidth = 0.5)
             #tab.center_search_path.set_data(path_x, path_y)
             #tab.center_search_path.set_3d_properties(path_z)
 
@@ -43,7 +49,7 @@ def update_beam_center_plot(root, event = None):
         if not hasattr(tab, 'beam_centers_plot'):
             tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=200)
         else:
-            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=200)
+            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, color='red', marker='x', s=200)
             #tab.beam_centers_plot._offsets3d = (beam_centers_x, beam_centers_y, beam_centers_z)
 
     if data['Alignment']['trajectory'] is not None:
@@ -67,6 +73,7 @@ def update_beam_center_plot(root, event = None):
 
         ax.plot(trj_x, trj_y, trj_z, label='Beam Trajectory', color='red', linewidth = 2, linestyle='dashed')
 
+    ax.legend()
     canvas.draw()
     
     

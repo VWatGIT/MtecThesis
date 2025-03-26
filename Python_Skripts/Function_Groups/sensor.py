@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from configparser import ConfigParser
-from pylablib.devices import Thorlabs # TODO uncomment later
+#from pylablib.devices import Thorlabs # TODO uncomment later
 
 
 class Signal: # Dummy
