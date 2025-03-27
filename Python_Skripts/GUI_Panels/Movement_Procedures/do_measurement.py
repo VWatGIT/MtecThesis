@@ -5,18 +5,17 @@ def doMeasurement(root, data, sensor, hexapod, i):
     measurement_point = tab.path_points[i]
 
     # Get the absolute Hexapod position for the measurement point 
-    hexapod_position = hexapod.position
-
-    # Get data from the sensor
     
+
     if root.simulate_var.get() == True:
+        hexapod_position = root.hexapod.simulated_position
         # create fake random signal
         signal = sensor.get_test_signal()
-
         intensity = root.gauss_beam.get_Intensity(point = measurement_point)
         # simulate only intensity
         signal.sum = intensity
     else:
+        hexapod_position = hexapod.get_position()
         signal = sensor.get_signal()
 
     measurement_id_str = str(i+1)  # Convert measurement_id to string

@@ -17,12 +17,11 @@ def combined_procedures(root):
 
         # Now calculate the trajectory
         root.log.log_event("Calculating Trajectory")
-        trj, theta, phi = process_beam_centers(root)
-        root.log.log_event(f"Trajectory: {trj} | Angles: theta = {theta:.2f}, phi = {phi:.2f}")
-
-        # Now align the probe with sensor in an angle
-        # maybe
-        # Alignment finished
+        try:
+            trj, theta, phi = process_beam_centers(root)
+            root.log.log_event(f"Trajectory: {trj} | Angles: theta = {theta:.2f}, phi = {phi:.2f}")
+        except Exception as e:
+            root.log.log_event(f"Error calculating Trajectory: {e}")
         
     else:
         root.log.log_event("Skipping Center Search")
@@ -43,7 +42,7 @@ def combined_procedures(root):
 
     # Move to default position  
     if root.hexapod.connection_status is True:
-        rcv = root.hexapod.move_to_default_position() 
+        rcv = root.hexapod.move_to_default_position(simulate = root.simulate_var.get()) 
         root.log.log_event(rcv)
 
     autosave(root)

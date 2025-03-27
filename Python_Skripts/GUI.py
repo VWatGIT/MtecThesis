@@ -72,13 +72,14 @@ class UserInterface:
         self.root.stop_threads = True
         self.measurement_running = False
         
+        
+        root.log.log_event("Shutting down")
         for thread in self.root.thread_list:
-            print(f"Waiting for Thread: {thread}")
-            thread.join()
-            print(f"Thread {thread} finished")
+                    root.log.log_event(f"Waiting for Thread: {thread}")
+                    thread.join()
+        root.log.log_event("All Threads Closed")
+        root.log.log_event("Goodbye")
 
-        
-        
         self.root.destroy()
         sys.exit()
 

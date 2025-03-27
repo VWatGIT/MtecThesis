@@ -34,23 +34,31 @@ def find_beam_centers(root):
 
     x_path_points, _ = generate_snake_path(grid_size, step_size)    
 
+    initial_position = root.hexapod.get_position(simulate = root.simulate_var.get())
      
     for i in range(len(x_path_points)):
+        if root.measurement_running == False:
+            root.log.log_event(f'Terminating center search at center {i+1}/{num_centers}')
+            break
+
         root.log.log_event(f'Searching for center {i+1}/{num_centers}')
 
-        last_point = root.hexapod.position
+        last_point = root.hexapod.get_position(simulate = root.simulate_var.get())
+        last_point = np.array(last_point)
 
         next_point = (x_path_points[i][0], x_path_points[i][1], x_path_points[i][2])
-        next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2])
-        root.hexapod.move(next_relative_position, flag = "relative", simulate = root.simulate_var.get())
-        current_pos = root.hexapod.position
+        new_position = (initial_position[0] + next_point[0],initial_position[1] + next_point[1],initial_position[2] + next_point[2], 0, 0, 0)
+        root.hexapod.move(new_position, flag = "absolute", simulate = root.simulate_var.get())
+
+        current_pos = root.hexapod.get_position(simulate = root.simulate_var.get())
 
         if root.center_search_method_var.get() == 'quadrant':
-            center = quadrant_search(root, data, root.hexapod.position, initial_search_area, max_num_iterations)
+            center = quadrant_search(root, data, next_point, initial_search_area, max_num_iterations)
             root.hexapod.move(current_pos, flag = "absolute", simulate = root.simulate_var.get()) # move back to the current position as quadrant search moves the hexapod
         elif root.center_search_method_var.get() == 'refine':
-            center = refine_search(root, data, root.hexapod.position, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
-        
+            center = refine_search(root, data, next_point, initial_search_area, initial_step_size, refinement_factor, max_num_iterations)
+            root.hexapod.move(current_pos, flag = "absolute", simulate = root.simulate_var.get()) # move back to the current position as refine search moves the hexapod
+
         if np.isclose(np.abs(center[1]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3) or np.isclose(np.abs(center[2]), abs(initial_search_area), rtol = 1e-3, atol = 1e-3):
             root.log.log_event(f'Center {i+1}/{num_centers} not found, search area too small')
         else:
@@ -62,86 +70,89 @@ def find_beam_centers(root):
     
     return data['Alignment']['Center_Search']['Beam_Centers']
 
-def grid_search(root, data, initial_point, grid_size, step_size):
-    max_value = -np.inf
-    max_point = None
-    
-    step_size = (step_size, step_size, step_size)
-
-    path_points, _ = generate_snake_path(grid_size, step_size)
-
-    # Transform path points to positions relative to the initial point
-    for point in path_points:
-        data['Alignment']['Center_Search']['Path_Points'].append((point[0] + initial_point[0], point[1] + initial_point[1], point[2] + initial_point[2]))
-
-    #update_beam_center_plot(root)
-    root.after(10, update_beam_center_plot, root)
-    #print(f'Path Points: \n {path_points}')
-    last_point = initial_point
-    root.hexapod.move(initial_point, flag = "absolute", simulate = root.simulate_var.get())
-    for i in range(len(path_points)):
-
-        # As Path points are absolute, transform them to relative positions
-        next_point = np.array((path_points[i][0] + initial_point[0], path_points[i][1] + initial_point[1], path_points[i][2] + initial_point[2]))
-        next_relative_position = (next_point[0] - last_point[0], next_point[1] - last_point[1], next_point[2] - last_point[2])
-        root.hexapod.move(next_relative_position, flag = "relative", simulate = root.simulate_var.get())
-        last_point = next_point
-
-        current_path_point = (root.hexapod.position[0], root.hexapod.position[1], root.hexapod.position[2])
-        if root.simulate_var.get() == True:
-            # change point to laser coordinates
-            value = root.gauss_beam.get_Intensity(point = current_path_point)
-
-        signal = root.sensor.get_signal()
-        value = signal.sum
-
-
-        if value > max_value:
-            max_value = value
-            x = root.hexapod.position[0]
-            y = root.hexapod.position[1]
-            z = root.hexapod.position[2]
-            max_point = (x, y, z)
-            #print(f'new max value: {max_value:.2f} at {max_point}')
-        
-
-        tab = root.tab_group.nametowidget(root.tab_group.select())
-        tab.current_point_index += 1
-        #update_beam_center_plot(root)
-
-        #root.after(10, update_beam_center_plot, root)
-    #print(f'finished iteration, new center: {max_point}')
-    return max_point
 
 def refine_search(root, data, initial_point, initial_search_area = 5, initial_step_size = 1, refinement_factor = 2, max_iterations = 3):
+    # TODO fix
+    def grid_search(root, data, current_center, grid_size, step_size):
+        if root.measurement_running == False:
+            return current_center
+        
+        max_value = -np.inf
+        max_point = None
+        
+        step_size = (step_size, step_size, step_size)
+
+        path_points, _ = generate_snake_path(grid_size, step_size)
+
+        # Transform path points to positions relative to the initial point
+        for point in path_points:
+            data['Alignment']['Center_Search']['Path_Points'].append((point[0] + current_center[0], point[1] + current_center[1], point[2] + current_center[2]))
+
+        #update_beam_center_plot(root)
+        root.after(10, update_beam_center_plot, root)
+        #print(f'Path Points: \n {path_points}')
+   
+        current_position = root.hexapod.get_position(simulate = root.simulate_var.get())
+        for i in range(len(path_points)):
+
+            # As Path points are absolute, transform them to relative positions
+            next_point = np.array((path_points[i][0] + current_center[0], path_points[i][1] + current_center[1], path_points[i][2] + current_center[2]))
+            
+            new_position = (current_position[0] + next_point[0],current_position[1] + next_point[1],current_position[2] + next_point[2], 0, 0, 0)
+            root.hexapod.move(new_position, flag = "absolute", simulate = root.simulate_var.get())
+          
+            if root.simulate_var.get() == True:
+                value = root.gauss_beam.get_Intensity(point = path_points[i])
+            else:
+                signal = root.sensor.get_signal()
+                value = signal.sum
+
+
+            if value > max_value:
+                max_value = value
+                max_point = (current_center[0] + path_points[i][0], current_center[1] + path_points[i][1], current_center[2] + path_points[i][2])
+
+            tab = root.tab_group.nametowidget(root.tab_group.select())
+            tab.current_point_index += 1
+            #update_beam_center_plot(root)
+
+            #root.after(10, update_beam_center_plot, root)
+        #print(f'finished iteration, new center: {max_point}')
+        return max_point
+
+    
     step_size = initial_step_size
 
     # Scale to allow for the first search area to not be greater than the initial search area
     # due to being multiplied by the step size which gets divided by the refinement factor later
     scaled_area = initial_search_area/step_size
     
-    
+    center = tuple(initial_point)
     for _ in range(max_iterations):
+        if root.measurement_running == False:
+            return center
+        
         # Hexapod moves along the path points, which are relative
         # range and grid_size are formatted in a way so it fits the path creation
         y_range = z_range = (-scaled_area*step_size, scaled_area*step_size) # 5 mm in each direction
 
         grid_size = (0, y_range[1] - y_range[0], z_range[1] - z_range[0])
 
-        center = grid_search(root, data, initial_point, grid_size, step_size)
+        center = grid_search(root, data, center, grid_size, step_size)
+        #print(f'Center found: {center} in iteration {_}')
         step_size /= refinement_factor
-
-    root.hexapod.move(initial_point, flag = "absolute") # return to initial position after finsished search
 
     return center
 
 
 def quadrant_search(root, data, initial_point, initial_search_area, max_iterations):
     # recursive function
-
+    if root.measurement_running == False:
+        return initial_point
 
     # define the 4 points to measure relative to the initial point
     center = initial_point
+
     # these should be touples!
     top_left = [initial_point[0], initial_point[1] - initial_search_area, initial_point[2] + initial_search_area]
     top_right = [initial_point[0], initial_point[1] + initial_search_area, initial_point[2] + initial_search_area]
@@ -149,52 +160,55 @@ def quadrant_search(root, data, initial_point, initial_search_area, max_iteratio
     bottom_right = [initial_point[0], initial_point[1] + initial_search_area, initial_point[2] - initial_search_area]
 
     points = [top_left, top_right, bottom_right, bottom_left] # maybe include top_left again to build a rectangle?
-
+    data['Alignment']['Center_Search']['Path_Points'].extend(points)
+    root.after(0, update_beam_center_plot, root)
     tab = root.tab_group.nametowidget(root.tab_group.select())
 
     # measure the points
     values = []
-    initial_position = root.hexapod.position
+    initial_position = root.hexapod.get_position()
 
     for point in points:
-        position = (initial_position[0] + point[0],initial_position[1] + point[1],initial_position[2] + point[2], 0, 0, 0)
-        root.hexapod.move(position, flag = "absolute", simulate = root.simulate_var.get())
-        data['Alignment']['Center_Search']['Path_Points'].append(point)
+        if root.measurement_running == False:
+            return initial_point
+        
+    
+        next_position = (initial_position[0] + point[0],initial_position[1] + point[1],initial_position[2] + point[2], 0, 0, 0)
+        root.hexapod.move(next_position, flag = "absolute", simulate = root.simulate_var.get())
+        #data['Alignment']['Center_Search']['Path_Points'].append(point)
 
         if root.simulate_var.get() == True:
             # change point to laser coordinates
             value = root.gauss_beam.get_Intensity(point = point)#, shift = [0, -1, +2]) # example shift
         else:      
-            signal = root.sensor.get_signal()
-            value = signal.sum
+            value = root.sensor.get_signal().sum
+            
 
         values.append(value)
         tab.current_point_index += 1
+        root.after(0, update_beam_center_plot, root)
         
-    root.after(10, update_beam_center_plot, root)
+
     # now determine the center of the quadrant with the max_point in it
     new_center = None
 
-    # now fid the center of the rectangle built by the point and center with the smallest difference
+    # now find the center of the rectangle built by the point and center with the smallest difference
     max_point = points[np.argmax(values)]
     new_center = [center[0], center[1] + (max_point[1] - center[1])/2, center[2] + (max_point[2] - center[2])/2]
     
     if new_center is None:
-        print("Error in determining the new new_center")
+        root.log.log_event("No new center found")
         return initial_point
 
     max_iterations -= 1
     if max_iterations == 0:
-        return initial_point
+        return new_center
 
 
-    if np.all(np.isclose(initial_point, max_point, rtol = 1e-3, atol = 1e-3)):
-        return max_point
+    if np.all(np.isclose(initial_point[:3], new_center, rtol = 1e-3, atol = 1e-3)):
+        return new_center
     else:
         return quadrant_search(root, data, new_center, initial_search_area/2, max_iterations)
-
-
-
 
 
 

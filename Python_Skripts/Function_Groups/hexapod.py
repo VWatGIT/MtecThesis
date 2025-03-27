@@ -52,7 +52,7 @@ class Hexapod():
         
         self.default_position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
         
-        self.position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
+        self.simulated_position = [0, 0, 0, 0, 0, 0] # [x, y, z, roll, pitch, yaw]
         self.velocity = 1 # mm/s Default
 
         # Set up Sockets to connect to Server later
@@ -71,12 +71,12 @@ class Hexapod():
         if self.connection_status is True:
             self.move_to_default_position()
     
-    def move_to_default_position(self):
+    def move_to_default_position(self, simulate = False):
         if not self.connection_status:
             rcv = 'Hexpod not connected to server'
             return rcv
 
-        rcv = self.move(self.default_position, flag = "absolute")
+        rcv = self.move(self.default_position, flag = "absolute", simulate = simulate)
         return rcv
     
     def connect_sockets(self, callback = None):
@@ -120,19 +120,20 @@ class Hexapod():
             self.connection_status = True
             self.connecting = False
             rcv = f'Hexapod Connection Successful: | IP: {self.IP} | Port1: {self.port_1} | Port2: {self.port_2}'
-            callback(rcv)
-
-            # Autmoatically move to default position after successful connection
-            self.move_to_default_position()
-
-            return rcv
         
         except Exception as e:
             self.connection_status = False
             self.connecting = False
             rcv = f'Hexapod Connection Failed: {e}'
-            callback(rcv)
-            return rcv
+        
+        
+        callback(rcv)
+
+        if self.connection_status:
+            rcv2 = self.move_to_default_position()
+            callback(rcv2)
+
+        return rcv
 
 
     def clear_socket_buffer(self, sock):
@@ -192,35 +193,41 @@ class Hexapod():
 
         return rcv
 
+    def get_position(self, simulate = False, callback = None):
+        if simulate:
+            return self.simulated_position
+        elif not self.connection_status:
+            rcv = 'Hexpod not connected to server'
+            if callback is not None:
+                callback(rcv)
+                return self.simulated_position
+        else:
+            rcv = self.send_command('get_pos')    
+            position = list(map(float, rcv.split()))[1:] # remove first element which is the command
 
-
-
-
+        return position
 
     def move(self, pos, flag = "relative", simulate = False):
         
         if (self.connection_status is False) or (simulate):
-            
-            pos_current = self.position # use simulated position for testing
+            if simulate:
+                pos_current = self.simulated_position # use simulated position for testing
 
-            if flag == "relative": # relative movement
-                pos_new = [curr + p for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
-            elif flag == "absolute": # absolute movement
-                pos_new = pos   
-            
-            self.position = pos_new # update fake position attribute
+                if flag == "relative": # relative movement
+                    pos_new = [curr + p for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
+                elif flag == "absolute": # absolute movement
+                    pos_new = pos   
 
-            rcv = 'Hexpod not connected to server'
+                self.simulated_position = pos_new # update fake position attribute
+                rcv = f'Simulated movement: {pos_new}'
+            else:
+                rcv = 'Hexpod not connected to server'
+            
             return rcv
+        
         else:
-            # Send command to get current position
-            rcv = self.send_command('get_pos')
-            #print(f'rcv: {rcv}')
-            if rcv == 'Timeout':
-                return rcv
+            pos_current = self.get_position()
 
-            pos_current = list(map(float, rcv.split()))[1:] # remove first element which is the command
-            #print(f'Current Position: {pos_current}')
             if flag == "relative": # relative movement
                 pos_new = [curr + float(p) for curr, p in zip(pos_current, pos)] # add relative movement to current position for each coordinate
             elif flag == "absolute": # absolute movement
@@ -234,8 +241,8 @@ class Hexapod():
             rcv = self.send_command(command)
             if rcv == 'Timeout':
                 return rcv 
-            self.position = pos_new # update position attribute
-            rcv += f": {self.position}" # add actual position to returned message
+
+            rcv += f": {pos_new}" # add new position to returned message
             return rcv
 
     def set_velocity(self, velocity):
@@ -250,7 +257,7 @@ class Hexapod():
         return rcv
 
     def __repr__(self):
-        return f"Hexapod(\nposition={self.position}\nTravelRanges={self.travel_ranges} \nIP={self.IP} \nPort1={self.port_1} \nPort2={self.port_2}\n)"
+        return f"Hexapod(\nposition={self.simulated_position}\nTravelRanges={self.travel_ranges} \nIP={self.IP} \nPort1={self.port_1} \nPort2={self.port_2}\n)"
     
 
 if __name__ == "__main__":
@@ -260,9 +267,9 @@ if __name__ == "__main__":
     print("connect: "+ str(hexapod.connect_sockets()))    
     #print("move: " + str(hexapod.move([1, 1, 1, 0, 0, 0], flag = "relative")))
     print(hexapod.move_to_default_position())
-    print("get_pos:" + str(hexapod.send_command("get_pos")))
+    print(hexapod.get_position())
     print(hexapod.move([1.001, 1, 1.0003, 1.02, 0, 0, 0], flag = "relative"))
-    print(type(hexapod.position[0]))
+    print(type(hexapod.simulated_position[0]))
     """
     print(hexapod.send_command("get_pos"))
     

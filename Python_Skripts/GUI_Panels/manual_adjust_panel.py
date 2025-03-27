@@ -30,7 +30,7 @@ class ManualAdjustPanel:
         e_width = 10
     
         determine_automatic_alignment_button = tk.Button(self.panel, text="Automatic Determination", command= lambda: determine_automatic_alignment(self.root))
-        manual_align_checkbutton = tk.Checkbutton(self.panel, text="Manual", variable = self.root.manual_alignment_var)
+        manual_align_checkbutton = tk.Checkbutton(self.panel, text="Manual", variable = self.root.manual_alignment_var, command= lambda: root.checkbox_panel_object.grey_out())
         seperator3 = ttk.Separator(self.panel, orient="horizontal")
 
         determine_automatic_alignment_button.grid(row=0, column=0, columnspan=2, pady=5, sticky="nsew")

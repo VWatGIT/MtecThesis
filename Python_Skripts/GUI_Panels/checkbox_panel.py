@@ -62,8 +62,7 @@ class CheckboxPanel:
         self.checkbox_update_thread = threading.Thread(target= lambda: update_checkboxes(root))
         self.root.thread_list.append(self.checkbox_update_thread)
         self.checkbox_update_thread.start()
-        #root.after(2000, self.checkbox_update_thread.start())
-        
+        #root.after(2000, self.checkbox_update_thread.start()) # wait for camera to be created
             
     def grey_out(self, flag = None):
 
@@ -75,7 +74,8 @@ class CheckboxPanel:
                 self.probe_detected.config(state="disabled")
                 self.hexapod_connected.config(state="disabled")
                 self.stage_connected.config(state="disabled")
-                self.manual_alignment_checkbutton.config(state="disabled")
+
+                #self.root.manual_alignment_checkbutton.config(state="disabled")
 
             else:
                 self.camera_connected.config(state="normal")
@@ -84,7 +84,7 @@ class CheckboxPanel:
                 self.probe_detected.config(state="normal")
                 self.hexapod_connected.config(state="normal")
                 self.stage_connected.config(state="normal")
-                self.manual_alignment_checkbutton.config(state="normal")
+                #self.root.manual_alignment_checkbutton.config(state="normal")
             return
 
         if self.root.manual_alignment_var.get() == True:

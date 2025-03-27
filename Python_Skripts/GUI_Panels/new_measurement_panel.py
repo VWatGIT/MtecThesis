@@ -92,9 +92,9 @@ class NewMeasurementPanel:
         self.root.log.log_event("Terminating Measurements")
         self.root.measurement_running = False
         # Stop the Hexapod Server, needs to be restarted
-        self.root.hexapod.send_command("stop")
+        #self.root.hexapod.send_command("stop")
 
-        root.log.log_event("Terminated all procedures")
+        #self.root.log.log_event("Terminated all procedures")
          
 
 

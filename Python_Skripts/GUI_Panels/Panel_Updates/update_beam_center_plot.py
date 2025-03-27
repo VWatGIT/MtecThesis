@@ -47,9 +47,9 @@ def update_beam_center_plot(root, event = None):
         beam_centers_z = beam_centers[:, 2]
         
         if not hasattr(tab, 'beam_centers_plot'):
-            tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=200)
+            tab.beam_centers_plot = ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, label='Beam Centers', color='red', marker='x', s=200, zorder=3)
         else:
-            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, color='red', marker='x', s=200)
+            ax.scatter(beam_centers_x, beam_centers_y, beam_centers_z, color='red', marker='x', s=200, zorder=3)
             #tab.beam_centers_plot._offsets3d = (beam_centers_x, beam_centers_y, beam_centers_z)
 
     if data['Alignment']['trajectory'] is not None:
@@ -70,8 +70,12 @@ def update_beam_center_plot(root, event = None):
         trj_x = [center_line(trj, origin, t)[0] for t in t_values]
         trj_y = [center_line(trj, origin, t)[1] for t in t_values]
         trj_z = [center_line(trj, origin, t)[2] for t in t_values]
+        
 
-        ax.plot(trj_x, trj_y, trj_z, label='Beam Trajectory', color='red', linewidth = 2, linestyle='dashed')
+        if not hasattr(tab, 'beam_trajectory_plot'):
+            tab.beam_trajectory_plot = ax.plot(trj_x, trj_y, trj_z, label='Beam Trajectory', color='red', linewidth = 2, linestyle='dashed')
+        else:
+            ax.plot(trj_x, trj_y, trj_z, color='red', linewidth = 2, linestyle='dashed')
 
     ax.legend()
     canvas.draw()
