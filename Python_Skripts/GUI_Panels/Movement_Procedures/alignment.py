@@ -53,9 +53,13 @@ def determine_automatic_alignment(root):
         delta_pos = relative_hexapod_delta_position(probe_tip_position, photo_diode_array_position)
 
         # convert to absolute position
-        rcv = root.hexapod.send_command('get_pos')
-        old_pos = np.array(list(map(float, rcv.split()))[1:])
+        if root.hexapod.connection_status == True:
+            old_pos = root.hexapod.get_position()
+        else:
+            old_pos = root.hexapod.default_position
+
         new_pos = old_pos + delta_pos
+
 
         # Set values in the entries
         manual_adjust_panel = root.manual_adjust_panel

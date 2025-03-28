@@ -29,7 +29,7 @@ def process_data(root):
     data = tab.data
 
 
-    process_slices(data)
+    process_slices(root, data)
     root.log.log_event("Created Slices and Beam Model")
 
     # Update after processing

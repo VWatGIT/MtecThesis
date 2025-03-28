@@ -203,7 +203,7 @@ class Hexapod():
                 return self.simulated_position
         else:
             rcv = self.send_command('get_pos')    
-            position = list(map(float, rcv.split()))[1:] # remove first element which is the command
+            position = tuple(map(float, rcv.split()))[1:] # remove first element which is the command
 
         return position
 

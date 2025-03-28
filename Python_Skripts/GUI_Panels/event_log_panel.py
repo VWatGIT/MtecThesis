@@ -27,6 +27,12 @@ class EventLogPanel:
         self.event_log.config(state='disabled')
         self.event_log.see(tk.END)
 
+    def replace_last_event(self, message):
+        self.delete_last_event()
+        self.log_event(message)
+
+
+
     def delete_last_event(self):
         self.event_log.config(state='normal')
         try:
